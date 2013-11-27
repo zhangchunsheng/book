@@ -1,0 +1,1517 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Appendix E: Built-in Template Tags and Filters</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='appendixD.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixF.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="appendix-e-built-in-template-tags-and-filters">
+<h1>Appendix E: Built-in Template Tags and Filters</h1>
+<p>Chapter 4 lists a number of the most useful built-in template tags and
+filters. However, Django ships with many more built-in tags and filters.
+This appendix covers them.</p>
+<div class="section" id="built-in-tag-reference">
+<h2>Built-in Tag Reference</h2>
+<div class="section" id="autoescape">
+<h3>autoescape</h3>
+<p>Control the current auto-escaping behavior. This tag takes either <tt class="docutils literal"><span class="pre">on</span></tt> or
+<tt class="docutils literal"><span class="pre">off</span></tt> as an argument and that determines whether auto-escaping is in effect
+inside the block.</p>
+<p>When auto-escaping is in effect, all variable content has HTML escaping applied
+to it before placing the result into the output (but after any filters have
+been applied). This is equivalent to manually applying the <tt class="docutils literal"><span class="pre">escape</span></tt> filter
+to each variable.</p>
+<p>The only exceptions are variables that are already marked as &#8220;safe&#8221; from
+escaping, either by the code that populated the variable, or because it has had
+the <tt class="docutils literal"><span class="pre">safe</span></tt> or <tt class="docutils literal"><span class="pre">escape</span></tt> filters applied.</p>
+</div>
+<div class="section" id="block">
+<h3>block</h3>
+<p>Define a block that can be overridden by child templates. See
+Chapter 4 for more information on template inheritance.</p>
+</div>
+<div class="section" id="comment">
+<h3>comment</h3>
+<p>Ignore everything between <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">comment</span> <span class="pre">%}</span></tt> and <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">endcomment</span> <span class="pre">%}</span></tt></p>
+</div>
+<div class="section" id="cycle">
+<h3>cycle</h3>
+<p>Cycle among the given strings or variables each time this tag is encountered.</p>
+<p>Within a loop, cycles among the given strings each time through the
+loop:</p>
+<div class="highlight-python"><pre>{% for o in some_list %}
+    &lt;tr class="{% cycle 'row1' 'row2' %}"&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}</pre>
+</div>
+<p>You can use variables, too. For example, if you have two template variables,
+<tt class="docutils literal"><span class="pre">rowvalue1</span></tt> and <tt class="docutils literal"><span class="pre">rowvalue2</span></tt>, you can cycle between their values like this:</p>
+<div class="highlight-python"><pre>{% for o in some_list %}
+    &lt;tr class="{% cycle rowvalue1 rowvalue2 %}"&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}</pre>
+</div>
+<p>Yes, you can mix variables and strings:</p>
+<div class="highlight-python"><pre>{% for o in some_list %}
+    &lt;tr class="{% cycle 'row1' rowvalue2 'row3' %}"&gt;
+        ...
+    &lt;/tr&gt;
+{% endfor %}</pre>
+</div>
+<p>In some cases you might want to refer to the next value of a cycle from
+outside of a loop. To do this, just give the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">cycle</span> <span class="pre">%}</span></tt> tag a name, using
+&#8220;as&#8221;, like this:</p>
+<div class="highlight-python"><pre>{% cycle 'row1' 'row2' as rowcolors %}</pre>
+</div>
+<p>From then on, you can insert the current value of the cycle wherever you&#8217;d like
+in your template:</p>
+<div class="highlight-python"><pre>&lt;tr class="{% cycle rowcolors %}"&gt;...&lt;/tr&gt;
+&lt;tr class="{% cycle rowcolors %}"&gt;...&lt;/tr&gt;</pre>
+</div>
+<p>You can use any number of values in a <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">cycle</span> <span class="pre">%}</span></tt> tag, separated by spaces.
+Values enclosed in single (<tt class="docutils literal"><span class="pre">'</span></tt>) or double quotes (<tt class="docutils literal"><span class="pre">&quot;</span></tt>) are treated as
+string literals, while values without quotes are treated as template variables.</p>
+<p>For backwards compatibility, the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">cycle</span> <span class="pre">%}</span></tt> tag supports the much inferior
+old syntax from previous Django versions. You shouldn&#8217;t use this in any new
+projects, but for the sake of the people who are still using it, here&#8217;s what it
+looks like:</p>
+<div class="highlight-python"><pre>{% cycle row1,row2,row3 %}</pre>
+</div>
+<p>In this syntax, each value gets interpreted as a literal string, and there&#8217;s no
+way to specify variable values. Or literal commas. Or spaces. Did we mention
+you shouldn&#8217;t use this syntax in any new projects?</p>
+</div>
+<div class="section" id="debug">
+<h3>debug</h3>
+<p>Output a whole load of debugging information, including the current context and
+imported modules.</p>
+</div>
+<div class="section" id="extends">
+<h3>extends</h3>
+<p>Signal that this template extends a parent template.</p>
+<p>This tag can be used in two ways:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">extends</span> <span class="pre">&quot;base.html&quot;</span> <span class="pre">%}</span></tt> (with quotes) uses the literal value
+<tt class="docutils literal"><span class="pre">&quot;base.html&quot;</span></tt> as the name of the parent template to extend.</li>
+<li><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">extends</span> <span class="pre">variable</span> <span class="pre">%}</span></tt> uses the value of <tt class="docutils literal"><span class="pre">variable</span></tt>. If the variable
+evaluates to a string, Django will use that string as the name of the
+parent template. If the variable evaluates to a <tt class="docutils literal"><span class="pre">Template</span></tt> object,
+Django will use that object as the parent template.</li>
+</ul>
+<p>See Chapter 4 for more information on template inheritance.</p>
+</div>
+<div class="section" id="filter">
+<h3>filter</h3>
+<p>Filter the contents of the variable through variable filters.</p>
+<p>Filters can also be piped through each other, and they can have arguments &#8211;
+just like in variable syntax.</p>
+<p>Sample usage:</p>
+<div class="highlight-python"><pre>{% filter force_escape|lower %}
+    This text will be HTML-escaped, and will appear in all lowercase.
+{% endfilter %}</pre>
+</div>
+</div>
+<div class="section" id="firstof">
+<h3>firstof</h3>
+<p>Outputs the first variable passed that is not False.  Outputs nothing if all the
+passed variables are False.</p>
+<p>Sample usage:</p>
+<div class="highlight-python"><pre>{% firstof var1 var2 var3 %}</pre>
+</div>
+<p>This is equivalent to:</p>
+<div class="highlight-python"><pre>{% if var1 %}
+    {{ var1 }}
+{% else %}{% if var2 %}
+    {{ var2 }}
+{% else %}{% if var3 %}
+    {{ var3 }}
+{% endif %}{% endif %}{% endif %}</pre>
+</div>
+<p>You can also use a literal string as a fallback value in case all
+passed variables are False:</p>
+<div class="highlight-python"><pre>{% firstof var1 var2 var3 "fallback value" %}</pre>
+</div>
+</div>
+<div class="section" id="for">
+<h3>for</h3>
+<p>Loop over each item in an array.  For example, to display a list of athletes
+provided in <tt class="docutils literal"><span class="pre">athlete_list</span></tt>:</p>
+<div class="highlight-python"><pre>&lt;ul&gt;
+{% for athlete in athlete_list %}
+    &lt;li&gt;{{ athlete.name }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;</pre>
+</div>
+<p>You can loop over a list in reverse by using <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">for</span> <span class="pre">obj</span> <span class="pre">in</span> <span class="pre">list</span> <span class="pre">reversed</span> <span class="pre">%}</span></tt>.</p>
+<p>If you need to loop over a list of lists, you can unpack the values
+in each sub-list into individual variables. For example, if your context
+contains a list of (x,y) coordinates called <tt class="docutils literal"><span class="pre">points</span></tt>, you could use the
+following to output the list of points:</p>
+<div class="highlight-python"><pre>{% for x, y in points %}
+    There is a point at {{ x }},{{ y }}
+{% endfor %}</pre>
+</div>
+<p>This can also be useful if you need to access the items in a dictionary.
+For example, if your context contained a dictionary <tt class="docutils literal"><span class="pre">data</span></tt>, the following
+would display the keys and values of the dictionary:</p>
+<div class="highlight-python"><pre>{% for key, value in data.items %}
+    {{ key }}: {{ value }}
+{% endfor %}</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">for</span></tt> loop sets a number of variables available within the loop (see
+Table E-1).</p>
+<table border="1" class="docutils">
+<caption>Table E-1. Variables Available Inside {% for %} Loops</caption>
+<colgroup>
+<col width="35%" />
+<col width="65%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Variable</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">forloop.counter</span></tt></td>
+<td>The current iteration of the loop (1-indexed)</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">forloop.counter0</span></tt></td>
+<td>The current iteration of the loop (0-indexed)</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">forloop.revcounter</span></tt></td>
+<td>The number of iterations from the end of the
+loop (1-indexed)</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">forloop.revcounter0</span></tt></td>
+<td>The number of iterations from the end of the
+loop (0-indexed)</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">forloop.first</span></tt></td>
+<td>True if this is the first time through the loop</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">forloop.last</span></tt></td>
+<td>True if this is the last time through the loop</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">forloop.parentloop</span></tt></td>
+<td>For nested loops, this is the loop &#8220;above&#8221; the
+current one</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="docutils literal"><span class="pre">for</span></tt> tag can take an optional <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">empty</span> <span class="pre">%}</span></tt> clause that will be
+displayed if the given array is empty or could not be found:</p>
+<div class="highlight-python"><pre>&lt;ul&gt;
+{% for athlete in athlete_list %}
+    &lt;li&gt;{{ athlete.name }}&lt;/li&gt;
+{% empty %}
+    &lt;li&gt;Sorry, no athlete in this list!&lt;/li&gt;
+{% endfor %}
+&lt;ul&gt;</pre>
+</div>
+<p>The above is equivalent to &#8211; but shorter, cleaner, and possibly faster
+than &#8211; the following:</p>
+<div class="highlight-python"><pre>&lt;ul&gt;
+  {% if athlete_list %}
+    {% for athlete in athlete_list %}
+      &lt;li&gt;{{ athlete.name }}&lt;/li&gt;
+    {% endfor %}
+  {% else %}
+    &lt;li&gt;Sorry, no athletes in this list.&lt;/li&gt;
+  {% endif %}
+&lt;/ul&gt;</pre>
+</div>
+</div>
+<div class="section" id="if">
+<h3>if</h3>
+<p>The <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">if</span> <span class="pre">%}</span></tt> tag evaluates a variable, and if that variable is &#8220;true&#8221; (i.e.
+exists, is not empty, and is not a false boolean value) the contents of the
+block are output:</p>
+<div class="highlight-python"><pre>{% if athlete_list %}
+    Number of athletes: {{ athlete_list|length }}
+{% else %}
+    No athletes.
+{% endif %}</pre>
+</div>
+<p>In the above, if <tt class="docutils literal"><span class="pre">athlete_list</span></tt> is not empty, the number of athletes will be
+displayed by the <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">athlete_list|length</span> <span class="pre">}}</span></tt> variable.</p>
+<p>As you can see, the <tt class="docutils literal"><span class="pre">if</span></tt> tag can take an optional <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">else</span> <span class="pre">%}</span></tt> clause that
+will be displayed if the test fails.</p>
+<p><tt class="docutils literal"><span class="pre">if</span></tt> tags may use <tt class="docutils literal"><span class="pre">and</span></tt>, <tt class="docutils literal"><span class="pre">or</span></tt> or <tt class="docutils literal"><span class="pre">not</span></tt> to test a number of variables or
+to negate a given variable:</p>
+<div class="highlight-python"><pre>{% if athlete_list and coach_list %}
+    Both athletes and coaches are available.
+{% endif %}
+
+{% if not athlete_list %}
+    There are no athletes.
+{% endif %}
+
+{% if athlete_list or coach_list %}
+    There are some athletes or some coaches.
+{% endif %}
+
+{% if not athlete_list or coach_list %}
+    There are no athletes or there are some coaches (OK, so
+    writing English translations of boolean logic sounds
+    stupid; it's not our fault).
+{% endif %}
+
+{% if athlete_list and not coach_list %}
+    There are some athletes and absolutely no coaches.
+{% endif %}</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">if</span></tt> tags don&#8217;t allow <tt class="docutils literal"><span class="pre">and</span></tt> and <tt class="docutils literal"><span class="pre">or</span></tt> clauses within the same tag, because
+the order of logic would be ambiguous. For example, this is invalid:</p>
+<div class="highlight-python"><pre>{% if athlete_list and coach_list or cheerleader_list %}</pre>
+</div>
+<p>If you need to combine <tt class="docutils literal"><span class="pre">and</span></tt> and <tt class="docutils literal"><span class="pre">or</span></tt> to do advanced logic, just use nested
+<tt class="docutils literal"><span class="pre">if</span></tt> tags. For example:</p>
+<div class="highlight-python"><pre>{% if athlete_list %}
+    {% if coach_list or cheerleader_list %}
+        We have athletes, and either coaches or cheerleaders!
+    {% endif %}
+{% endif %}</pre>
+</div>
+<p>Multiple uses of the same logical operator are fine, as long as you use the
+same operator. For example, this is valid:</p>
+<div class="highlight-python"><pre>{% if athlete_list or coach_list or parent_list or teacher_list %}</pre>
+</div>
+</div>
+<div class="section" id="ifchanged">
+<h3>ifchanged</h3>
+<p>Check if a value has changed from the last iteration of a loop.</p>
+<p>The <tt class="docutils literal"><span class="pre">ifchanged</span></tt> tag is used within a loop. It has two possible uses.</p>
+<ol class="arabic">
+<li><p class="first">Checks its own rendered contents against its previous state and only
+displays the content if it has changed. For example, this displays a list of
+days, only displaying the month if it changes:</p>
+<div class="highlight-python"><pre>&lt;h1&gt;Archive for {{ year }}&lt;/h1&gt;
+
+{% for date in days %}
+    {% ifchanged %}&lt;h3&gt;{{ date|date:"F" }}&lt;/h3&gt;{% endifchanged %}
+    &lt;a href="{{ date|date:"M/d"|lower }}/"&gt;{{ date|date:"j" }}&lt;/a&gt;
+{% endfor %}</pre>
+</div>
+</li>
+<li><p class="first">If given a variable, check whether that variable has changed. For
+example, the following shows the date every time it changes, but
+only shows the hour if both the hour and the date has changed:</p>
+<div class="highlight-python"><pre>{% for date in days %}
+    {% ifchanged date.date %} {{ date.date }} {% endifchanged %}
+    {% ifchanged date.hour date.date %}
+        {{ date.hour }}
+    {% endifchanged %}
+{% endfor %}</pre>
+</div>
+</li>
+</ol>
+<p>The <tt class="docutils literal"><span class="pre">ifchanged</span></tt> tag can also take an optional <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">else</span> <span class="pre">%}</span></tt> clause that
+will be displayed if the value has not changed:</p>
+<div class="highlight-python"><pre>{% for match in matches %}
+    &lt;div style="background-color:
+        {% ifchanged match.ballot_id %}
+            {% cycle red,blue %}
+        {% else %}
+            grey
+        {% endifchanged %}
+    "&gt;{{ match }}&lt;/div&gt;
+{% endfor %}</pre>
+</div>
+</div>
+<div class="section" id="ifequal">
+<h3>ifequal</h3>
+<p>Output the contents of the block if the two arguments equal each other.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>{% ifequal user.id comment.user_id %}
+    ...
+{% endifequal %}</pre>
+</div>
+<p>As in the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">if</span> <span class="pre">%}</span></tt> tag, an <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">else</span> <span class="pre">%}</span></tt> clause is optional.</p>
+<p>The arguments can be hard-coded strings, so the following is valid:</p>
+<div class="highlight-python"><pre>{% ifequal user.username "adrian" %}
+    ...
+{% endifequal %}</pre>
+</div>
+<p>It is only possible to compare an argument to template variables or strings.
+You cannot check for equality with Python objects such as <tt class="docutils literal"><span class="pre">True</span></tt> or
+<tt class="docutils literal"><span class="pre">False</span></tt>.  If you need to test if something is true or false, use the <tt class="docutils literal"><span class="pre">if</span></tt>
+tag instead.</p>
+</div>
+<div class="section" id="ifnotequal">
+<h3>ifnotequal</h3>
+<p>Just like <tt class="docutils literal"><span class="pre">ifequal</span></tt>, except it tests that the two arguments are not equal.</p>
+</div>
+<div class="section" id="include">
+<h3>include</h3>
+<p>Loads a template and renders it with the current context. This is a way of
+&#8220;including&#8221; other templates within a template.</p>
+<p>The template name can either be a variable or a hard-coded (quoted) string,
+in either single or double quotes.</p>
+<p>This example includes the contents of the template <tt class="docutils literal"><span class="pre">&quot;foo/bar.html&quot;</span></tt>:</p>
+<div class="highlight-python"><pre>{% include "foo/bar.html" %}</pre>
+</div>
+<p>This example includes the contents of the template whose name is contained in
+the variable <tt class="docutils literal"><span class="pre">template_name</span></tt>:</p>
+<div class="highlight-python"><pre>{% include template_name %}</pre>
+</div>
+<p>An included template is rendered with the context of the template that&#8217;s
+including it. This example produces the output <tt class="docutils literal"><span class="pre">&quot;Hello,</span> <span class="pre">John&quot;</span></tt>:</p>
+<ul>
+<li><p class="first">Context: variable <tt class="docutils literal"><span class="pre">person</span></tt> is set to <tt class="docutils literal"><span class="pre">&quot;john&quot;</span></tt>.</p>
+</li>
+<li><p class="first">Template:</p>
+<div class="highlight-python"><pre>{% include "name_snippet.html" %}</pre>
+</div>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">name_snippet.html</span></tt> template:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Hello</span><span class="p">,</span> <span class="p">{{</span> <span class="n">person</span> <span class="p">}}</span>
+</pre></div>
+</div>
+</li>
+</ul>
+<p>See also: <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">%}</span></tt>.</p>
+</div>
+<div class="section" id="load">
+<h3>load</h3>
+<p>Load a custom template tag set. See Chapter 9 for more information on custom
+template libraries.</p>
+</div>
+<div class="section" id="now">
+<h3>now</h3>
+<p>Display the date, formatted according to the given string.</p>
+<p>Uses the same format as PHP&#8217;s <tt class="docutils literal"><span class="pre">date()</span></tt> function (<a class="reference external" href="http://php.net/date">http://php.net/date</a>)
+with some custom extensions.</p>
+<p>Table E-2 shows the available format strings.</p>
+<table border="1" class="docutils">
+<caption>Table E-2. Available Date Format Strings</caption>
+<colgroup>
+<col width="12%" />
+<col width="31%" />
+<col width="57%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Format character</th>
+<th class="head">Description</th>
+<th class="head">Example output</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>a</td>
+<td><tt class="docutils literal"><span class="pre">'a.m.'</span></tt> or <tt class="docutils literal"><span class="pre">'p.m.'</span></tt> (Note that
+this is slightly different than PHP&#8217;s
+output, because this includes periods
+to match Associated Press style.)</td>
+<td><tt class="docutils literal"><span class="pre">'a.m.'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>A</td>
+<td><tt class="docutils literal"><span class="pre">'AM'</span></tt> or <tt class="docutils literal"><span class="pre">'PM'</span></tt>.</td>
+<td><tt class="docutils literal"><span class="pre">'AM'</span></tt></td>
+</tr>
+<tr class="row-even"><td>b</td>
+<td>Month, textual, 3 letters, lowercase.</td>
+<td><tt class="docutils literal"><span class="pre">'jan'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>B</td>
+<td>Not implemented.</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>d</td>
+<td>Day of the month, 2 digits with
+leading zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'01'</span></tt> to <tt class="docutils literal"><span class="pre">'31'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>D</td>
+<td>Day of the week, textual, 3 letters.</td>
+<td><tt class="docutils literal"><span class="pre">'Fri'</span></tt></td>
+</tr>
+<tr class="row-even"><td>f</td>
+<td>Time, in 12-hour hours and minutes,
+with minutes left off if they&#8217;re zero.
+Proprietary extension.</td>
+<td><tt class="docutils literal"><span class="pre">'1'</span></tt>, <tt class="docutils literal"><span class="pre">'1:30'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>F</td>
+<td>Month, textual, long.</td>
+<td><tt class="docutils literal"><span class="pre">'January'</span></tt></td>
+</tr>
+<tr class="row-even"><td>g</td>
+<td>Hour, 12-hour format without leading
+zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'1'</span></tt> to <tt class="docutils literal"><span class="pre">'12'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>G</td>
+<td>Hour, 24-hour format without leading
+zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'0'</span></tt> to <tt class="docutils literal"><span class="pre">'23'</span></tt></td>
+</tr>
+<tr class="row-even"><td>h</td>
+<td>Hour, 12-hour format.</td>
+<td><tt class="docutils literal"><span class="pre">'01'</span></tt> to <tt class="docutils literal"><span class="pre">'12'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>H</td>
+<td>Hour, 24-hour format.</td>
+<td><tt class="docutils literal"><span class="pre">'00'</span></tt> to <tt class="docutils literal"><span class="pre">'23'</span></tt></td>
+</tr>
+<tr class="row-even"><td>i</td>
+<td>Minutes.</td>
+<td><tt class="docutils literal"><span class="pre">'00'</span></tt> to <tt class="docutils literal"><span class="pre">'59'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>I</td>
+<td>Not implemented.</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-even"><td>j</td>
+<td>Day of the month without leading
+zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'1'</span></tt> to <tt class="docutils literal"><span class="pre">'31'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>l</td>
+<td>Day of the week, textual, long.</td>
+<td><tt class="docutils literal"><span class="pre">'Friday'</span></tt></td>
+</tr>
+<tr class="row-even"><td>L</td>
+<td>Boolean for whether it&#8217;s a leap year.</td>
+<td><tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+<tr class="row-odd"><td>m</td>
+<td>Month, 2 digits with leading zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'01'</span></tt> to <tt class="docutils literal"><span class="pre">'12'</span></tt></td>
+</tr>
+<tr class="row-even"><td>M</td>
+<td>Month, textual, 3 letters.</td>
+<td><tt class="docutils literal"><span class="pre">'Jan'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>n</td>
+<td>Month without leading zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'1'</span></tt> to <tt class="docutils literal"><span class="pre">'12'</span></tt></td>
+</tr>
+<tr class="row-even"><td>N</td>
+<td>Month abbreviation in Associated Press
+style. Proprietary extension.</td>
+<td><tt class="docutils literal"><span class="pre">'Jan.'</span></tt>, <tt class="docutils literal"><span class="pre">'Feb.'</span></tt>, <tt class="docutils literal"><span class="pre">'March'</span></tt>, <tt class="docutils literal"><span class="pre">'May'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>O</td>
+<td>Difference to Greenwich time in hours.</td>
+<td><tt class="docutils literal"><span class="pre">'+0200'</span></tt></td>
+</tr>
+<tr class="row-even"><td>P</td>
+<td>Time, in 12-hour hours, minutes and
+&#8216;a.m.&#8217;/&#8217;p.m.&#8217;, with minutes left off
+if they&#8217;re zero and the special-case
+strings &#8216;midnight&#8217; and &#8216;noon&#8217; if
+appropriate. Proprietary extension.</td>
+<td><tt class="docutils literal"><span class="pre">'1</span> <span class="pre">a.m.'</span></tt>, <tt class="docutils literal"><span class="pre">'1:30</span> <span class="pre">p.m.'</span></tt>, <tt class="docutils literal"><span class="pre">'midnight'</span></tt>, <tt class="docutils literal"><span class="pre">'noon'</span></tt>, <tt class="docutils literal"><span class="pre">'12:30</span> <span class="pre">p.m.'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>r</td>
+<td>RFC 2822 formatted date.</td>
+<td><tt class="docutils literal"><span class="pre">'Thu,</span> <span class="pre">21</span> <span class="pre">Dec</span> <span class="pre">2000</span> <span class="pre">16:01:07</span> <span class="pre">+0200'</span></tt></td>
+</tr>
+<tr class="row-even"><td>s</td>
+<td>Seconds, 2 digits with leading zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'00'</span></tt> to <tt class="docutils literal"><span class="pre">'59'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>S</td>
+<td>English ordinal suffix for day of the
+month, 2 characters.</td>
+<td><tt class="docutils literal"><span class="pre">'st'</span></tt>, <tt class="docutils literal"><span class="pre">'nd'</span></tt>, <tt class="docutils literal"><span class="pre">'rd'</span></tt> or <tt class="docutils literal"><span class="pre">'th'</span></tt></td>
+</tr>
+<tr class="row-even"><td>t</td>
+<td>Number of days in the given month.</td>
+<td><tt class="docutils literal"><span class="pre">28</span></tt> to <tt class="docutils literal"><span class="pre">31</span></tt></td>
+</tr>
+<tr class="row-odd"><td>T</td>
+<td>Time zone of this machine.</td>
+<td><tt class="docutils literal"><span class="pre">'EST'</span></tt>, <tt class="docutils literal"><span class="pre">'MDT'</span></tt></td>
+</tr>
+<tr class="row-even"><td>U</td>
+<td>Not implemented.</td>
+<td>&nbsp;</td>
+</tr>
+<tr class="row-odd"><td>w</td>
+<td>Day of the week, digits without
+leading zeros.</td>
+<td><tt class="docutils literal"><span class="pre">'0'</span></tt> (Sunday) to <tt class="docutils literal"><span class="pre">'6'</span></tt> (Saturday)</td>
+</tr>
+<tr class="row-even"><td>W</td>
+<td>ISO-8601 week number of year, with
+weeks starting on Monday.</td>
+<td><tt class="docutils literal"><span class="pre">1</span></tt>, <tt class="docutils literal"><span class="pre">53</span></tt></td>
+</tr>
+<tr class="row-odd"><td>y</td>
+<td>Year, 2 digits.</td>
+<td><tt class="docutils literal"><span class="pre">'99'</span></tt></td>
+</tr>
+<tr class="row-even"><td>Y</td>
+<td>Year, 4 digits.</td>
+<td><tt class="docutils literal"><span class="pre">'1999'</span></tt></td>
+</tr>
+<tr class="row-odd"><td>z</td>
+<td>Day of the year.</td>
+<td><tt class="docutils literal"><span class="pre">0</span></tt> to <tt class="docutils literal"><span class="pre">365</span></tt></td>
+</tr>
+<tr class="row-even"><td>Z</td>
+<td>Time zone offset in seconds. The
+offset for timezones west of UTC is
+always negative, and for those east of
+UTC is always positive.</td>
+<td><tt class="docutils literal"><span class="pre">-43200</span></tt> to <tt class="docutils literal"><span class="pre">43200</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>Example:</p>
+<div class="highlight-python"><pre>It is {% now "jS F Y H:i" %}</pre>
+</div>
+<p>Note that you can backslash-escape a format string if you want to use the
+&#8220;raw&#8221; value. In this example, &#8220;f&#8221; is backslash-escaped, because otherwise
+&#8220;f&#8221; is a format string that displays the time. The &#8220;o&#8221; doesn&#8217;t need to be
+escaped, because it&#8217;s not a format character:</p>
+<div class="highlight-python"><pre>It is the {% now "jS o\f F" %}</pre>
+</div>
+<p>This would display as &#8220;It is the 4th of September&#8221;.</p>
+</div>
+<div class="section" id="regroup">
+<h3>regroup</h3>
+<p>Regroup a list of alike objects by a common attribute.</p>
+<p>This complex tag is best illustrated by use of an example: say that <tt class="docutils literal"><span class="pre">people</span></tt>
+is a list of people represented by dictionaries with <tt class="docutils literal"><span class="pre">first_name</span></tt>,
+<tt class="docutils literal"><span class="pre">last_name</span></tt>, and <tt class="docutils literal"><span class="pre">gender</span></tt> keys:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">people</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;George&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Bush&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Male&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Bill&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Clinton&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Male&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Margaret&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Thatcher&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Female&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Condoleezza&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Rice&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Female&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Pat&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Smith&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Unknown&#39;</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>...and you&#8217;d like to display a hierarchical list that is ordered by gender,
+like this:</p>
+<div class="highlight-python"><pre>* Male:
+    * George Bush
+    * Bill Clinton
+* Female:
+    * Margaret Thatcher
+    * Condoleezza Rice
+* Unknown:
+    * Pat Smith</pre>
+</div>
+<p>You can use the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">regroup</span> <span class="pre">%}</span></tt> tag to group the list of people by gender.
+The following snippet of template code would accomplish this:</p>
+<div class="highlight-python"><pre>{% regroup people by gender as gender_list %}
+
+&lt;ul&gt;
+{% for gender in gender_list %}
+    &lt;li&gt;{{ gender.grouper }}
+    &lt;ul&gt;
+        {% for item in gender.list %}
+        &lt;li&gt;{{ item.first_name }} {{ item.last_name }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+    &lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;</pre>
+</div>
+<p>Let&#8217;s walk through this example. <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">regroup</span> <span class="pre">%}</span></tt> takes three arguments: the
+list you want to regroup, the attribute to group by, and the name of the
+resulting list. Here, we&#8217;re regrouping the <tt class="docutils literal"><span class="pre">people</span></tt> list by the <tt class="docutils literal"><span class="pre">gender</span></tt>
+attribute and calling the result <tt class="docutils literal"><span class="pre">gender_list</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">{%</span> <span class="pre">regroup</span> <span class="pre">%}</span></tt> produces a list (in this case, <tt class="docutils literal"><span class="pre">gender_list</span></tt>) of
+<strong>group objects</strong>. Each group object has two attributes:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">grouper</span></tt> &#8211; the item that was grouped by (e.g., the string &#8220;Male&#8221; or
+&#8220;Female&#8221;).</li>
+<li><tt class="docutils literal"><span class="pre">list</span></tt> &#8211; a list of all items in this group (e.g., a list of all people
+with gender=&#8217;Male&#8217;).</li>
+</ul>
+<p>Note that <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">regroup</span> <span class="pre">%}</span></tt> does not order its input! Our example relies on
+the fact that the <tt class="docutils literal"><span class="pre">people</span></tt> list was ordered by <tt class="docutils literal"><span class="pre">gender</span></tt> in the first place.
+If the <tt class="docutils literal"><span class="pre">people</span></tt> list did <em>not</em> order its members by <tt class="docutils literal"><span class="pre">gender</span></tt>, the regrouping
+would naively display more than one group for a single gender. For example,
+say the <tt class="docutils literal"><span class="pre">people</span></tt> list was set to this (note that the males are not grouped
+together):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">people</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Bill&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Clinton&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Male&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Pat&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Smith&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Unknown&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Margaret&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Thatcher&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Female&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;George&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Bush&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Male&#39;</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;first_name&#39;</span><span class="p">:</span> <span class="s">&#39;Condoleezza&#39;</span><span class="p">,</span> <span class="s">&#39;last_name&#39;</span><span class="p">:</span> <span class="s">&#39;Rice&#39;</span><span class="p">,</span> <span class="s">&#39;gender&#39;</span><span class="p">:</span> <span class="s">&#39;Female&#39;</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>With this input for <tt class="docutils literal"><span class="pre">people</span></tt>, the example <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">regroup</span> <span class="pre">%}</span></tt> template code
+above would result in the following output:</p>
+<div class="highlight-python"><pre>* Male:
+    * Bill Clinton
+* Unknown:
+    * Pat Smith
+* Female:
+    * Margaret Thatcher
+* Male:
+    * George Bush
+* Female:
+    * Condoleezza Rice</pre>
+</div>
+<p>The easiest solution to this gotcha is to make sure in your view code that the
+data is ordered according to how you want to display it.</p>
+<p>Another solution is to sort the data in the template using the <tt class="docutils literal"><span class="pre">dictsort</span></tt>
+filter, if your data is in a list of dictionaries:</p>
+<div class="highlight-python"><pre>{% regroup people|dictsort:"gender" by gender as gender_list %}</pre>
+</div>
+</div>
+<div class="section" id="spaceless">
+<h3>spaceless</h3>
+<p>Removes whitespace between HTML tags. This includes tab
+characters and newlines.</p>
+<p>Example usage:</p>
+<div class="highlight-python"><pre>{% spaceless %}
+    &lt;p&gt;
+        &lt;a href="foo/"&gt;Foo&lt;/a&gt;
+    &lt;/p&gt;
+{% endspaceless %}</pre>
+</div>
+<p>This example would return this HTML:</p>
+<div class="highlight-python"><pre>&lt;p&gt;&lt;a href="foo/"&gt;Foo&lt;/a&gt;&lt;/p&gt;</pre>
+</div>
+<p>Only space between <em>tags</em> is removed &#8211; not space between tags and text. In
+this example, the space around <tt class="docutils literal"><span class="pre">Hello</span></tt> won&#8217;t be stripped:</p>
+<div class="highlight-python"><pre>{% spaceless %}
+    &lt;strong&gt;
+        Hello
+    &lt;/strong&gt;
+{% endspaceless %}</pre>
+</div>
+</div>
+<div class="section" id="ssi">
+<h3>ssi</h3>
+<p>Output the contents of a given file into the page.</p>
+<p>Like a simple &#8220;include&#8221; tag, <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">%}</span></tt> includes the contents of another
+file &#8211; which must be specified using an absolute path &#8211; in the current
+page:</p>
+<div class="highlight-python"><pre>{% ssi /home/html/ljworld.com/includes/right_generic.html %}</pre>
+</div>
+<p>If the optional &#8220;parsed&#8221; parameter is given, the contents of the included
+file are evaluated as template code, within the current context:</p>
+<div class="highlight-python"><pre>{% ssi /home/html/ljworld.com/includes/right_generic.html parsed %}</pre>
+</div>
+<p>Note that if you use <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">%}</span></tt>, you&#8217;ll need to define
+<tt class="docutils literal"><span class="pre">ALLOWED_INCLUDE_ROOTS</span></tt> in your Django settings, as a security measure.</p>
+<p>See also: <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">include</span> <span class="pre">%}</span></tt>.</p>
+</div>
+<div class="section" id="templatetag">
+<h3>templatetag</h3>
+<p>Output one of the syntax characters used to compose template tags.</p>
+<p>Since the template system has no concept of &#8220;escaping&#8221;, to display one of the
+bits used in template tags, you must use the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">templatetag</span> <span class="pre">%}</span></tt> tag.</p>
+<p>See Table E-3 for the available arguments.</p>
+<table border="1" class="docutils">
+<caption>Table E-3. Available Arguments for templatetag Filter</caption>
+<colgroup>
+<col width="72%" />
+<col width="28%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Argument</th>
+<th class="head">Outputs</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">openblock</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{%</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">closeblock</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">%}</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">openvariable</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">closevariable</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">}}</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">openbrace</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">closebrace</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">}</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">opencomment</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{#</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">closecomment</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">#}</span></tt></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="url">
+<h3>url</h3>
+<p>Returns an absolute URL (i.e., a URL without the domain name) matching a given
+view function and optional parameters. This is a way to output links without
+violating the DRY principle by having to hard-code URLs in your templates:</p>
+<div class="highlight-python"><pre>{% url path.to.some_view arg1,arg2,name1=value1 %}</pre>
+</div>
+<p>The first argument is a path to a view function in the format
+<tt class="docutils literal"><span class="pre">package.package.module.function</span></tt>. Additional arguments are optional and
+should be comma-separated values that will be used as positional and keyword
+arguments in the URL. All arguments required by the URLconf should be present.</p>
+<p>For example, suppose you have a view, <tt class="docutils literal"><span class="pre">app_views.client</span></tt>, whose URLconf
+takes a client ID (here, <tt class="docutils literal"><span class="pre">client()</span></tt> is a method inside the views file
+<tt class="docutils literal"><span class="pre">app_views.py</span></tt>). The URLconf line might look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;^client/(\d+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;app_views.client&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If this app&#8217;s URLconf is included into the project&#8217;s URLconf under a path
+such as this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;^clients/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;project_name.app_name.urls&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>...then, in a template, you can create a link to this view like this:</p>
+<div class="highlight-python"><pre>{% url app_views.client client.id %}</pre>
+</div>
+<p>The template tag will output the string <tt class="docutils literal"><span class="pre">/clients/client/123/</span></tt>.</p>
+</div>
+<div class="section" id="widthratio">
+<h3>widthratio</h3>
+<p>For creating bar charts and such, this tag calculates the ratio of a given value
+to a maximum value, and then applies that ratio to a constant.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>&lt;img src="bar.gif" height="10" width="{% widthratio this_value max_value 100 %}" /&gt;</pre>
+</div>
+<p>Above, if <tt class="docutils literal"><span class="pre">this_value</span></tt> is 175 and <tt class="docutils literal"><span class="pre">max_value</span></tt> is 200, the image in the
+above example will be 88 pixels wide (because 175/200 = .875; .875 * 100 = 87.5
+which is rounded up to 88).</p>
+</div>
+<div class="section" id="with">
+<h3>with</h3>
+<p>Caches a complex variable under a simpler name. This is useful when accessing
+an &#8220;expensive&#8221; method (e.g., one that hits the database) multiple times.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>{% with business.employees.count as total %}
+    {{ total }} employee{{ total|pluralize }}
+{% endwith %}</pre>
+</div>
+<p>The populated variable (in the example above, <tt class="docutils literal"><span class="pre">total</span></tt>) is only available
+between the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">with</span> <span class="pre">%}</span></tt> and <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">endwith</span> <span class="pre">%}</span></tt> tags.</p>
+</div>
+</div>
+<div class="section" id="built-in-filter-reference">
+<h2>Built-in Filter Reference</h2>
+<div class="section" id="add">
+<h3>add</h3>
+<p>Adds the argument to the value.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">add</span><span class="p">:</span><span class="s">&quot;2&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">4</span></tt>, then the output will be <tt class="docutils literal"><span class="pre">6</span></tt>.</p>
+</div>
+<div class="section" id="addslashes">
+<h3>addslashes</h3>
+<p>Adds slashes before quotes. Useful for escaping strings in CSV, for example.</p>
+</div>
+<div class="section" id="capfirst">
+<h3>capfirst</h3>
+<p>Capitalizes the first character of the value.</p>
+</div>
+<div class="section" id="center">
+<h3>center</h3>
+<p>Centers the value in a field of a given width.</p>
+</div>
+<div class="section" id="cut">
+<h3>cut</h3>
+<p>Removes all values of arg from the given string.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">cut</span><span class="p">:</span><span class="s">&quot; &quot;</span><span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;String</span> <span class="pre">with</span> <span class="pre">spaces&quot;</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&quot;Stringwithspaces&quot;</span></tt>.</p>
+</div>
+<div class="section" id="date">
+<h3>date</h3>
+<p>Formats a date according to the given format (same as the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">now</span> <span class="pre">%}</span></tt> tag).</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">date</span><span class="p">:</span><span class="s">&quot;D d M Y&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is a <tt class="docutils literal"><span class="pre">datetime</span></tt> object (e.g., the result of
+<tt class="docutils literal"><span class="pre">datetime.datetime.now()</span></tt>), the output will be the string
+<tt class="docutils literal"><span class="pre">'Wed</span> <span class="pre">09</span> <span class="pre">Jan</span> <span class="pre">2008'</span></tt>.</p>
+<p>When used without a format string:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">date</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>...the formatting string defined in the <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt> setting will be
+used.</p>
+</div>
+<div class="section" id="default">
+<h3>default</h3>
+<p>If value evaluates to <tt class="docutils literal"><span class="pre">False</span></tt>, use given default. Otherwise, use the value.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">default</span><span class="p">:</span><span class="s">&quot;nothing&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;&quot;</span></tt> (the empty string), the output will be <tt class="docutils literal"><span class="pre">nothing</span></tt>.</p>
+</div>
+<div class="section" id="default-if-none">
+<h3>default_if_none</h3>
+<p>If (and only if) value is <tt class="docutils literal"><span class="pre">None</span></tt>, use given default. Otherwise, use the
+value.</p>
+<p>Note that if an empty string is given, the default value will <em>not</em> be used.
+Use the <tt class="docutils literal"><span class="pre">default</span></tt> filter if you want to fallback for empty strings.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">default_if_none</span><span class="p">:</span><span class="s">&quot;nothing&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">None</span></tt>, the output will be the string <tt class="docutils literal"><span class="pre">&quot;nothing&quot;</span></tt>.</p>
+</div>
+<div class="section" id="dictsort">
+<h3>dictsort</h3>
+<p>Takes a list of dictionaries and returns that list sorted by the key given in
+the argument.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">dictsort</span><span class="p">:</span><span class="s">&quot;name&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;zed&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;joe&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>then the output would be:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;amy&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">22</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;joe&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">31</span><span class="p">},</span>
+    <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;zed&#39;</span><span class="p">,</span> <span class="s">&#39;age&#39;</span><span class="p">:</span> <span class="mi">19</span><span class="p">},</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="dictsortreversed">
+<h3>dictsortreversed</h3>
+<p>Takes a list of dictionaries and returns that list sorted in reverse order by
+the key given in the argument. This works exactly the same as the above filter,
+but the returned value will be in reverse order.</p>
+</div>
+<div class="section" id="divisibleby">
+<h3>divisibleby</h3>
+<p>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if the value is divisible by the argument.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">divisibleby</span><span class="p">:</span><span class="s">&quot;3&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">21</span></tt>, the output would be <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+</div>
+<div class="section" id="escape">
+<h3>escape</h3>
+<p>Escapes a string&#8217;s HTML. Specifically, it makes these replacements:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">&lt;</span></tt> is converted to <tt class="docutils literal"><span class="pre">&amp;lt;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">&gt;</span></tt> is converted to <tt class="docutils literal"><span class="pre">&amp;gt;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'</span></tt> (single quote) is converted to <tt class="docutils literal"><span class="pre">&amp;#39;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">&quot;</span></tt> (double quote) is converted to <tt class="docutils literal"><span class="pre">&amp;quot;</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">&amp;</span></tt> is converted to <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt></li>
+</ul>
+<p>The escaping is only applied when the string is output, so it does not matter
+where in a chained sequence of filters you put <tt class="docutils literal"><span class="pre">escape</span></tt>: it will always be
+applied as though it were the last filter. If you want escaping to be applied
+immediately, use the <tt class="docutils literal"><span class="pre">force_escape</span></tt> filter.</p>
+<p>Applying <tt class="docutils literal"><span class="pre">escape</span></tt> to a variable that would normally have auto-escaping
+applied to the result will only result in one round of escaping being done. So
+it is safe to use this function even in auto-escaping environments. If you want
+multiple escaping passes to be applied, use the <tt class="docutils literal"><span class="pre">force_escape</span></tt> filter.</p>
+</div>
+<div class="section" id="escapejs">
+<h3>escapejs</h3>
+<p>Escapes characters for use in JavaScript strings. This does <em>not</em> make the
+string safe for use in HTML, but does protect you from syntax errors when using
+templates to generate JavaScript/JSON.</p>
+</div>
+<div class="section" id="filesizeformat">
+<h3>filesizeformat</h3>
+<p>Format the value like a &#8216;human-readable&#8217; file size (i.e. <tt class="docutils literal"><span class="pre">'13</span> <span class="pre">KB'</span></tt>,
+<tt class="docutils literal"><span class="pre">'4.1</span> <span class="pre">MB'</span></tt>, <tt class="docutils literal"><span class="pre">'102</span> <span class="pre">bytes'</span></tt>, etc).</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">filesizeformat</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is 123456789, the output would be <tt class="docutils literal"><span class="pre">117.7</span> <span class="pre">MB</span></tt>.</p>
+</div>
+<div class="section" id="first">
+<h3>first</h3>
+<p>Returns the first item in a list.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">first</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is the list <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c']</span></tt>, the output will be <tt class="docutils literal"><span class="pre">'a'</span></tt>.</p>
+</div>
+<div class="section" id="fix-ampersands">
+<h3>fix_ampersands</h3>
+<p>Replaces ampersands with <tt class="docutils literal"><span class="pre">&amp;amp;</span></tt> entities.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">fix_ampersands</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">Tom</span> <span class="pre">&amp;</span> <span class="pre">Jerry</span></tt>, the output will be <tt class="docutils literal"><span class="pre">Tom</span> <span class="pre">&amp;amp;</span> <span class="pre">Jerry</span></tt>.</p>
+</div>
+<div class="section" id="floatformat">
+<h3>floatformat</h3>
+<p>When used without an argument, rounds a floating-point number to one decimal
+place &#8211; but only if there&#8217;s a decimal part to be displayed. For example:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="57%" />
+<col width="17%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><tt class="docutils literal"><span class="pre">value</span></tt></th>
+<th class="head">Template</th>
+<th class="head">Output</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.23234</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.2</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">34.00000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.26000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.3</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>If used with a numeric integer argument, <tt class="docutils literal"><span class="pre">floatformat</span></tt> rounds a number to
+that many decimal places. For example:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="24%" />
+<col width="57%" />
+<col width="20%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><tt class="docutils literal"><span class="pre">value</span></tt></th>
+<th class="head">Template</th>
+<th class="head">Output</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.23234</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:3</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.232</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">34.00000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:3</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.000</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.26000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:3</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.260</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>If the argument passed to <tt class="docutils literal"><span class="pre">floatformat</span></tt> is negative, it will round a number
+to that many decimal places &#8211; but only if there&#8217;s a decimal part to be
+displayed. For example:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="59%" />
+<col width="19%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head"><tt class="docutils literal"><span class="pre">value</span></tt></th>
+<th class="head">Template</th>
+<th class="head">Output</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.23234</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:&quot;-3&quot;</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.232</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">34.00000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:&quot;-3&quot;</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">34.26000</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">value|floatformat:&quot;-3&quot;</span> <span class="pre">}}</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">34.260</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>Using <tt class="docutils literal"><span class="pre">floatformat</span></tt> with no argument is equivalent to using <tt class="docutils literal"><span class="pre">floatformat</span></tt>
+with an argument of <tt class="docutils literal"><span class="pre">-1</span></tt>.</p>
+</div>
+<div class="section" id="force-escape">
+<h3>force_escape</h3>
+<p>Applies HTML escaping to a string (see the <tt class="docutils literal"><span class="pre">escape</span></tt> filter for details).
+This filter is applied <em>immediately</em> and returns a new, escaped string. This
+is useful in the rare cases where you need multiple escaping or want to apply
+other filters to the escaped results. Normally, you want to use the <tt class="docutils literal"><span class="pre">escape</span></tt>
+filter.</p>
+</div>
+<div class="section" id="get-digit">
+<h3>get_digit</h3>
+<p>Given a whole number, returns the requested digit, where 1 is the right-most
+digit, 2 is the second-right-most digit, etc. Returns the original value for
+invalid input (if input or argument is not an integer, or if argument is less
+than 1). Otherwise, output is always an integer.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">get_digit</span><span class="p">:</span><span class="s">&quot;2&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">123456789</span></tt>, the output will be <tt class="docutils literal"><span class="pre">8</span></tt>.</p>
+</div>
+<div class="section" id="iriencode">
+<h3>iriencode</h3>
+<p>Converts an IRI (Internationalized Resource Identifier) to a string that is
+suitable for including in a URL. This is necessary if you&#8217;re trying to use
+strings containing non-ASCII characters in a URL.</p>
+<p>It&#8217;s safe to use this filter on a string that has already gone through the
+<tt class="docutils literal"><span class="pre">urlencode</span></tt> filter.</p>
+</div>
+<div class="section" id="join">
+<h3>join</h3>
+<p>Joins a list with a string, like Python&#8217;s <tt class="docutils literal"><span class="pre">str.join(list)</span></tt></p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">join</span><span class="p">:</span><span class="s">&quot; // &quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is the list <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c']</span></tt>, the output will be the string
+<tt class="docutils literal"><span class="pre">&quot;a</span> <span class="pre">//</span> <span class="pre">b</span> <span class="pre">//</span> <span class="pre">c&quot;</span></tt>.</p>
+</div>
+<div class="section" id="last">
+<h3>last</h3>
+<p>Returns the last item in a list.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">last</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is the list <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c',</span> <span class="pre">'d']</span></tt>, the output will be the string
+<tt class="docutils literal"><span class="pre">&quot;d&quot;</span></tt>.</p>
+</div>
+<div class="section" id="length">
+<h3>length</h3>
+<p>Returns the length of the value. This works for both strings and lists.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">length</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c',</span> <span class="pre">'d']</span></tt>, the output will be <tt class="docutils literal"><span class="pre">4</span></tt>.</p>
+</div>
+<div class="section" id="length-is">
+<h3>length_is</h3>
+<p>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if the value&#8217;s length is the argument, or <tt class="docutils literal"><span class="pre">False</span></tt> otherwise.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">length_is</span><span class="p">:</span><span class="s">&quot;4&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c',</span> <span class="pre">'d']</span></tt>, the output will be <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+</div>
+<div class="section" id="linebreaks">
+<h3>linebreaks</h3>
+<p>Replaces line breaks in plain text with appropriate HTML; a single
+newline becomes an HTML line break (<tt class="docutils literal"><span class="pre">&lt;br</span> <span class="pre">/&gt;</span></tt>) and a new line
+followed by a blank line becomes a paragraph break (<tt class="docutils literal"><span class="pre">&lt;/p&gt;</span></tt>).</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">linebreaks</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">Joel\nis</span> <span class="pre">a</span> <span class="pre">slug</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&lt;p&gt;Joel&lt;br</span> <span class="pre">/&gt;is</span> <span class="pre">a</span>
+<span class="pre">slug&lt;/p&gt;</span></tt>.</p>
+<div class="section" id="linebreaksbr">
+<h4>linebreaksbr</h4>
+<p>Converts all newlines in a piece of plain text to HTML line breaks
+(<tt class="docutils literal"><span class="pre">&lt;br</span> <span class="pre">/&gt;</span></tt>).</p>
+</div>
+</div>
+<div class="section" id="linenumbers">
+<h3>linenumbers</h3>
+<p>Displays text with line numbers.</p>
+</div>
+<div class="section" id="ljust">
+<h3>ljust</h3>
+<p>Left-aligns the value in a field of a given width.</p>
+<p><strong>Argument:</strong> field size</p>
+</div>
+<div class="section" id="lower">
+<h3>lower</h3>
+<p>Converts a string into all lowercase.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">lower</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">Still</span> <span class="pre">MAD</span> <span class="pre">At</span> <span class="pre">Yoko</span></tt>, the output will be <tt class="docutils literal"><span class="pre">still</span> <span class="pre">mad</span> <span class="pre">at</span> <span class="pre">yoko</span></tt>.</p>
+</div>
+<div class="section" id="make-list">
+<h3>make_list</h3>
+<p>Returns the value turned into a list. For an integer, it&#8217;s a list of
+digits. For a string, it&#8217;s a list of characters.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">make_list</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is the string <tt class="docutils literal"><span class="pre">&quot;Joel&quot;</span></tt>, the output would be the list
+<tt class="docutils literal"><span class="pre">[u'J',</span> <span class="pre">u'o',</span> <span class="pre">u'e',</span> <span class="pre">u'l']</span></tt>. If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">123</span></tt>, the output will be the
+list <tt class="docutils literal"><span class="pre">[1,</span> <span class="pre">2,</span> <span class="pre">3]</span></tt>.</p>
+</div>
+<div class="section" id="phone2numeric">
+<h3>phone2numeric</h3>
+<p>Converts a phone number (possibly containing letters) to its numerical
+equivalent. For example, <tt class="docutils literal"><span class="pre">'800-COLLECT'</span></tt> will be converted to
+<tt class="docutils literal"><span class="pre">'800-2655328'</span></tt>.</p>
+<p>The input doesn&#8217;t have to be a valid phone number. This will happily convert
+any string.</p>
+</div>
+<div class="section" id="pluralize">
+<h3>pluralize</h3>
+<p>Returns a plural suffix if the value is not 1. By default, this suffix is <tt class="docutils literal"><span class="pre">'s'</span></tt>.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>You have {{ num_messages }} message{{ num_messages|pluralize }}.</pre>
+</div>
+<p>For words that require a suffix other than <tt class="docutils literal"><span class="pre">'s'</span></tt>, you can provide an alternate
+suffix as a parameter to the filter.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>You have {{ num_walruses }} walrus{{ num_walrus|pluralize:"es" }}.</pre>
+</div>
+<p>For words that don&#8217;t pluralize by simple suffix, you can specify both a
+singular and plural suffix, separated by a comma.</p>
+<p>Example:</p>
+<div class="highlight-python"><pre>You have {{ num_cherries }} cherr{{ num_cherries|pluralize:"y,ies" }}.</pre>
+</div>
+</div>
+<div class="section" id="pprint">
+<h3>pprint</h3>
+<p>A wrapper around the Python standard library&#8217;s <tt class="docutils literal"><span class="pre">pprint.pprint</span></tt> function &#8211;
+for debugging, really.</p>
+</div>
+<div class="section" id="random">
+<h3>random</h3>
+<p>Returns a random item from the given list.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">random</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is the list <tt class="docutils literal"><span class="pre">['a',</span> <span class="pre">'b',</span> <span class="pre">'c',</span> <span class="pre">'d']</span></tt>, the output could be <tt class="docutils literal"><span class="pre">&quot;b&quot;</span></tt>.</p>
+</div>
+<div class="section" id="removetags">
+<h3>removetags</h3>
+<p>Removes a space-separated list of [X]HTML tags from the output.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">removetags</span><span class="p">:</span><span class="s">&quot;b span&quot;</span><span class="o">|</span><span class="n">safe</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;&lt;b&gt;Joel&lt;/b&gt;</span> <span class="pre">&lt;button&gt;is&lt;/button&gt;</span> <span class="pre">a</span> <span class="pre">&lt;span&gt;slug&lt;/span&gt;&quot;</span></tt> the
+output will be <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">&lt;button&gt;is&lt;/button&gt;</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>.</p>
+</div>
+<div class="section" id="rjust">
+<h3>rjust</h3>
+<p>Right-aligns the value in a field of a given width.</p>
+<p><strong>Argument:</strong> field size</p>
+</div>
+<div class="section" id="safe">
+<h3>safe</h3>
+<p>Marks a string as not requiring further HTML escaping prior to output. When
+autoescaping is off, this filter has no effect.</p>
+</div>
+<div class="section" id="safeseq">
+<h3>safeseq</h3>
+<p>Applies the <tt class="docutils literal"><span class="pre">safe</span></tt> filter to each element of a sequence.  Useful in
+conjunction with other filters that operate on sequences, such as
+<tt class="docutils literal"><span class="pre">join</span></tt>.  For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">some_list</span><span class="o">|</span><span class="n">safeseq</span><span class="o">|</span><span class="n">join</span><span class="p">:</span><span class="s">&quot;, &quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>You couldn&#8217;t use the <tt class="docutils literal"><span class="pre">safe</span></tt> filter directly in this case, as it would
+first convert the variable into a string, rather than working with the
+individual elements of the sequence.</p>
+</div>
+<div class="section" id="slice">
+<h3>slice</h3>
+<p>Returns a slice of the list.</p>
+<p>Uses the same syntax as Python&#8217;s list slicing. See
+<a class="reference external" href="http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice">http://diveintopython.org/native_data_types/lists.html#odbchelper.list.slice</a>
+for an introduction.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">some_list</span><span class="o">|</span><span class="nb">slice</span><span class="p">:</span><span class="s">&quot;:2&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="slugify">
+<h3>slugify</h3>
+<p>Converts to lowercase, removes non-word characters (only alphanumerics and
+underscores are kept) and converts spaces to hyphens. Also strips leading and trailing
+whitespace.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">slugify</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&quot;joel-is-a-slug&quot;</span></tt>.</p>
+</div>
+<div class="section" id="stringformat">
+<h3>stringformat</h3>
+<p>Formats the variable according to the argument, a string formatting specifier.
+This specifier uses Python string formatting syntax, with the exception that
+the leading &#8220;%&#8221; is dropped.</p>
+<p>See <a class="reference external" href="http://docs.python.org/library/stdtypes.html#string-formatting-operations">http://docs.python.org/library/stdtypes.html#string-formatting-operations</a>
+for documentation of Python string formatting.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">stringformat</span><span class="p">:</span><span class="s">&quot;s&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>.</p>
+</div>
+<div class="section" id="striptags">
+<h3>striptags</h3>
+<p>Strips all [X]HTML tags.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">striptags</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;&lt;b&gt;Joel&lt;/b&gt;</span> <span class="pre">&lt;button&gt;is&lt;/button&gt;</span> <span class="pre">a</span> <span class="pre">&lt;span&gt;slug&lt;/span&gt;&quot;</span></tt>, the
+output will be <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>.</p>
+</div>
+<div class="section" id="time">
+<h3>time</h3>
+<p>Formats a time according to the given format (same as the <a class="reference internal" href="#now">now</a> tag).
+The time filter will only accept parameters in the format string that relate
+to the time of day, not the date (for obvious reasons). If you need to
+format a date, use the <a class="reference internal" href="#date">date</a> filter.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">time</span><span class="p">:</span><span class="s">&quot;H:i&quot;</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is equivalent to <tt class="docutils literal"><span class="pre">datetime.datetime.now()</span></tt>, the output will be
+the string <tt class="docutils literal"><span class="pre">&quot;01:23&quot;</span></tt>.</p>
+<p>When used without a format string:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">time</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>...the formatting string defined in the <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt> setting will be
+used.</p>
+</div>
+<div class="section" id="timesince">
+<h3>timesince</h3>
+<p>Formats a date as the time since that date (e.g., &#8220;4 days, 6 hours&#8221;).</p>
+<p>Takes an optional argument that is a variable containing the date to use as
+the comparison point (without the argument, the comparison point is <em>now</em>).
+For example, if <tt class="docutils literal"><span class="pre">blog_date</span></tt> is a date instance representing midnight on 1
+June 2006, and <tt class="docutils literal"><span class="pre">comment_date</span></tt> is a date instance for 08:00 on 1 June 2006,
+then <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">blog_date|timesince:comment_date</span> <span class="pre">}}</span></tt> would return &#8220;8 hours&#8221;.</p>
+<p>Comparing offset-naive and offset-aware datetimes will return an empty string.</p>
+<p>Minutes is the smallest unit used, and &#8220;0 minutes&#8221; will be returned for any
+date that is in the future relative to the comparison point.</p>
+</div>
+<div class="section" id="timeuntil">
+<h3>timeuntil</h3>
+<p>Similar to <tt class="docutils literal"><span class="pre">timesince</span></tt>, except that it measures the time from now until the
+given date or datetime. For example, if today is 1 June 2006 and
+<tt class="docutils literal"><span class="pre">conference_date</span></tt> is a date instance holding 29 June 2006, then
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">conference_date|timeuntil</span> <span class="pre">}}</span></tt> will return &#8220;4 weeks&#8221;.</p>
+<p>Takes an optional argument that is a variable containing the date to use as
+the comparison point (instead of <em>now</em>). If <tt class="docutils literal"><span class="pre">from_date</span></tt> contains 22 June
+2006, then <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">conference_date|timeuntil:from_date</span> <span class="pre">}}</span></tt> will return &#8220;1 week&#8221;.</p>
+<p>Comparing offset-naive and offset-aware datetimes will return an empty string.</p>
+<p>Minutes is the smallest unit used, and &#8220;0 minutes&#8221; will be returned for any
+date that is in the past relative to the comparison point.</p>
+</div>
+<div class="section" id="title">
+<h3>title</h3>
+<p>Converts a string into titlecase.</p>
+</div>
+<div class="section" id="truncatewords">
+<h3>truncatewords</h3>
+<p>Truncates a string after a certain number of words.</p>
+<p><strong>Argument:</strong> Number of words to truncate after</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">truncatewords</span><span class="p">:</span><span class="mi">2</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">...&quot;</span></tt>.</p>
+</div>
+<div class="section" id="truncatewords-html">
+<h3>truncatewords_html</h3>
+<p>Similar to <tt class="docutils literal"><span class="pre">truncatewords</span></tt>, except that it is aware of HTML tags. Any tags
+that are opened in the string and not closed before the truncation point, are
+closed immediately after the truncation.</p>
+<p>This is less efficient than <tt class="docutils literal"><span class="pre">truncatewords</span></tt>, so should only be used when it
+is being passed HTML text.</p>
+</div>
+<div class="section" id="unordered-list">
+<h3>unordered_list</h3>
+<p>Recursively takes a self-nested list and returns an HTML unordered list &#8211;
+WITHOUT opening and closing &lt;ul&gt; tags.</p>
+<p>The list is assumed to be in the proper format. For example, if <tt class="docutils literal"><span class="pre">var</span></tt> contains
+<tt class="docutils literal"><span class="pre">['States',</span> <span class="pre">['Kansas',</span> <span class="pre">['Lawrence',</span> <span class="pre">'Topeka'],</span> <span class="pre">'Illinois']]</span></tt>, then
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">var|unordered_list</span> <span class="pre">}}</span></tt> would return:</p>
+<div class="highlight-python"><pre>&lt;li&gt;States
+&lt;ul&gt;
+        &lt;li&gt;Kansas
+        &lt;ul&gt;
+                &lt;li&gt;Lawrence&lt;/li&gt;
+                &lt;li&gt;Topeka&lt;/li&gt;
+        &lt;/ul&gt;
+        &lt;/li&gt;
+        &lt;li&gt;Illinois&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;</pre>
+</div>
+</div>
+<div class="section" id="upper">
+<h3>upper</h3>
+<p>Converts a string into all uppercase.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">upper</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug&quot;</span></tt>, the output will be <tt class="docutils literal"><span class="pre">&quot;JOEL</span> <span class="pre">IS</span> <span class="pre">A</span> <span class="pre">SLUG&quot;</span></tt>.</p>
+</div>
+<div class="section" id="urlencode">
+<h3>urlencode</h3>
+<p>Escapes a value for use in a URL.</p>
+</div>
+<div class="section" id="urlize">
+<h3>urlize</h3>
+<p>Converts URLs in plain text into clickable links.</p>
+<p>Note that if <tt class="docutils literal"><span class="pre">urlize</span></tt> is applied to text that already contains HTML markup,
+things won&#8217;t work as expected. Apply this filter only to <em>plain</em> text.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">urlize</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Check</span> <span class="pre">out</span> <span class="pre">www.djangoproject.com&quot;</span></tt>, the output will be
+<tt class="docutils literal"><span class="pre">&quot;Check</span> <span class="pre">out</span> <span class="pre">&lt;a</span>
+<span class="pre">href=&quot;http://www.djangoproject.com&quot;&gt;www.djangoproject.com&lt;/a&gt;&quot;</span></tt>.</p>
+</div>
+<div class="section" id="urlizetrunc">
+<h3>urlizetrunc</h3>
+<p>Converts URLs into clickable links, truncating URLs longer than the given
+character limit.</p>
+<p>As with <a class="reference internal" href="#urlize">urlize</a>, this filter should only be applied to <em>plain</em> text.</p>
+<p><strong>Argument:</strong> Length to truncate URLs to</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">urlizetrunc</span><span class="p">:</span><span class="mi">15</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">&quot;Check</span> <span class="pre">out</span> <span class="pre">www.djangoproject.com&quot;</span></tt>, the output would be
+<tt class="docutils literal"><span class="pre">'Check</span> <span class="pre">out</span> <span class="pre">&lt;a</span>
+<span class="pre">href=&quot;http://www.djangoproject.com&quot;&gt;www.djangopr...&lt;/a&gt;'</span></tt>.</p>
+</div>
+<div class="section" id="wordcount">
+<h3>wordcount</h3>
+<p>Returns the number of words.</p>
+</div>
+<div class="section" id="wordwrap">
+<h3>wordwrap</h3>
+<p>Wraps words at specified line length.</p>
+<p><strong>Argument:</strong> number of characters at which to wrap the text</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">value</span><span class="o">|</span><span class="n">wordwrap</span><span class="p">:</span><span class="mi">5</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>If <tt class="docutils literal"><span class="pre">value</span></tt> is <tt class="docutils literal"><span class="pre">Joel</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">slug</span></tt>, the output would be:</p>
+<div class="highlight-python"><pre>Joel
+is a
+slug</pre>
+</div>
+</div>
+<div class="section" id="yesno">
+<h3>yesno</h3>
+<p>Given a string mapping values for <tt class="docutils literal"><span class="pre">True</span></tt>, <tt class="docutils literal"><span class="pre">False</span></tt>, and (optionally) <tt class="docutils literal"><span class="pre">None</span></tt>,
+returns one of those strings according to the value (see Table F-4).</p>
+<table border="1" class="docutils">
+<caption>Table E-4. Examples of the yesno Filter</caption>
+<colgroup>
+<col width="15%" />
+<col width="33%" />
+<col width="52%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Value</th>
+<th class="head">Argument</th>
+<th class="head">Outputs</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">True</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">&quot;yeah,no,maybe&quot;</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">yeah</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">False</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">&quot;yeah,no,maybe&quot;</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">no</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">None</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">&quot;yeah,no,maybe&quot;</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">maybe</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">None</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">&quot;yeah,no&quot;</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">&quot;no&quot;</span></tt> (converts None to False
+if no mapping for None is given)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='appendixD.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixF.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

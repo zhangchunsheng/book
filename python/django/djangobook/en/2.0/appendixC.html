@@ -1,0 +1,926 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Appendix C: Generic View Reference</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='appendixB.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixD.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="appendix-c-generic-view-reference">
+<h1>Appendix C: Generic View Reference</h1>
+<p>Chapter 11 introduced generic views but leaves out some of the gory details.
+This appendix describes each generic view along with all the options each view can
+take. Be sure to read Chapter 11 before trying to understand the reference
+material that follows. You might want to refer back to the <tt class="docutils literal"><span class="pre">Book</span></tt>,
+<tt class="docutils literal"><span class="pre">Publisher</span></tt>, and <tt class="docutils literal"><span class="pre">Author</span></tt> objects defined in that chapter; the examples that
+follow use these models.</p>
+<div class="section" id="common-arguments-to-generic-views">
+<h2>Common Arguments to Generic Views</h2>
+<p>Most of these views take a large number of arguments that can change the generic
+view&#8217;s behavior. Many of these arguments work the same across a large number of
+views. Table C-1 describes each of these common arguments; anytime you see one
+of these arguments in a generic view&#8217;s argument list, it will work as described in
+the table.</p>
+<table border="1" class="docutils">
+<caption>Table C-1. Common Arguments to Generic Views</caption>
+<colgroup>
+<col width="35%" />
+<col width="65%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Argument</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">allow_empty</span></tt></td>
+<td>A Boolean specifying whether to display the
+page if no objects are available. If this is
+<tt class="docutils literal"><span class="pre">False</span></tt> and no objects are available, the view
+will raise a 404 error instead of displaying an
+empty page. By default, this is <tt class="docutils literal"><span class="pre">True</span></tt>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">context_processors</span></tt></td>
+<td>A list of additional template-context processors
+(besides the defaults) to apply to the view&#8217;s
+template. See Chapter 9 for information on
+template context processors.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">extra_context</span></tt></td>
+<td>A dictionary of values to add to the template
+context. By default, this is an empty
+dictionary. If a value in the dictionary is
+callable, the generic view will call it just
+before rendering the template.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">mimetype</span></tt></td>
+<td>The MIME type to use for the resulting
+document. It defaults to the value of the
+<tt class="docutils literal"><span class="pre">DEFAULT_MIME_TYPE</span></tt> setting, which is
+<tt class="docutils literal"><span class="pre">text/html</span></tt> if you haven&#8217;t changed it.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">queryset</span></tt></td>
+<td>A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> (i.e., something like
+<tt class="docutils literal"><span class="pre">Author.objects.all()</span></tt>) to read objects from.
+See Appendix B for more information about
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt> objects. Most generic views require
+this argument.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">template_loader</span></tt></td>
+<td>The template loader to use when loading the
+template. By default, it&#8217;s
+<tt class="docutils literal"><span class="pre">django.template.loader</span></tt>. See Chapter 9 for
+information on template loaders.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">template_name</span></tt></td>
+<td>The full name of a template to use in rendering
+the page. This lets you override the default
+template name derived from the <tt class="docutils literal"><span class="pre">QuerySet</span></tt>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">template_object_name</span></tt></td>
+<td>The name of the template variable to
+use in the template context. By default, this is
+<tt class="docutils literal"><span class="pre">'object'</span></tt>. Views that list more than one
+object (i.e., <tt class="docutils literal"><span class="pre">object_list</span></tt> views and various
+objects-for-date views) will append <tt class="docutils literal"><span class="pre">'_list'</span></tt>
+to the value of this parameter.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="simple-generic-views">
+<h2>&#8220;Simple&#8221; Generic Views</h2>
+<p>The module``django.views.generic.simple`` contains simple views that handle a
+couple of common cases: rendering a template when no view logic is needed and
+issuing a redirect.</p>
+<div class="section" id="rendering-a-template">
+<h3>Rendering a Template</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.simple.direct_to_template</span></tt></p>
+<p>This view renders a given template, passing it a <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">params</span> <span class="pre">}}</span></tt> template
+variable, which is a dictionary of the parameters captured in the URL.</p>
+<div class="section" id="example">
+<h4>Example</h4>
+<p>Given the following URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.views.generic.simple</span> <span class="kn">import</span> <span class="n">direct_to_template</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^foo/$&#39;</span><span class="p">,</span>             <span class="n">direct_to_template</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;template&#39;</span><span class="p">:</span> <span class="s">&#39;foo_index.html&#39;</span><span class="p">}),</span>
+    <span class="p">(</span><span class="s">r&#39;^foo/(?P&lt;id&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="n">direct_to_template</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;template&#39;</span><span class="p">:</span> <span class="s">&#39;foo_detail.html&#39;</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>a request to <tt class="docutils literal"><span class="pre">/foo/</span></tt> would render the template <tt class="docutils literal"><span class="pre">foo_index.html</span></tt>, and a
+request to <tt class="docutils literal"><span class="pre">/foo/15/</span></tt> would render <tt class="docutils literal"><span class="pre">foo_detail.html</span></tt> with a context
+variable <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">params.id</span> <span class="pre">}}</span></tt> that is set to <tt class="docutils literal"><span class="pre">15</span></tt>.</p>
+</div>
+<div class="section" id="required-arguments">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">template</span></tt>: The full name of a template to use.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="redirecting-to-another-url">
+<h3>Redirecting to Another URL</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.simple.redirect_to</span></tt></p>
+<p>This view redirects to another URL. The given URL may contain dictionary-style string
+formatting, which will be interpolated against the parameters captured in the
+URL.</p>
+<p>If the given URL is <tt class="docutils literal"><span class="pre">None</span></tt>, Django will return an HTTP 410 (&#8220;Gone&#8221;) message.</p>
+<div class="section" id="id1">
+<h4>Example</h4>
+<p>This URLconf redirects from <tt class="docutils literal"><span class="pre">/foo/&lt;id&gt;/</span></tt> to <tt class="docutils literal"><span class="pre">/bar/&lt;id&gt;/</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.views.generic.simple</span> <span class="kn">import</span> <span class="n">redirect_to</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;django.views.generic.simple&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^foo/(?p&lt;id&gt;\d+)/$&#39;</span><span class="p">,</span> <span class="n">redirect_to</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="s">&#39;/bar/</span><span class="si">%(id)s</span><span class="s">/&#39;</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This example returns a &#8220;Gone&#8221; response for requests to <tt class="docutils literal"><span class="pre">/bar/</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.views.generic.simple</span> <span class="kn">import</span> <span class="n">redirect_to</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;django.views.generic.simple&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">&#39;^bar/$&#39;</span><span class="p">,</span> <span class="n">redirect_to</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;url&#39;</span><span class="p">:</span> <span class="bp">None</span><span class="p">}),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">url</span></tt>: The URL to redirect to, as a string. Or <tt class="docutils literal"><span class="pre">None</span></tt> to return a 410
+(&#8220;Gone&#8221;) HTTP response.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="list-detail-generic-views">
+<h2>List/Detail Generic Views</h2>
+<p>The list/detail generic views (in the module
+<tt class="docutils literal"><span class="pre">django.views.generic.list_detail</span></tt>) handle the common case of displaying a
+list of items at one view and individual &#8220;detail&#8221; views of those items at
+another.</p>
+<div class="section" id="lists-of-objects">
+<h3>Lists of Objects</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.list_detail.object_list</span></tt></p>
+<p>Use this view to display a page representing a list of objects.</p>
+<div class="section" id="id3">
+<h4>Example</h4>
+<p>Given the <tt class="docutils literal"><span class="pre">Author</span></tt> object from Chapter 5, we can use the <tt class="docutils literal"><span class="pre">object_list</span></tt> view
+to show a simple list of all authors given the following URLconf snippet:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.books.models</span> <span class="kn">import</span> <span class="n">Author</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.views.generic</span> <span class="kn">import</span> <span class="n">list_detail</span>
+
+<span class="n">author_list_info</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;queryset&#39;</span><span class="p">:</span>   <span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;authors/$&#39;</span><span class="p">,</span> <span class="n">list_detail</span><span class="o">.</span><span class="n">object_list</span><span class="p">,</span> <span class="n">author_list_info</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id4">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects to list (see Table C-1).</li>
+</ul>
+</div>
+<div class="section" id="optional-arguments">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">paginate_by</span></tt>: An integer specifying how many objects should be
+displayed per page. If this is given, the view will paginate objects with
+<tt class="docutils literal"><span class="pre">paginate_by</span></tt> objects per page. The view will expect either a <tt class="docutils literal"><span class="pre">page</span></tt>
+query string parameter (via <tt class="docutils literal"><span class="pre">GET</span></tt>) containing a zero-indexed page
+number, or a <tt class="docutils literal"><span class="pre">page</span></tt> variable specified in the URLconf. See the following
+&#8220;Notes on Pagination&#8221; section.</li>
+</ul>
+<p>Additionally, this view may take any of these common arguments described in
+Table C-1:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="template-name">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_list.html</span></tt> by default. Both the application label and the
+model name are derived from the <tt class="docutils literal"><span class="pre">queryset</span></tt> parameter. The application label is the
+name of the application that the model is defined in, and the model name is the
+lowercased version of the name of the model class.</p>
+<p>In the previous example using <tt class="docutils literal"><span class="pre">Author.objects.all()</span></tt> as the <tt class="docutils literal"><span class="pre">queryset</span></tt>, the application
+label would be <tt class="docutils literal"><span class="pre">books</span></tt> and the model name would be <tt class="docutils literal"><span class="pre">author</span></tt>. This means
+the default template would be <tt class="docutils literal"><span class="pre">books/author_list.html</span></tt>.</p>
+</div>
+<div class="section" id="template-context">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will contain the following:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">object_list</span></tt>: The list of objects. This variable&#8217;s name depends on the
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this variable&#8217;s name will be
+<tt class="docutils literal"><span class="pre">foo_list</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">is_paginated</span></tt>: A Boolean representing whether the results are
+paginated. Specifically, this is set to <tt class="docutils literal"><span class="pre">False</span></tt> if the number of
+available objects is less than or equal to <tt class="docutils literal"><span class="pre">paginate_by</span></tt>.</li>
+</ul>
+<p>If the results are paginated, the context will contain these extra variables:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">results_per_page</span></tt>: The number of objects per page. (This is the same as
+the <tt class="docutils literal"><span class="pre">paginate_by</span></tt> parameter.)</li>
+<li><tt class="docutils literal"><span class="pre">has_next</span></tt>: A Boolean representing whether there&#8217;s a next page.</li>
+<li><tt class="docutils literal"><span class="pre">has_previous</span></tt>: A Boolean representing whether there&#8217;s a previous page.</li>
+<li><tt class="docutils literal"><span class="pre">page</span></tt>: The current page number, as an integer. This is 1-based.</li>
+<li><tt class="docutils literal"><span class="pre">next</span></tt>: The next page number, as an integer. If there&#8217;s no next page,
+this will still be an integer representing the theoretical next-page
+number. This is 1-based.</li>
+<li><tt class="docutils literal"><span class="pre">previous</span></tt>: The previous page number, as an integer. This is 1-based.</li>
+<li><tt class="docutils literal"><span class="pre">pages</span></tt>: The total number of pages, as an integer.</li>
+<li><tt class="docutils literal"><span class="pre">hits</span></tt>: The total number of objects across <em>all</em> pages, not just this
+page.</li>
+</ul>
+<div class="admonition-a-note-on-pagination admonition">
+<p class="first admonition-title">A Note on Pagination</p>
+<p>If <tt class="docutils literal"><span class="pre">paginate_by</span></tt> is specified, Django will paginate the results. You can
+specify the page number in the URL in one of two ways:</p>
+<ul>
+<li><p class="first">Use the <tt class="docutils literal"><span class="pre">page</span></tt> parameter in the URLconf. For example, this is what
+your URLconf might look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^objects/page(?P&lt;page&gt;[0-9]+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;object_list&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">info_dict</span><span class="p">))</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">Pass the page number via the <tt class="docutils literal"><span class="pre">page</span></tt> query-string parameter. For
+example, a URL would look like this:</p>
+<div class="highlight-python"><pre>/objects/?page=3</pre>
+</div>
+</li>
+</ul>
+<p class="last">In both cases, <tt class="docutils literal"><span class="pre">page</span></tt> is 1-based, not 0-based, so the first page would be
+represented as page <tt class="docutils literal"><span class="pre">1</span></tt>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="detail-views">
+<h3>Detail Views</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.list_detail.object_detail</span></tt></p>
+<p>This view provides a &#8220;detail&#8221; view of a single object.</p>
+<div class="section" id="id5">
+<h4>Example</h4>
+<p>Continuing the previous <tt class="docutils literal"><span class="pre">object_list</span></tt> example, we could add a detail view for a
+given author by modifying the URLconf:</p>
+<pre class="literal-block">
+from mysite.books.models import Author
+from django.conf.urls.defaults import *
+from django.views.generic import list_detail
+
+author_list_info = {
+    'queryset' :   Author.objects.all(),
+}
+<strong>author_detail_info = {</strong>
+    <strong>&quot;queryset&quot; : Author.objects.all(),</strong>
+    <strong>&quot;template_object_name&quot; : &quot;author&quot;,</strong>
+<strong>}</strong>
+
+urlpatterns = patterns('',
+    (r'authors/$', list_detail.object_list, author_list_info),
+    <strong>(r'^authors/(?P&lt;object_id&gt;d+)/$', list_detail.object_detail, author_detail_info),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id6">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> that will be searched for the object (see Table C-1).</li>
+</ul>
+<p>and either</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">object_id</span></tt>: The value of the primary-key field for the object.</li>
+</ul>
+<p>or</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">slug</span></tt>: The slug of the given object. If you pass this field, then the
+<tt class="docutils literal"><span class="pre">slug_field</span></tt> argument (see the following section) is also required.</li>
+</ul>
+</div>
+<div class="section" id="id7">
+<h4>Optional Arguments</h4>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">slug_field</span></tt>: The name of the field on the object containing the slug.
+This is required if you are using the <tt class="docutils literal"><span class="pre">slug</span></tt> argument, but it must be
+absent if you&#8217;re using the <tt class="docutils literal"><span class="pre">object_id</span></tt> argument.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">template_name_field</span></tt>: The name of a field on the object whose value is
+the template name to use. This lets you store template names in your data.</p>
+<p>In other words, if your object has a field <tt class="docutils literal"><span class="pre">'the_template'</span></tt> that
+contains a string <tt class="docutils literal"><span class="pre">'foo.html'</span></tt>, and you set <tt class="docutils literal"><span class="pre">template_name_field</span></tt> to
+<tt class="docutils literal"><span class="pre">'the_template'</span></tt>, then the generic view for this object will use the
+template <tt class="docutils literal"><span class="pre">'foo.html'</span></tt>.</p>
+<p>If the template named by <tt class="docutils literal"><span class="pre">template_name_field</span></tt> doesn&#8217;t exist, the one
+named by <tt class="docutils literal"><span class="pre">template_name</span></tt> is used instead.  It&#8217;s a bit of a
+brain-bender, but it&#8217;s useful in some cases.</p>
+</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id8">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> and <tt class="docutils literal"><span class="pre">template_name_field</span></tt> aren&#8217;t specified, this view
+will use the template <tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_detail.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id9">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">object</span></tt>: The object. This variable&#8217;s name depends on the
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this variable&#8217;s name will be
+<tt class="docutils literal"><span class="pre">foo</span></tt>.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="section" id="date-based-generic-views">
+<h2>Date-Based Generic Views</h2>
+<p>Date-based generic views are generally used to provide a set of &#8220;archive&#8221;
+pages for dated material. Think year/month/day archives for a newspaper, or a
+typical blog archive.</p>
+<div class="admonition-tip admonition">
+<p class="first admonition-title">Tip:</p>
+<p>By default, these views ignore objects with dates in the future.</p>
+<p>This means that if you try to visit an archive page in the future, Django
+will automatically show a 404 (&#8220;Page not found&#8221;) error, even if there are objects
+published that day.</p>
+<p>Thus, you can publish postdated objects that don&#8217;t appear publicly until
+their desired publication date.</p>
+<p class="last">However, for different types of date-based objects, this isn&#8217;t appropriate
+(e.g., a calendar of upcoming events). For these views, setting the
+<tt class="docutils literal"><span class="pre">allow_future</span></tt> option to <tt class="docutils literal"><span class="pre">True</span></tt> will make the future objects appear (and
+allow users to visit &#8220;future&#8221; archive pages).</p>
+</div>
+<div class="section" id="archive-index">
+<h3>Archive Index</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_index</span></tt></p>
+<p>This view provides a top-level index page showing the &#8220;latest&#8221; (i.e., most
+recent) objects by date.</p>
+<div class="section" id="id10">
+<h4>Example</h4>
+<p>Say a typical book publisher wants a page of recently published books. Given some
+<tt class="docutils literal"><span class="pre">Book</span></tt> object with a <tt class="docutils literal"><span class="pre">publication_date</span></tt> field, we can use the
+<tt class="docutils literal"><span class="pre">archive_index</span></tt> view for this common task:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.books.models</span> <span class="kn">import</span> <span class="n">Book</span>
+<span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.views.generic</span> <span class="kn">import</span> <span class="n">date_based</span>
+
+<span class="n">book_info</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&quot;queryset&quot;</span>   <span class="p">:</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+    <span class="s">&quot;date_field&quot;</span> <span class="p">:</span> <span class="s">&quot;publication_date&quot;</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^books/$&#39;</span><span class="p">,</span> <span class="n">date_based</span><span class="o">.</span><span class="n">archive_index</span><span class="p">,</span> <span class="n">book_info</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id11">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: The name of the <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt>&#8216;s model that the date-based archive should use to determine
+the objects on the page.</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects for which the archive serves.</li>
+</ul>
+</div>
+<div class="section" id="id12">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page, as described in the previous note.</li>
+<li><tt class="docutils literal"><span class="pre">num_latest</span></tt>: The number of latest objects to send to the template
+context. By default, it&#8217;s 15.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_archive.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id14">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">date_list</span></tt>: A list of <tt class="docutils literal"><span class="pre">datetime.date</span></tt> objects representing all years
+that have objects available according to <tt class="docutils literal"><span class="pre">queryset</span></tt>. These are ordered
+in reverse.</p>
+<p>For example, if you have blog entries from 2003 through 2006, this list
+will contain four <tt class="docutils literal"><span class="pre">datetime.date</span></tt> objects: one for each of those years.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">latest</span></tt>: The <tt class="docutils literal"><span class="pre">num_latest</span></tt> objects in the system, in descending order
+by <tt class="docutils literal"><span class="pre">date_field</span></tt>. For example, if <tt class="docutils literal"><span class="pre">num_latest</span></tt> is <tt class="docutils literal"><span class="pre">10</span></tt>, then
+<tt class="docutils literal"><span class="pre">latest</span></tt> will be a list of the latest ten objects in <tt class="docutils literal"><span class="pre">queryset</span></tt>.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="year-archives">
+<h3>Year Archives</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_year</span></tt></p>
+<p>Use this view for yearly archive pages. These pages have a list of months in
+which objects exists, and they can optionally display all the objects published in
+a given year.</p>
+<div class="section" id="id15">
+<h4>Example</h4>
+<p>Extending the <tt class="docutils literal"><span class="pre">archive_index</span></tt> example from earlier, we&#8217;ll add a way to view all
+the books published in a given year:</p>
+<pre class="literal-block">
+from mysite.books.models import Book
+from django.conf.urls.defaults import *
+from django.views.generic import date_based
+
+book_info = {
+    &quot;queryset&quot;   : Book.objects.all(),
+    &quot;date_field&quot; : &quot;publication_date&quot;
+}
+
+urlpatterns = patterns('',
+    (r'^books/$', date_based.archive_index, book_info),
+    <strong>(r'^books/(?P&lt;year&gt;d{4})/?$', date_based.archive_year, book_info),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id16">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: As for <tt class="docutils literal"><span class="pre">archive_index</span></tt> (see the previous section).</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects for which the archive serves.</li>
+<li><tt class="docutils literal"><span class="pre">year</span></tt>: The four-digit year for which the archive serves (as in our
+example, this is usually taken from a URL parameter).</li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">make_object_list</span></tt>: A Boolean specifying whether to retrieve the full
+list of objects for this year and pass those to the template. If <tt class="docutils literal"><span class="pre">True</span></tt>,
+this list of objects will be made available to the template as
+<tt class="docutils literal"><span class="pre">object_list</span></tt>. (The name <tt class="docutils literal"><span class="pre">object_list</span></tt> may be different; see the
+information about <tt class="docutils literal"><span class="pre">object_list</span></tt> in the following &#8220;Template Context&#8221;
+section.) By default, this is <tt class="docutils literal"><span class="pre">False</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_archive_year.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id19">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">date_list</span></tt>: A list of <tt class="docutils literal"><span class="pre">datetime.date</span></tt> objects representing all months
+that have objects available in the given year, according to <tt class="docutils literal"><span class="pre">queryset</span></tt>,
+in ascending order.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">year</span></tt>: The given year, as a four-character string.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">object_list</span></tt>: If the <tt class="docutils literal"><span class="pre">make_object_list</span></tt> parameter is <tt class="docutils literal"><span class="pre">True</span></tt>, this
+will be set to a list of objects available for the given year, ordered by
+the date field. This variable&#8217;s name depends on the
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this variable&#8217;s name will be
+<tt class="docutils literal"><span class="pre">foo_list</span></tt>.</p>
+<p>If <tt class="docutils literal"><span class="pre">make_object_list</span></tt> is <tt class="docutils literal"><span class="pre">False</span></tt>, <tt class="docutils literal"><span class="pre">object_list</span></tt> will be passed to
+the template as an empty list.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="month-archives">
+<h3>Month Archives</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_month</span></tt></p>
+<p>This view provides monthly archive pages showing all objects for a given month.</p>
+<div class="section" id="id20">
+<h4>Example</h4>
+<p>Continuing with our example, adding month views should look familiar:</p>
+<pre class="literal-block">
+urlpatterns = patterns('',
+    (r'^books/$', date_based.archive_index, book_info),
+    (r'^books/(?P&lt;year&gt;d{4})/?$', date_based.archive_year, book_info),
+    <strong>(</strong>
+        <strong>r'^(?P&lt;year&gt;d{4})/(?P&lt;month&gt;[a-z]{3})/$',</strong>
+        <strong>date_based.archive_month,</strong>
+        <strong>book_info</strong>
+    <strong>),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id21">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">year</span></tt>: The four-digit year for which the archive serves (a string).</li>
+<li><tt class="docutils literal"><span class="pre">month</span></tt>: The month for which the archive serves, formatted according to
+the <tt class="docutils literal"><span class="pre">month_format</span></tt> argument.</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects for which the archive serves.</li>
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: The name of the <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt>&#8216;s model that the date-based archive should use to determine
+the objects on the page.</li>
+</ul>
+</div>
+<div class="section" id="id22">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">month_format</span></tt>: A format string that regulates what format the <tt class="docutils literal"><span class="pre">month</span></tt>
+parameter uses. This should be in the syntax accepted by Python&#8217;s
+<tt class="docutils literal"><span class="pre">time.strftime</span></tt>. (See Python&#8217;s strftime documentation at
+<a class="reference external" href="http://docs.python.org/library/time.html#time.strftime">http://docs.python.org/library/time.html#time.strftime</a>.) It&#8217;s set
+to <tt class="docutils literal"><span class="pre">&quot;%b&quot;</span></tt> by default, which is a three-letter month abbreviation (i.e.,
+&#8220;jan&#8221;, &#8220;feb&#8221;, etc.). To change it to use numbers, use <tt class="docutils literal"><span class="pre">&quot;%m&quot;</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page, as described in the previous note.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id23">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_archive_month.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id24">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">month</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the given month.</li>
+<li><tt class="docutils literal"><span class="pre">next_month</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the first day of
+the next month. If the next month is in the future, this will be <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">previous_month</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the first day
+of the previous month. Unlike <tt class="docutils literal"><span class="pre">next_month</span></tt>, this will never be <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">object_list</span></tt>: A list of objects available for the given month. This
+variable&#8217;s name depends on the <tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which
+is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If <tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this
+variable&#8217;s name will be <tt class="docutils literal"><span class="pre">foo_list</span></tt>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="week-archives">
+<h3>Week Archives</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_week</span></tt></p>
+<p>This view shows all objects in a given week.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For the sake of consistency with Python&#8217;s built-in date/time handling,
+Django assumes that the first day of the week is Sunday.</p>
+</div>
+<div class="section" id="id25">
+<h4>Example</h4>
+<pre class="literal-block">
+urlpatterns = patterns('',
+    # ...
+    <strong>(</strong>
+        <strong>r'^(?P&lt;year&gt;d{4})/(?P&lt;week&gt;d{2})/$',</strong>
+        <strong>date_based.archive_week,</strong>
+        <strong>book_info</strong>
+    <strong>),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id26">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">year</span></tt>: The four-digit year for which the archive serves (a string).</li>
+<li><tt class="docutils literal"><span class="pre">week</span></tt>: The week of the year for which the archive serves (a string).</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects for which the archive serves.</li>
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: The name of the <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt>&#8216;s model that the date-based archive should use to determine
+the objects on the page.</li>
+</ul>
+</div>
+<div class="section" id="id27">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page, as described in the previous note.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id28">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_archive_week.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id29">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">week</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the first day of the
+given week.</li>
+<li><tt class="docutils literal"><span class="pre">object_list</span></tt>: A list of objects available for the given week. This
+variable&#8217;s name depends on the <tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which
+is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If <tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this
+variable&#8217;s name will be <tt class="docutils literal"><span class="pre">foo_list</span></tt>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="day-archives">
+<h3>Day Archives</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_day</span></tt></p>
+<p>This view generates all objects in a given day.</p>
+<div class="section" id="id30">
+<h4>Example</h4>
+<pre class="literal-block">
+urlpatterns = patterns('',
+    # ...
+    <strong>(</strong>
+        <strong>r'^(?P&lt;year&gt;d{4})/(?P&lt;month&gt;[a-z]{3})/(?P&lt;day&gt;d{2})/$',</strong>
+        <strong>date_based.archive_day,</strong>
+        <strong>book_info</strong>
+    <strong>),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id31">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">year</span></tt>: The four-digit year for which the archive serves (a string).</li>
+<li><tt class="docutils literal"><span class="pre">month</span></tt>: The month for which the archive serves, formatted according to the
+<tt class="docutils literal"><span class="pre">month_format</span></tt> argument.</li>
+<li><tt class="docutils literal"><span class="pre">day</span></tt>: The day for which the archive serves, formatted according to the
+<tt class="docutils literal"><span class="pre">day_format</span></tt> argument.</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> of objects for which the archive serves.</li>
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: The name of the <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt>&#8216;s model that the date-based archive should use to determine
+the objects on the page.</li>
+</ul>
+</div>
+<div class="section" id="id32">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">month_format</span></tt>: A format string that regulates what format the <tt class="docutils literal"><span class="pre">month</span></tt>
+parameter uses. See the detailed explanation in the &#8220;Month Archives&#8221;
+section, above.</li>
+<li><tt class="docutils literal"><span class="pre">day_format</span></tt>: Like <tt class="docutils literal"><span class="pre">month_format</span></tt>, but for the <tt class="docutils literal"><span class="pre">day</span></tt> parameter. It
+defaults to <tt class="docutils literal"><span class="pre">&quot;%d&quot;</span></tt> (the day of the month as a decimal number, 01-31).</li>
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page, as described in the previous note.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_empty</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id33">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> isn&#8217;t specified, this view will use the template
+<tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_archive_day.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id34">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">day</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the given day.</li>
+<li><tt class="docutils literal"><span class="pre">next_day</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the next day. If the
+next day is in the future, this will be <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">previous_day</span></tt>: A <tt class="docutils literal"><span class="pre">datetime.date</span></tt> object representing the previous day.
+Unlike <tt class="docutils literal"><span class="pre">next_day</span></tt>, this will never be <tt class="docutils literal"><span class="pre">None</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">object_list</span></tt>: A list of objects available for the given day. This
+variable&#8217;s name depends on the <tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which
+is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If <tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this
+variable&#8217;s name will be <tt class="docutils literal"><span class="pre">foo_list</span></tt>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="archive-for-today">
+<h3>Archive for Today</h3>
+<p>The <tt class="docutils literal"><span class="pre">django.views.generic.date_based.archive_today</span></tt> view shows all objects for
+<em>today</em>. This is exactly the same as <tt class="docutils literal"><span class="pre">archive_day</span></tt>, except the
+<tt class="docutils literal"><span class="pre">year</span></tt>/<tt class="docutils literal"><span class="pre">month</span></tt>/<tt class="docutils literal"><span class="pre">day</span></tt> arguments are not used, and today&#8217;s date is used
+instead.</p>
+<div class="section" id="id35">
+<h4>Example</h4>
+<pre class="literal-block">
+urlpatterns = patterns('',
+    # ...
+    <strong>(r'^books/today/$', date_based.archive_today, book_info),</strong>
+)
+</pre>
+</div>
+</div>
+<div class="section" id="date-based-detail-pages">
+<h3>Date-Based Detail Pages</h3>
+<p><em>View function</em>: <tt class="docutils literal"><span class="pre">django.views.generic.date_based.object_detail</span></tt></p>
+<p>Use this view for a page representing an individual object.</p>
+<p>This has a different URL from the <tt class="docutils literal"><span class="pre">object_detail</span></tt> view; the <tt class="docutils literal"><span class="pre">object_detail</span></tt>
+view uses URLs like <tt class="docutils literal"><span class="pre">/entries/&lt;slug&gt;/</span></tt>, while this one uses URLs like
+<tt class="docutils literal"><span class="pre">/entries/2006/aug/27/&lt;slug&gt;/</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you&#8217;re using date-based detail pages with slugs in the URLs, you probably
+also want to use the <tt class="docutils literal"><span class="pre">unique_for_date</span></tt> option on the slug field to
+validate that slugs aren&#8217;t duplicated in a single day. See Appendix A for
+details on <tt class="docutils literal"><span class="pre">unique_for_date</span></tt>.</p>
+</div>
+<div class="section" id="id36">
+<h4>Example</h4>
+<p>This one differs (slightly) from all the other date-based examples in that we
+need to provide either an object ID or a slug so that Django can look up the
+object in question.</p>
+<p>Since the object we&#8217;re using doesn&#8217;t have a slug field, we&#8217;ll use ID-based URLs.
+It&#8217;s considered a best practice to use a slug field, but in the interest of
+simplicity we&#8217;ll let it go.</p>
+<pre class="literal-block">
+urlpatterns = patterns('',
+    # ...
+    <strong>(</strong>
+        <strong>r'^(?P&lt;year&gt;d{4})/(?P&lt;month&gt;[a-z]{3})/(?P&lt;day&gt;d{2})/(?P&lt;object_id&gt;[w-]+)/$',</strong>
+        <strong>date_based.object_detail,</strong>
+        <strong>book_info</strong>
+    <strong>),</strong>
+)
+</pre>
+</div>
+<div class="section" id="id37">
+<h4>Required Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">year</span></tt>: The object&#8217;s four-digit year (a string).</li>
+<li><tt class="docutils literal"><span class="pre">month</span></tt>: The object&#8217;s month, formatted according to the <tt class="docutils literal"><span class="pre">month_format</span></tt>
+argument.</li>
+<li><tt class="docutils literal"><span class="pre">day</span></tt>: The object&#8217;s day, formatted according to the <tt class="docutils literal"><span class="pre">day_format</span></tt> argument.</li>
+<li><tt class="docutils literal"><span class="pre">queryset</span></tt>: A <tt class="docutils literal"><span class="pre">QuerySet</span></tt> that contains the object.</li>
+<li><tt class="docutils literal"><span class="pre">date_field</span></tt>: The name of the <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt>&#8216;s model that the generic view should use to look up the
+object according to <tt class="docutils literal"><span class="pre">year</span></tt>, <tt class="docutils literal"><span class="pre">month</span></tt>, and <tt class="docutils literal"><span class="pre">day</span></tt>.</li>
+</ul>
+<p>You&#8217;ll also need either:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">object_id</span></tt>: The value of the primary-key field for the object.</li>
+</ul>
+<p>or:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">slug</span></tt>: The slug of the given object. If you pass this field, then the
+<tt class="docutils literal"><span class="pre">slug_field</span></tt> argument (described in the following section) is also
+required.</li>
+</ul>
+</div>
+<div class="section" id="id38">
+<h4>Optional Arguments</h4>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">allow_future</span></tt>: A Boolean specifying whether to include &#8220;future&#8221; objects
+on this page, as described in the previous note.</li>
+<li><tt class="docutils literal"><span class="pre">day_format</span></tt>: Like <tt class="docutils literal"><span class="pre">month_format</span></tt>, but for the <tt class="docutils literal"><span class="pre">day</span></tt> parameter. It
+defaults to <tt class="docutils literal"><span class="pre">&quot;%d&quot;</span></tt> (the day of the month as a decimal number, 01-31).</li>
+<li><tt class="docutils literal"><span class="pre">month_format</span></tt>: A format string that regulates what format the <tt class="docutils literal"><span class="pre">month</span></tt>
+parameter uses. See the detailed explanation in the &#8220;Month Archives&#8221;
+section, above.</li>
+<li><tt class="docutils literal"><span class="pre">slug_field</span></tt>: The name of the field on the object containing the slug.
+This is required if you are using the <tt class="docutils literal"><span class="pre">slug</span></tt> argument, but it must be
+absent if you&#8217;re using the <tt class="docutils literal"><span class="pre">object_id</span></tt> argument.</li>
+<li><tt class="docutils literal"><span class="pre">template_name_field</span></tt>: The name of a field on the object whose value is
+the template name to use. This lets you store template names in the data.
+In other words, if your object has a field <tt class="docutils literal"><span class="pre">'the_template'</span></tt> that
+contains a string <tt class="docutils literal"><span class="pre">'foo.html'</span></tt>, and you set <tt class="docutils literal"><span class="pre">template_name_field</span></tt> to
+<tt class="docutils literal"><span class="pre">'the_template'</span></tt>, then the generic view for this object will use the
+template <tt class="docutils literal"><span class="pre">'foo.html'</span></tt>.</li>
+</ul>
+<p>This view may also take these common arguments (see Table C-1):</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">context_processors</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">extra_context</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">mimetype</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_loader</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">template_object_name</span></tt></li>
+</ul>
+</div>
+<div class="section" id="id39">
+<h4>Template Name</h4>
+<p>If <tt class="docutils literal"><span class="pre">template_name</span></tt> and <tt class="docutils literal"><span class="pre">template_name_field</span></tt> aren&#8217;t specified, this view
+will use the template <tt class="docutils literal"><span class="pre">&lt;app_label&gt;/&lt;model_name&gt;_detail.html</span></tt> by default.</p>
+</div>
+<div class="section" id="id40">
+<h4>Template Context</h4>
+<p>In addition to <tt class="docutils literal"><span class="pre">extra_context</span></tt>, the template&#8217;s context will be as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">object</span></tt>: The object. This variable&#8217;s name depends on the
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> parameter, which is <tt class="docutils literal"><span class="pre">'object'</span></tt> by default. If
+<tt class="docutils literal"><span class="pre">template_object_name</span></tt> is <tt class="docutils literal"><span class="pre">'foo'</span></tt>, this variable&#8217;s name will be
+<tt class="docutils literal"><span class="pre">foo</span></tt>.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='appendixB.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixD.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

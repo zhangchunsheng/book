@@ -1,0 +1,506 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 20: Security</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter19.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixA.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-20-security">
+<h1>Chapter 20: Security</h1>
+<p>The Internet can be a scary place.</p>
+<p>These days, high-profile security gaffes seem to crop up on a daily basis. We&#8217;ve
+seen viruses spread with amazing speed, swarms of compromised computers wielded as
+weapons, a never-ending arms race against spammers, and many, many reports of
+identify theft from hacked Web sites.</p>
+<p>As Web developers, we have a duty to do what we can to combat these forces
+of darkness. Every Web developer needs to treat security as a fundamental
+aspect of Web programming. Unfortunately, it turns out that implementing security is <em>hard</em>
+&#8211; attackers need to find only a single vulnerability, but defenders have to
+protect every single one.</p>
+<p>Django attempts to mitigate this difficulty. It&#8217;s designed to automatically
+protect you from many of the common security mistakes that new (and even
+experienced) Web developers make. Still, it&#8217;s important to understand what
+these problems are, how Django protects you, and &#8211; most important &#8211; the
+steps you can take to make your code even more secure.</p>
+<p>First, though, an important disclaimer: We do not intend to present a
+definitive guide to every known Web security exploit, and so we won&#8217;t try to
+explain each vulnerability in a comprehensive manner. Instead, we&#8217;ll give a
+short synopsis of security problems as they apply to Django.</p>
+<div class="section" id="the-theme-of-web-security">
+<h2>The Theme of Web Security</h2>
+<p>If you learn only one thing from this chapter, let it be this:</p>
+<blockquote>
+<div>Never &#8211; under any circumstances &#8211; trust data from the browser.</div></blockquote>
+<p>You <em>never</em> know who&#8217;s on the other side of that HTTP connection. It might be
+one of your users, but it just as easily could be a nefarious cracker looking
+for an opening.</p>
+<p>Any data of any nature that comes from the browser needs to be treated with a
+healthy dose of paranoia. This includes data that&#8217;s both &#8220;in band&#8221; (i.e.,
+submitted from Web forms) and &#8220;out of band&#8221; (i.e., HTTP headers, cookies,
+and other request information). It&#8217;s trivial to spoof the request metadata that
+browsers usually add automatically.</p>
+<p>Every one of the vulnerabilities discussed in this chapter stems directly from
+trusting data that comes over the wire and then failing to sanitize that data
+before using it. You should make it a general practice to continuously ask,
+&#8220;Where does this data come from?&#8221;</p>
+</div>
+<div class="section" id="sql-injection">
+<h2>SQL Injection</h2>
+<p><em>SQL injection</em> is a common exploit in which an attacker alters Web page
+parameters (such as <tt class="docutils literal"><span class="pre">GET</span></tt>/<tt class="docutils literal"><span class="pre">POST</span></tt> data or URLs) to insert arbitrary SQL
+snippets that a naive Web application executes in its database directly. It&#8217;s
+probably the most dangerous &#8211; and, unfortunately, one of the most common &#8211;
+vulnerabilities out there.</p>
+<p>This vulnerability most commonly crops up when constructing SQL &#8220;by hand&#8221; from
+user input. For example, imagine writing a function to gather a list of
+contact information from a contact search page. To prevent spammers from reading
+every single e-mail in our system, we&#8217;ll force the user to type in someone&#8217;s
+username before providing her e-mail address:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">user_contacts</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">]</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM user_contacts WHERE username = &#39;</span><span class="si">%s</span><span class="s">&#39;;&quot;</span> <span class="o">%</span> <span class="n">username</span>
+    <span class="c"># execute the SQL here...</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this example, and all similar &#8220;don&#8217;t do this&#8221; examples that follow,
+we&#8217;ve deliberately left out most of the code needed to make the functions
+actually work. We don&#8217;t want this code to work if someone accidentally
+takes it out of context.</p>
+</div>
+<p>Though at first this doesn&#8217;t look dangerous, it really is.</p>
+<p>First, our attempt at protecting our entire e-mail list will fail with a
+cleverly constructed query. Think about what happens if an attacker types
+<tt class="docutils literal"><span class="pre">&quot;'</span> <span class="pre">OR</span> <span class="pre">'a'='a&quot;</span></tt> into the query box. In that case, the query that the string
+interpolation will construct will be:</p>
+<div class="highlight-python"><pre>SELECT * FROM user_contacts WHERE username = '' OR 'a' = 'a';</pre>
+</div>
+<p>Because we allowed unsecured SQL into the string, the attacker&#8217;s added <tt class="docutils literal"><span class="pre">OR</span></tt>
+clause ensures that every single row is returned.</p>
+<p>However, that&#8217;s the <em>least</em> scary attack. Imagine what will happen if the
+attacker submits <tt class="docutils literal"><span class="pre">&quot;';</span> <span class="pre">DELETE</span> <span class="pre">FROM</span> <span class="pre">user_contacts</span> <span class="pre">WHERE</span> <span class="pre">'a'</span> <span class="pre">=</span> <span class="pre">'a&quot;</span></tt>. We&#8217;ll end
+up with this complete query:</p>
+<div class="highlight-python"><pre>SELECT * FROM user_contacts WHERE username = ''; DELETE FROM user_contacts WHERE 'a' = 'a';</pre>
+</div>
+<p>Yikes! Our entire contact list would be deleted instantly.</p>
+<div class="section" id="the-solution">
+<h3>The Solution</h3>
+<p>Although this problem is insidious and sometimes hard to spot, the solution is
+simple: <em>never</em> trust user-submitted data, and <em>always</em> escape it when passing
+it into SQL.</p>
+<p>The Django database API does this for you. It automatically escapes all
+special SQL parameters, according to the quoting conventions of the database
+server you&#8217;re using (e.g., PostgreSQL or MySQL).</p>
+<p>For example, in this API call:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">foo</span><span class="o">.</span><span class="n">get_list</span><span class="p">(</span><span class="n">bar__exact</span><span class="o">=</span><span class="s">&quot;&#39; OR 1=1&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Django will escape the input accordingly, resulting in a statement like this:</p>
+<div class="highlight-python"><pre>SELECT * FROM foos WHERE bar = '\' OR 1=1'</pre>
+</div>
+<p>Completely harmless.</p>
+<p>This applies to the entire Django database API, with a couple of exceptions:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">where</span></tt> argument to the <tt class="docutils literal"><span class="pre">extra()</span></tt> method. (See Appendix C.)
+That parameter accepts raw SQL by design.</li>
+<li>Queries done &#8220;by hand&#8221; using the lower-level database API. (See Chapter 10.)</li>
+</ul>
+<p>In each of these cases, it&#8217;s easy to keep yourself protected. In each case,
+avoid string interpolation in favor of passing in <em>bind parameters</em>. That is,
+the example we started this section with should be written as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">connection</span>
+
+<span class="k">def</span> <span class="nf">user_contacts</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">user</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;username&#39;</span><span class="p">]</span>
+    <span class="n">sql</span> <span class="o">=</span> <span class="s">&quot;SELECT * FROM user_contacts WHERE username = </span><span class="si">%s</span><span class="s">&quot;</span>
+    <span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+    <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="p">,</span> <span class="p">[</span><span class="n">user</span><span class="p">])</span>
+    <span class="c"># ... do something with the results</span>
+</pre></div>
+</div>
+<p>The low-level <tt class="docutils literal"><span class="pre">execute</span></tt> method takes a SQL string with <tt class="docutils literal"><span class="pre">%s</span></tt> placeholders
+and automatically escapes and inserts parameters from the list passed as the
+second argument. You should <em>always</em> construct custom SQL this way.</p>
+<p>Unfortunately, you can&#8217;t use bind parameters everywhere in SQL; they&#8217;re not
+allowed as identifiers (i.e., table or column names). Thus, if you need to,
+say, dynamically construct a list of tables from a <tt class="docutils literal"><span class="pre">POST</span></tt> variable, you&#8217;ll
+need to escape that name in your code. Django provides a function,
+<tt class="docutils literal"><span class="pre">django.db.connection.ops.quote_name</span></tt>, which will escape the identifier
+according to the current database&#8217;s quoting scheme.</p>
+</div>
+</div>
+<div class="section" id="cross-site-scripting-xss">
+<h2>Cross-Site Scripting (XSS)</h2>
+<p><em>Cross-site scripting</em> (XSS), is found in Web applications that fail to
+escape user-submitted content properly before rendering it into HTML. This
+allows an attacker to insert arbitrary HTML into your Web page, usually in the
+form of <tt class="docutils literal"><span class="pre">&lt;script&gt;</span></tt> tags.</p>
+<p>Attackers often use XSS attacks to steal cookie and session information, or to trick
+users into giving private information to the wrong person (aka <em>phishing</em>).</p>
+<p>This type of attack can take a number of different forms and has almost
+infinite permutations, so we&#8217;ll just look at a typical example. Consider this
+extremely simple &#8220;Hello, World&#8221; view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">say_hello</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;world&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;&lt;h1&gt;Hello, </span><span class="si">%s</span><span class="s">!&lt;/h1&gt;&#39;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This view simply reads a name from a <tt class="docutils literal"><span class="pre">GET</span></tt> parameter and passes that name
+into the generated HTML. So, if we accessed
+<tt class="docutils literal"><span class="pre">http://example.com/hello/?name=Jacob</span></tt>, the page would contain this:</p>
+<div class="highlight-python"><pre>&lt;h1&gt;Hello, Jacob!&lt;/h1&gt;</pre>
+</div>
+<p>But wait &#8211; what happens if we access
+<tt class="docutils literal"><span class="pre">http://example.com/hello/?name=&lt;i&gt;Jacob&lt;/i&gt;</span></tt>? Then we get this:</p>
+<div class="highlight-python"><pre>&lt;h1&gt;Hello, &lt;i&gt;Jacob&lt;/i&gt;!&lt;/h1&gt;</pre>
+</div>
+<p>Of course, an attacker wouldn&#8217;t use something as benign as <tt class="docutils literal"><span class="pre">&lt;i&gt;</span></tt> tags; he
+could include a whole set of HTML that hijacked your page with arbitrary
+content. This type of attack has been used to trick users into entering data
+into what looks like their bank&#8217;s Web site, but in fact is an XSS-hijacked form
+that submits their back account information to an attacker.</p>
+<p>The problem gets worse if you store this data in the database and later display it
+it on your site. For example, MySpace was once found to be vulnerable to an XSS
+attack of this nature. A user inserted JavaScript into his profile that automatically
+added him as your friend when you visited his profile page. Within a few days, he had
+millions of friends.</p>
+<p>Now, this may sound relatively benign, but keep in mind that this attacker
+managed to get <em>his</em> code &#8211; not MySpace&#8217;s &#8211; running on <em>your</em> computer. This
+violates the assumed trust that all the code on MySpace is actually written
+by MySpace.</p>
+<p>MySpace was extremely lucky that this malicious code didn&#8217;t automatically
+delete viewers&#8217; accounts, change their passwords, flood the site with spam, or
+any of the other nightmare scenarios this vulnerability unleashes.</p>
+<div class="section" id="id1">
+<h3>The Solution</h3>
+<p>The solution is simple: <em>always</em> escape <em>any</em> content that might have come
+from a user before inserting it into HTML.</p>
+<p>To guard against this, Django&#8217;s template system automatically escapes all
+variable values. Let&#8217;s see what happens if we rewrite our example using the
+template system:</p>
+<div class="highlight-python"><pre># views.py
+
+from django.shortcuts import render
+
+def say_hello(request):
+    name = request.GET.get('name', 'world')
+    return render(request, 'hello.html', {'name': name})
+
+# hello.html
+
+&lt;h1&gt;Hello, {{ name }}!&lt;/h1&gt;</pre>
+</div>
+<p>With this in place, a request to <tt class="docutils literal"><span class="pre">http://example.com/hello/name=&lt;i&gt;Jacob&lt;/i&gt;</span></tt>
+will result in the following page:</p>
+<div class="highlight-python"><pre>&lt;h1&gt;Hello, &amp;lt;i&amp;gt;Jacob&amp;lt;/i&amp;gt;!&lt;/h1&gt;</pre>
+</div>
+<p>We covered Django&#8217;s auto-escaping back in Chapter 4, along with ways to turn
+it off. But even if you&#8217;re using this feature, you should <em>still</em> get in the
+habit of asking yourself, at all times, &#8220;Where does this data come from?&#8221; No
+automatic solution will ever protect your site from XSS attacks 100% of the
+time.</p>
+</div>
+</div>
+<div class="section" id="cross-site-request-forgery">
+<h2>Cross-Site Request Forgery</h2>
+<p>Cross-site request forgery (CSRF) happens when a malicious Web site tricks users
+into unknowingly loading a URL from a site at which they&#8217;re already authenticated &#8211;
+hence taking advantage of their authenticated status.</p>
+<p>Django has built-in tools to protect from this kind of attack. Both the attack
+itself and those tools are covered in great detail in <a class="reference external" href="chapter16.html">Chapter 16</a>.</p>
+</div>
+<div class="section" id="session-forging-hijacking">
+<h2>Session Forging/Hijacking</h2>
+<p>This isn&#8217;t a specific attack, but rather a general class of attacks on a
+user&#8217;s session data. It can take a number of different forms:</p>
+<ul>
+<li><p class="first">A <em>man-in-the-middle</em> attack, where an attacker snoops on session data
+as it travels over the wire (or wireless) network.</p>
+</li>
+<li><p class="first"><em>Session forging</em>, where an attacker uses a session ID
+(perhaps obtained through a man-in-the-middle attack) to pretend to be
+another user.</p>
+<p>An example of these first two would be an attacker in a coffee shop using
+the shop&#8217;s wireless network to capture a session cookie. She could then use that
+cookie to impersonate the original user.</p>
+</li>
+<li><p class="first">A <em>cookie-forging</em> attack, where an attacker overrides the supposedly
+read-only data stored in a cookie. <a class="reference external" href="chapter14.html">Chapter 14</a> explains in detail how
+cookies work, and one of the salient points is that it&#8217;s trivial for
+browsers and malicious users to change cookies without your knowledge.</p>
+<p>There&#8217;s a long history of Web sites that have stored a cookie like
+<tt class="docutils literal"><span class="pre">IsLoggedIn=1</span></tt> or even <tt class="docutils literal"><span class="pre">LoggedInAsUser=jacob</span></tt>. It&#8217;s dead simple to
+exploit these types of cookies.</p>
+<p>On a more subtle level, though, it&#8217;s never a good idea to trust anything
+stored in cookies. You never know who&#8217;s been poking at them.</p>
+</li>
+<li><p class="first"><em>Session fixation</em>, where an attacker tricks a user into setting or
+reseting the user&#8217;s session ID.</p>
+<p>For example, PHP allows session identifiers to be passed in the URL
+(e.g.,
+<tt class="docutils literal"><span class="pre">http://example.com/?PHPSESSID=fa90197ca25f6ab40bb1374c510d7a32</span></tt>). An
+attacker who tricks a user into clicking a link with a hard-coded
+session ID will cause the user to pick up that session.</p>
+<p>Session fixation has been used in phishing attacks to trick users into entering
+personal information into an account the attacker owns. He can
+later log into that account and retrieve the data.</p>
+</li>
+<li><p class="first"><em>Session poisoning</em>, where an attacker injects potentially dangerous
+data into a user&#8217;s session &#8211; usually through a Web form that the user
+submits to set session data.</p>
+<p>A canonical example is a site that stores a simple user preference (like
+a page&#8217;s background color) in a cookie. An attacker could trick a user
+into clicking a link to submit a &#8220;color&#8221; that actually contains an
+XSS attack. If that color isn&#8217;t escaped, the user could again
+inject malicious code into the user&#8217;s environment.</p>
+</li>
+</ul>
+<div class="section" id="id2">
+<h3>The Solution</h3>
+<p>There are a number of general principles that can protect you from these attacks:</p>
+<ul>
+<li><p class="first">Never allow session information to be contained in the URL.</p>
+<p>Django&#8217;s session framework (see <a class="reference external" href="chapter14.html">Chapter 14</a>) simply doesn&#8217;t allow
+sessions to be contained in the URL.</p>
+</li>
+<li><p class="first">Don&#8217;t store data in cookies directly. Instead, store a session ID
+that maps to session data stored on the backend.</p>
+<p>If you use Django&#8217;s built-in session framework (i.e.,
+<tt class="docutils literal"><span class="pre">request.session</span></tt>), this is handled automatically for you. The only
+cookie that the session framework uses is a single session ID; all the
+session data is stored in the database.</p>
+</li>
+<li><p class="first">Remember to escape session data if you display it in the template. See
+the earlier XSS section, and remember that it applies to any user-created
+content as well as any data from the browser. You should treat session
+information as being user created.</p>
+</li>
+<li><p class="first">Prevent attackers from spoofing session IDs whenever possible.</p>
+<p>Although it&#8217;s nearly impossible to detect someone who&#8217;s hijacked a
+session ID, Django does have built-in protection against a brute-force
+session attack. Session IDs are stored as hashes (instead of sequential
+numbers), which prevents a brute-force attack, and a user will always get
+a new session ID if she tries a nonexistent one, which prevents session
+fixation.</p>
+</li>
+</ul>
+<p>Notice that none of those principles and tools prevents man-in-the-middle
+attacks. These types of attacks are nearly impossible to detect. If your site
+allows logged-in users to see any sort of sensitive data, you should <em>always</em>
+serve that site over HTTPS. Additionally, if you have an SSL-enabled site,
+you should set the <tt class="docutils literal"><span class="pre">SESSION_COOKIE_SECURE</span></tt> setting to <tt class="docutils literal"><span class="pre">True</span></tt>; this will
+make Django only send session cookies over HTTPS.</p>
+</div>
+</div>
+<div class="section" id="e-mail-header-injection">
+<h2>E-mail Header Injection</h2>
+<p>SQL injection&#8217;s less well-known sibling, <em>e-mail header injection</em>, hijacks
+Web forms that send e-mail. An attacker can use this technique to send spam via
+your mail server. Any form that constructs e-mail headers from Web form data is
+vulnerable to this kind of attack.</p>
+<p>Let&#8217;s look at the canonical contact form found on many sites. Usually this
+sends a message to a hard-coded e-mail address and, hence, doesn&#8217;t appear
+vulnerable to spam abuse at first glance.</p>
+<p>However, most of these forms also allow the user to type in his own subject
+for the e-mail (along with a &#8220;from&#8221; address, body, and sometimes a few other
+fields). This subject field is used to construct the &#8220;subject&#8221; header of the
+e-mail message.</p>
+<p>If that header is unescaped when building the e-mail message, an attacker could
+submit something like <tt class="docutils literal"><span class="pre">&quot;hello\ncc:spamvictim&#64;example.com&quot;</span></tt> (where <tt class="docutils literal"><span class="pre">&quot;\n</span></tt>&#8221; is
+a newline character). That would make the constructed e-mail headers turn into:</p>
+<div class="highlight-python"><pre>To: hardcoded@example.com
+Subject: hello
+cc: spamvictim@example.com</pre>
+</div>
+<p>Like SQL injection, if we trust the subject line given by the user, we&#8217;ll
+allow him to construct a malicious set of headers, and he can use our
+contact form to send spam.</p>
+<div class="section" id="id3">
+<h3>The Solution</h3>
+<p>We can prevent this attack in the same way we prevent SQL injection: always
+escape or validate user-submitted content.</p>
+<p>Django&#8217;s built-in mail functions (in <tt class="docutils literal"><span class="pre">django.core.mail</span></tt>) simply do not allow
+newlines in any fields used to construct headers (the from and to addresses,
+plus the subject). If you try to use <tt class="docutils literal"><span class="pre">django.core.mail.send_mail</span></tt> with a
+subject that contains newlines, Django will raise a <tt class="docutils literal"><span class="pre">BadHeaderError</span></tt>
+exception.</p>
+<p>If you do not use Django&#8217;s built-in mail functions to send e-mail, you&#8217;ll need
+to make sure that newlines in headers either cause an error or are stripped.
+You may want to examine the <tt class="docutils literal"><span class="pre">SafeMIMEText</span></tt> class in <tt class="docutils literal"><span class="pre">django.core.mail</span></tt> to
+see how Django does this.</p>
+</div>
+</div>
+<div class="section" id="directory-traversal">
+<h2>Directory Traversal</h2>
+<p><em>Directory traversal</em> is another injection-style attack, wherein a malicious
+user tricks filesystem code into reading and/or writing files that the Web
+server shouldn&#8217;t have access to.</p>
+<p>An example might be a view that reads files from the disk without carefully
+sanitizing the file name:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">dump_file</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&quot;filename&quot;</span><span class="p">]</span>
+    <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">BASE_PATH</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="c"># ...</span>
+</pre></div>
+</div>
+<p>Though it looks like that view restricts file access to files beneath
+<tt class="docutils literal"><span class="pre">BASE_PATH</span></tt> (by using <tt class="docutils literal"><span class="pre">os.path.join</span></tt>), if the attacker passes in a
+<tt class="docutils literal"><span class="pre">filename</span></tt> containing <tt class="docutils literal"><span class="pre">..</span></tt> (that&#8217;s two periods, a shorthand for
+&#8220;the parent directory&#8221;), she can access files &#8220;above&#8221; <tt class="docutils literal"><span class="pre">BASE_PATH</span></tt>. It&#8217;s only
+a matter of time before she can discover the correct number of dots to
+successfully access, say, <tt class="docutils literal"><span class="pre">../../../../../etc/passwd</span></tt>.</p>
+<p>Anything that reads files without proper escaping is vulnerable to this
+problem. Views that <em>write</em> files are just as vulnerable, but the consequences
+are doubly dire.</p>
+<p>Another permutation of this problem lies in code that dynamically loads
+modules based on the URL or other request information. A well-publicized
+example came from the world of Ruby on Rails.  Prior to mid-2006,
+Rails used URLs like <tt class="docutils literal"><span class="pre">http://example.com/person/poke/1</span></tt> directly to
+load modules and call methods. The result was that a
+carefully constructed URL could automatically load arbitrary code,
+including a database reset script!</p>
+<div class="section" id="id4">
+<h3>The Solution</h3>
+<p>If your code ever needs to read or write files based on user input, you need
+to sanitize the requested path very carefully to ensure that an attacker isn&#8217;t
+able to escape from the base directory you&#8217;re restricting access to.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Needless to say, you should <em>never</em> write code that can read from any
+area of the disk!</p>
+</div>
+<p>A good example of how to do this escaping lies in Django&#8217;s built-in static
+content-serving view (in <tt class="docutils literal"><span class="pre">django.views.static</span></tt>). Here&#8217;s the relevant code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">posixpath</span>
+
+<span class="c"># ...</span>
+
+<span class="n">path</span> <span class="o">=</span> <span class="n">posixpath</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">urllib</span><span class="o">.</span><span class="n">unquote</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+<span class="n">newpath</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
+<span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">part</span><span class="p">:</span>
+        <span class="c"># strip empty path components</span>
+        <span class="k">continue</span>
+
+    <span class="n">drive</span><span class="p">,</span> <span class="n">part</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitdrive</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+    <span class="n">head</span><span class="p">,</span> <span class="n">part</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">part</span> <span class="ow">in</span> <span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">curdir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">):</span>
+        <span class="c"># strip &#39;.&#39; and &#39;..&#39; in path</span>
+        <span class="k">continue</span>
+
+    <span class="n">newpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">newpath</span><span class="p">,</span> <span class="n">part</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\\</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39;/&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Django doesn&#8217;t read files (unless you use the <tt class="docutils literal"><span class="pre">static.serve</span></tt>
+function, but that&#8217;s protected with the code just shown), so this
+vulnerability doesn&#8217;t affect the core code much.</p>
+<p>In addition, the use of the URLconf abstraction means that Django will <em>never</em>
+load code you&#8217;ve not explicitly told it to load. There&#8217;s no way to create a
+URL that causes Django to load something not mentioned in a URLconf.</p>
+</div>
+</div>
+<div class="section" id="exposed-error-messages">
+<h2>Exposed Error Messages</h2>
+<p>During development, being able to see tracebacks and errors live in your
+browser is extremely useful. Django has &#8220;pretty&#8221; and informative debug
+messages specifically to make debugging easier.</p>
+<p>However, if these errors get displayed once the site goes live, they can
+reveal aspects of your code or configuration that could aid an attacker.</p>
+<p>Furthermore, errors and tracebacks aren&#8217;t at all useful to end users. Django&#8217;s
+philosophy is that site visitors should never see application-related error
+messages. If your code raises an unhandled exception, a site visitor should
+not see the full traceback &#8211; or <em>any</em> hint of code snippets or Python
+(programmer-oriented) error messages. Instead, the visitor should see a
+friendly &#8220;This page is unavailable&#8221; message.</p>
+<p>Naturally, of course, developers need to see tracebacks to debug problems in
+their code. So the framework should hide all error messages from the public,
+but it should display them to the trusted site developers.</p>
+<div class="section" id="id5">
+<h3>The Solution</h3>
+<p>As we covered in Chapter 12, Django&#8217;s <tt class="docutils literal"><span class="pre">DEBUG</span></tt> setting controls the display of
+these error messages. Make sure to set this to <tt class="docutils literal"><span class="pre">False</span></tt> when you&#8217;re ready to
+deploy.</p>
+<p>Users deploying under Apache and mod_python (also see Chapter 12) should also
+make sure they have <tt class="docutils literal"><span class="pre">PythonDebug</span> <span class="pre">Off</span></tt> in their Apache conf files; this will
+suppress any errors that occur before Django has had a chance to load.</p>
+</div>
+</div>
+<div class="section" id="a-final-word-on-security">
+<h2>A Final Word on Security</h2>
+<p>We hope all this talk of security problems isn&#8217;t too intimidating. It&#8217;s true
+that the Web can be a wild world, but with a little bit of foresight,
+you can have a secure Web site.</p>
+<p>Keep in mind that Web security is a constantly changing field; if you&#8217;re
+reading the dead-tree version of this book, be sure to check more up to date
+security resources for any new vulnerabilities that have been discovered. In
+fact, it&#8217;s always a good idea to spend some time each week or month
+researching and keeping current on the state of Web application security. It&#8217;s
+a small investment to make, but the protection you&#8217;ll get for your site and
+your users is priceless.</p>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>You&#8217;ve reached the end of our regularly scheduled program. The following
+appendixes all contain reference material that you might need as you work on
+your Django projects.</p>
+<p>We wish you the best of luck in running your Django site, whether it&#8217;s a little
+toy for you and a few friends, or the next Google.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter19.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixA.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

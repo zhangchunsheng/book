@@ -1,0 +1,404 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 17: Middleware</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter16.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter18.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-17-middleware">
+<h1>Chapter 17: Middleware</h1>
+<p>On occasion, you&#8217;ll need to run a piece of code on each and every request that
+Django handles. This code might need to modify the request before the view
+handles it, it might need to log information about the request for debugging
+purposes, and so forth.</p>
+<p>You can do this with Django&#8217;s <em>middleware</em> framework, which is a set of hooks
+into Django&#8217;s request/response processing. It&#8217;s a light, low-level &#8220;plug-in&#8221;
+system capable of globally altering both Django&#8217;s input and output.</p>
+<p>Each middleware component is responsible for doing some specific function. If
+you&#8217;re reading this book straight through, you&#8217;ve seen middleware a number of
+times already:</p>
+<ul class="simple">
+<li>All of the session and user tools that we looked at in Chapter 14
+are made possible by a few small pieces of middleware (more
+specifically, the middleware makes <tt class="docutils literal"><span class="pre">request.session</span></tt> and
+<tt class="docutils literal"><span class="pre">request.user</span></tt> available to you in views).</li>
+<li>The sitewide cache discussed in Chapter 15 is actually just a piece
+of middleware that bypasses the call to your view function if the
+response for that view has already been cached.</li>
+<li>The <tt class="docutils literal"><span class="pre">flatpages</span></tt>, <tt class="docutils literal"><span class="pre">redirects</span></tt>, and <tt class="docutils literal"><span class="pre">csrf</span></tt> applications from
+Chapter 16 all do their magic through middleware components.</li>
+</ul>
+<p>This chapter dives deeper into exactly what middleware is and how it works,
+and explains how you can write your own middleware.</p>
+<div class="section" id="what-s-middleware">
+<h2>What&#8217;s Middleware?</h2>
+<p>Let&#8217;s start with a very simple example.</p>
+<p>High-traffic sites often need to deploy Django behind a load-balancing proxy
+(see Chapter 12). This can cause a few small complications, one of which is
+that every request&#8217;s remote IP (<tt class="docutils literal"><span class="pre">request.META[&quot;REMOTE_IP&quot;]</span></tt>) will be that of
+the load balancer, not the actual IP making the request. Load balancers deal
+with this by setting a special header, <tt class="docutils literal"><span class="pre">X-Forwarded-For</span></tt>, to the actual
+requesting IP address.</p>
+<p>So here&#8217;s a small bit of middleware that lets sites running behind a proxy
+still see the correct IP address in <tt class="docutils literal"><span class="pre">request.META[&quot;REMOTE_ADDR&quot;]</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">SetRemoteAddrFromForwardedFor</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">process_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">real_ip</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="p">[</span><span class="s">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c"># HTTP_X_FORWARDED_FOR can be a comma-separated list of IPs.</span>
+            <span class="c"># Take just the first one.</span>
+            <span class="n">real_ip</span> <span class="o">=</span> <span class="n">real_ip</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="p">[</span><span class="s">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">real_ip</span>
+</pre></div>
+</div>
+<p>(Note: Although the HTTP header is called <tt class="docutils literal"><span class="pre">X-Forwarded-For</span></tt>, Django makes
+it available as <tt class="docutils literal"><span class="pre">request.META['HTTP_X_FORWARDED_FOR']</span></tt>. With the exception
+of <tt class="docutils literal"><span class="pre">content-length</span></tt> and <tt class="docutils literal"><span class="pre">content-type</span></tt>, any HTTP headers in the request are
+converted to <tt class="docutils literal"><span class="pre">request.META</span></tt> keys by converting all characters to uppercase,
+replacing any hyphens with underscores and adding an <tt class="docutils literal"><span class="pre">HTTP_</span></tt> prefix to the
+name.)</p>
+<p>If this middleware is installed (see the next section), every request&#8217;s
+<tt class="docutils literal"><span class="pre">X-Forwarded-For</span></tt> value will be automatically inserted into
+<tt class="docutils literal"><span class="pre">request.META['REMOTE_ADDR']</span></tt>. This means your Django applications don&#8217;t need
+to be concerned with whether they&#8217;re behind a load-balancing proxy or not; they
+can simply access <tt class="docutils literal"><span class="pre">request.META['REMOTE_ADDR']</span></tt>, and that will work whether
+or not a proxy is being used.</p>
+<p>In fact, this is a common enough need that this piece of middleware is a
+built-in part of Django. It lives in <tt class="docutils literal"><span class="pre">django.middleware.http</span></tt>, and you can
+read a bit more about it later in this chapter.</p>
+</div>
+<div class="section" id="middleware-installation">
+<h2>Middleware Installation</h2>
+<p>If you&#8217;ve read this book straight through, you&#8217;ve already seen a number of
+examples of middleware installation; many of the examples in previous chapters
+have required certain middleware. For completeness, here&#8217;s how to install
+middleware.</p>
+<p>To activate a middleware component, add it to the <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> tuple
+in your settings module. In <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt>, each middleware component
+is represented by a string: the full Python path to the middleware&#8217;s class
+name. For example, here&#8217;s the default <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> created by
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">startproject</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">MIDDLEWARE_CLASSES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s">&#39;django.middleware.common.CommonMiddleware&#39;</span><span class="p">,</span>
+    <span class="s">&#39;django.contrib.sessions.middleware.SessionMiddleware&#39;</span><span class="p">,</span>
+    <span class="s">&#39;django.contrib.auth.middleware.AuthenticationMiddleware&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>A Django installation doesn&#8217;t require any middleware &#8211; <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt>
+can be empty, if you&#8217;d like &#8211; but we recommend that you activate
+<tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt>, which we explain shortly.</p>
+<p>The order is significant. On the request and view phases, Django applies
+middleware in the order given in <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt>, and on the response
+and exception phases, Django applies middleware in reverse order. That is,
+Django treats <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> as a sort of &#8220;wrapper&#8221; around the view
+function: on the request it walks down the list to the view, and on the
+response it walks back up.</p>
+</div>
+<div class="section" id="middleware-methods">
+<h2>Middleware Methods</h2>
+<p>Now that you know what middleware is and how to install it, let&#8217;s take a look at
+all the available methods that middleware classes can define.</p>
+<div class="section" id="initializer-init-self">
+<h3>Initializer: __init__(self)</h3>
+<p>Use <tt class="docutils literal"><span class="pre">__init__()</span></tt> to perform systemwide setup for a given middleware class.</p>
+<p>For performance reasons, each activated middleware class is instantiated only
+<em>once</em> per server process. This means that <tt class="docutils literal"><span class="pre">__init__()</span></tt> is called only once
+&#8211; at server startup &#8211; not for individual requests.</p>
+<p>A common reason to implement an <tt class="docutils literal"><span class="pre">__init__()</span></tt> method is to check whether the
+middleware is indeed needed. If <tt class="docutils literal"><span class="pre">__init__()</span></tt> raises
+<tt class="docutils literal"><span class="pre">django.core.exceptions.MiddlewareNotUsed</span></tt>, then Django will remove the
+middleware from the middleware stack. You might use this feature to check for
+some piece of software that the middleware class requires, or check whether
+the server is running debug mode, or any other such environment situation.</p>
+<p>If a middleware class defines an <tt class="docutils literal"><span class="pre">__init__()</span></tt> method, the method should take no
+arguments beyond the standard <tt class="docutils literal"><span class="pre">self</span></tt>.</p>
+</div>
+<div class="section" id="request-preprocessor-process-request-self-request">
+<h3>Request Preprocessor: process_request(self, request)</h3>
+<p>This method gets called as soon as the request has been received &#8211; before
+Django has parsed the URL to determine which view to execute. It gets passed
+the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object, which you may modify at will.</p>
+<p><tt class="docutils literal"><span class="pre">process_request()</span></tt> should return either <tt class="docutils literal"><span class="pre">None</span></tt> or an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>
+object.</p>
+<ul class="simple">
+<li>If it returns <tt class="docutils literal"><span class="pre">None</span></tt>, Django will continue processing this request,
+executing any other middleware and then the appropriate view.</li>
+<li>If it returns an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object, Django won&#8217;t bother calling
+<em>any</em> other middleware (of any type) or the appropriate view. Django
+will immediately return that <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="view-preprocessor-process-view-self-request-view-args-kwargs">
+<h3>View Preprocessor: process_view(self, request, view, args, kwargs)</h3>
+<p>This method gets called after the request preprocessor is called and Django
+has determined which view to execute, but before that view has actually been
+executed.</p>
+<p>The arguments passed to this view are shown in Table 17-1.</p>
+<table border="1" class="docutils">
+<caption>Table 17-1. Arguments Passed to process_view()</caption>
+<colgroup>
+<col width="19%" />
+<col width="81%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Argument</th>
+<th class="head">Explanation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">request</span></tt></td>
+<td>The <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">view</span></tt></td>
+<td>The Python function that Django will call to handle this
+request. This is the actual function object itself,
+not the name of the function as a string.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">args</span></tt></td>
+<td>The list of positional arguments that will be passed to
+the view, not including the <tt class="docutils literal"><span class="pre">request</span></tt> argument (which
+is always the first argument to a view).</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">kwargs</span></tt></td>
+<td>The dictionary of keyword arguments that will be passed
+to the view.</td>
+</tr>
+</tbody>
+</table>
+<p>Just like <tt class="docutils literal"><span class="pre">process_request()</span></tt>, <tt class="docutils literal"><span class="pre">process_view()</span></tt> should return either
+<tt class="docutils literal"><span class="pre">None</span></tt> or an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object.</p>
+<ul class="simple">
+<li>If it returns <tt class="docutils literal"><span class="pre">None</span></tt>, Django will continue processing this request,
+executing any other middleware and then the appropriate view.</li>
+<li>If it returns an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object, Django won&#8217;t bother calling
+<em>any</em> other middleware (of any type) or the appropriate view. Django
+will immediately return that <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>.</li>
+</ul>
+</div>
+<div class="section" id="response-postprocessor-process-response-self-request-response">
+<h3>Response Postprocessor: process_response(self, request, response)</h3>
+<p>This method gets called after the view function is called and the response is
+generated. Here, the processor can modify the content of a response. One
+obvious use case is content compression, such as gzipping of the request&#8217;s
+HTML.</p>
+<p>The parameters should be pretty self-explanatory: <tt class="docutils literal"><span class="pre">request</span></tt> is the request
+object, and <tt class="docutils literal"><span class="pre">response</span></tt> is the response object returned from the view.</p>
+<p>Unlike the request and view preprocessors, which may return <tt class="docutils literal"><span class="pre">None</span></tt>,
+<tt class="docutils literal"><span class="pre">process_response()</span></tt> <em>must</em> return an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object. That response
+could be the original one passed into the function (possibly modified) or a
+brand-new one.</p>
+</div>
+<div class="section" id="exception-postprocessor-process-exception-self-request-exception">
+<h3>Exception Postprocessor: process_exception(self, request, exception)</h3>
+<p>This method gets called only if something goes wrong and a view raises an
+uncaught exception. You can use this hook to send error notifications, dump
+postmortem information to a log, or even try to recover from the error
+automatically.</p>
+<p>The parameters to this function are the same <tt class="docutils literal"><span class="pre">request</span></tt> object we&#8217;ve been
+dealing with all along, and <tt class="docutils literal"><span class="pre">exception</span></tt>, which is the actual <tt class="docutils literal"><span class="pre">Exception</span></tt>
+object raised by the view function.</p>
+<p><tt class="docutils literal"><span class="pre">process_exception()</span></tt> should return a either <tt class="docutils literal"><span class="pre">None</span></tt> or an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>
+object.</p>
+<ul class="simple">
+<li>If it returns <tt class="docutils literal"><span class="pre">None</span></tt>, Django will continue processing this request
+with the framework&#8217;s built-in exception handling.</li>
+<li>If it returns an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object, Django will use that response
+instead of the framework&#8217;s built-in exception handling.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Django ships with a number of middleware classes (discussed in the following
+section) that make good examples. Reading the code for them should give you
+a good feel for the power of middleware.</p>
+<p class="last">You can also find a number of community-contributed examples on Django&#8217;s
+wiki: <a class="reference external" href="http://code.djangoproject.com/wiki/ContributedMiddleware">http://code.djangoproject.com/wiki/ContributedMiddleware</a></p>
+</div>
+</div>
+</div>
+<div class="section" id="built-in-middleware">
+<h2>Built-in Middleware</h2>
+<p>Django comes with some built-in middleware to deal with common problems, which we discuss
+in the sections that follow.</p>
+<div class="section" id="authentication-support-middleware">
+<h3>Authentication Support Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.contrib.auth.middleware.AuthenticationMiddleware</span></tt>.</p>
+<p>This middleware enables authentication support. It adds the <tt class="docutils literal"><span class="pre">request.user</span></tt>
+attribute, representing the currently logged-in user, to every incoming
+<tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object.</p>
+<p>See Chapter 14 for complete details.</p>
+</div>
+<div class="section" id="common-middleware">
+<h3>&#8220;Common&#8221; Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.middleware.common.CommonMiddleware</span></tt>.</p>
+<p>This middleware adds a few conveniences for perfectionists:</p>
+<ul>
+<li><p class="first"><em>Forbids access to user agents in the ``DISALLOWED_USER_AGENTS`` setting</em>:
+If provided, this setting should be a list of compiled regular expression
+objects that are matched against the user-agent header for each incoming
+request. Here&#8217;s an example snippet from a settings file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">re</span>
+
+<span class="n">DISALLOWED_USER_AGENTS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^OmniExplorer_Bot&#39;</span><span class="p">),</span>
+    <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="s">r&#39;^Googlebot&#39;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Note the <tt class="docutils literal"><span class="pre">import</span> <span class="pre">re</span></tt>, because <tt class="docutils literal"><span class="pre">DISALLOWED_USER_AGENTS</span></tt> requires its
+values to be compiled regexes (i.e., the output of <tt class="docutils literal"><span class="pre">re.compile()</span></tt>).
+The settings file is regular Python, so it&#8217;s perfectly OK to include
+Python <tt class="docutils literal"><span class="pre">import</span></tt> statements in it.</p>
+</li>
+<li><p class="first"><em>Performs URL rewriting based on the ``APPEND_SLASH`` and ``PREPEND_WWW``
+settings</em>: If <tt class="docutils literal"><span class="pre">APPEND_SLASH</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, URLs that lack a trailing
+slash will be redirected to the same URL with a trailing slash, unless
+the last component in the path contains a period. So <tt class="docutils literal"><span class="pre">foo.com/bar</span></tt> is
+redirected to <tt class="docutils literal"><span class="pre">foo.com/bar/</span></tt>, but <tt class="docutils literal"><span class="pre">foo.com/bar/file.txt</span></tt> is passed
+through unchanged.</p>
+<p>If <tt class="docutils literal"><span class="pre">PREPEND_WWW</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, URLs that lack a leading &#8220;www.&#8221; will be
+redirected to the same URL with a leading &#8220;www.&#8221;.</p>
+<p>Both of these options are meant to normalize URLs. The philosophy is
+that each URL should exist in one &#8211; and only one &#8211; place. Technically the
+URL <tt class="docutils literal"><span class="pre">example.com/bar</span></tt> is distinct from <tt class="docutils literal"><span class="pre">example.com/bar/</span></tt>, which in
+turn is distinct from <tt class="docutils literal"><span class="pre">www.example.com/bar/</span></tt>. A search-engine indexer
+would treat these as separate URLs, which is detrimental to your site&#8217;s
+search-engine rankings, so it&#8217;s a best practice to normalize URLs.</p>
+</li>
+<li><p class="first"><em>Handles ETags based on the ``USE_ETAGS`` setting</em>: <em>ETags</em> are an HTTP-level
+optimization for caching pages conditionally. If <tt class="docutils literal"><span class="pre">USE_ETAGS</span></tt> is
+set to <tt class="docutils literal"><span class="pre">True</span></tt>, Django will calculate an ETag for each request by
+MD5-hashing the page content, and it will take care of sending <tt class="docutils literal"><span class="pre">Not</span>
+<span class="pre">Modified</span></tt> responses, if appropriate.</p>
+<p>Note there is also a conditional <tt class="docutils literal"><span class="pre">GET</span></tt> middleware, covered shortly, which
+handles ETags and does a bit more.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="compression-middleware">
+<h3>Compression Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.middleware.gzip.GZipMiddleware</span></tt>.</p>
+<p>This middleware automatically compresses content for browsers that understand gzip
+compression (all modern browsers). This can greatly reduce the amount of bandwidth
+a Web server consumes. The tradeoff is that it takes a bit of processing time to
+compress pages.</p>
+<p>We usually prefer speed over bandwidth, but if you prefer the reverse, just
+enable this middleware.</p>
+</div>
+<div class="section" id="conditional-get-middleware">
+<h3>Conditional GET Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.middleware.http.ConditionalGetMiddleware</span></tt>.</p>
+<p>This middleware provides support for conditional <tt class="docutils literal"><span class="pre">GET</span></tt> operations. If the response
+has an <tt class="docutils literal"><span class="pre">Last-Modified</span></tt> or <tt class="docutils literal"><span class="pre">ETag</span></tt> or header, and the request has <tt class="docutils literal"><span class="pre">If-None-Match</span></tt>
+or <tt class="docutils literal"><span class="pre">If-Modified-Since</span></tt>, the response is replaced by an 304 (&#8220;Not modified&#8221;)
+response. <tt class="docutils literal"><span class="pre">ETag</span></tt> support depends on on the <tt class="docutils literal"><span class="pre">USE_ETAGS</span></tt> setting and expects
+the <tt class="docutils literal"><span class="pre">ETag</span></tt> response header to already be set. As discussed above, the <tt class="docutils literal"><span class="pre">ETag</span></tt>
+header is set by the Common middleware.</p>
+<p>It also removes the content from any response to a <tt class="docutils literal"><span class="pre">HEAD</span></tt> request and sets the
+<tt class="docutils literal"><span class="pre">Date</span></tt> and <tt class="docutils literal"><span class="pre">Content-Length</span></tt> response headers for all requests.</p>
+</div>
+<div class="section" id="reverse-proxy-support-x-forwarded-for-middleware">
+<h3>Reverse Proxy Support (X-Forwarded-For Middleware)</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.middleware.http.SetRemoteAddrFromForwardedFor</span></tt>.</p>
+<p>This is the example we examined in the &#8220;What&#8217;s Middleware?&#8221; section earlier. It
+sets <tt class="docutils literal"><span class="pre">request.META['REMOTE_ADDR']</span></tt> based on
+<tt class="docutils literal"><span class="pre">request.META['HTTP_X_FORWARDED_FOR']</span></tt>, if the latter is set. This is useful
+if you&#8217;re sitting behind a reverse proxy that causes each request&#8217;s
+<tt class="docutils literal"><span class="pre">REMOTE_ADDR</span></tt> to be set to <tt class="docutils literal"><span class="pre">127.0.0.1</span></tt>.</p>
+<div class="admonition-danger admonition">
+<p class="first admonition-title">Danger!</p>
+<p>This middleware does <em>not</em> validate <tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_FOR</span></tt>.</p>
+<p>If you&#8217;re not behind a reverse proxy that sets <tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_FOR</span></tt>
+automatically, do not use this middleware. Anybody can spoof the value of
+<tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_FOR</span></tt>, and because this sets <tt class="docutils literal"><span class="pre">REMOTE_ADDR</span></tt> based on
+<tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_FOR</span></tt>, that means anybody can fake his IP address.</p>
+<p class="last">Only use this middleware when you can absolutely trust the value of
+<tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_FOR</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="session-support-middleware">
+<h3>Session Support Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.contrib.sessions.middleware.SessionMiddleware</span></tt>.</p>
+<p>This middleware enables session support. See Chapter 14 for details.</p>
+</div>
+<div class="section" id="sitewide-cache-middleware">
+<h3>Sitewide Cache Middleware</h3>
+<p>Middleware classes: <tt class="docutils literal"><span class="pre">django.middleware.cache.UpdateCacheMiddleware</span></tt> and
+<tt class="docutils literal"><span class="pre">django.middleware.cache.FetchFromCacheMiddleware</span></tt>.</p>
+<p>These middlewares work together to cache each Django-powered page. This was
+discussed in detail in Chapter 15.</p>
+</div>
+<div class="section" id="transaction-middleware">
+<h3>Transaction Middleware</h3>
+<p>Middleware class: <tt class="docutils literal"><span class="pre">django.middleware.transaction.TransactionMiddleware</span></tt>.</p>
+<p>This middleware binds a database <tt class="docutils literal"><span class="pre">COMMIT</span></tt> or <tt class="docutils literal"><span class="pre">ROLLBACK</span></tt> to the request/response
+phase. If a view function runs successfully, a <tt class="docutils literal"><span class="pre">COMMIT</span></tt> is issued. If the view
+raises an exception, a <tt class="docutils literal"><span class="pre">ROLLBACK</span></tt> is issued.</p>
+<p>The order of this middleware in the stack is important. Middleware modules
+running outside of it run with commit-on-save &#8211; the default Django behavior.
+Middleware modules running inside it (coming later in the stack) will be under
+the same transaction control as the view functions.</p>
+<p>See Appendix B for more about information about database transactions.</p>
+</div>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>Web developers and database-schema designers don&#8217;t always have the luxury of
+starting from scratch. In the <a class="reference external" href="chapter18.html">next chapter</a>, we&#8217;ll cover how to integrate with
+legacy systems, such as database schemas you&#8217;ve inherited from the 1980s.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter16.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter18.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

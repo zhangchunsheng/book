@@ -1,0 +1,893 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Appendix A: Model Definition Reference</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter20.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixB.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="appendix-a-model-definition-reference">
+<h1>Appendix A: Model Definition Reference</h1>
+<p>Chapter 5 explains the basics of defining models, and we use them throughout
+the rest of the book. There is, however, a <em>huge</em> range of model options
+available not covered elsewhere. This appendix explains each possible model
+definition option.</p>
+<p>Note that although these APIs are considered stable, the Django developers
+consistently add new shortcuts and conveniences to the model definition. It&#8217;s a
+good idea to always check the latest documentation online at
+<a class="reference external" href="http://docs.djangoproject.com/">http://docs.djangoproject.com/</a>.</p>
+<div class="section" id="fields">
+<h2>Fields</h2>
+<p>The most important part of a model &#8211; and the only required part of a model &#8211;
+is the list of database fields it defines.</p>
+<div class="admonition-field-name-restrictions admonition">
+<p class="first admonition-title">Field Name Restrictions</p>
+<p>Django places only two restrictions on model field names:</p>
+<ol class="arabic">
+<li><p class="first">A field name cannot be a Python reserved word, because that would result
+in a Python syntax error. For example:</p>
+<div class="highlight-python"><pre>class Example(models.Model):
+    pass = models.IntegerField() # 'pass' is a reserved word!</pre>
+</div>
+</li>
+<li><p class="first">A field name cannot contain more than one underscore in a row, due to
+the way Django&#8217;s query lookup syntax works. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Example</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">foo__bar</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">()</span> <span class="c"># &#39;foo__bar&#39; has two underscores!</span>
+</pre></div>
+</div>
+</li>
+</ol>
+<p>These limitations can be worked around, though, because your field name
+doesn&#8217;t necessarily have to match your database column name. See
+&#8220;db_column&#8221;, below.</p>
+<p class="last">SQL reserved words, such as <tt class="docutils literal"><span class="pre">join</span></tt>, <tt class="docutils literal"><span class="pre">where</span></tt>, or <tt class="docutils literal"><span class="pre">select</span></tt>, <em>are</em> allowed
+as model field names, because Django escapes all database table names and
+column names in every underlying SQL query. It uses the quoting syntax of your
+particular database engine.</p>
+</div>
+<p>Each field in your model should be an instance of the appropriate <tt class="docutils literal"><span class="pre">Field</span></tt>
+class. Django uses the field class types to determine a few things:</p>
+<ul class="simple">
+<li>The database column type (e.g., <tt class="docutils literal"><span class="pre">INTEGER</span></tt>, <tt class="docutils literal"><span class="pre">VARCHAR</span></tt>).</li>
+<li>The widget to use in Django&#8217;s forms and admin site, if you care to use it
+(e.g., <tt class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">type=&quot;text&quot;&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;select&gt;</span></tt>).</li>
+<li>The minimal validation requirements, which are used in Django&#8217;s admin
+interface and by forms.</li>
+</ul>
+<p>A complete list of field classes follows, sorted alphabetically. Note that
+relationship fields (<tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, etc.) are handled in the next section.</p>
+<div class="section" id="autofield">
+<h3>AutoField</h3>
+<p>An <tt class="docutils literal"><span class="pre">IntegerField</span></tt> that automatically increments according to available IDs.
+You usually won&#8217;t need to use this directly; a primary key field will
+automatically be added to your model if you don&#8217;t specify otherwise.</p>
+</div>
+<div class="section" id="booleanfield">
+<h3>BooleanField</h3>
+<p>A true/false field.</p>
+<div class="admonition-mysql-users admonition">
+<p class="first admonition-title">MySQL users...</p>
+<p class="last">A boolean field in MySQL is stored as a <tt class="docutils literal"><span class="pre">TINYINT</span></tt> column with a value of
+either 0 or 1 (most databases have a proper <tt class="docutils literal"><span class="pre">BOOLEAN</span></tt> type instead). So,
+for MySQL, only, when a <tt class="docutils literal"><span class="pre">BooleanField</span></tt> is retrieved from the database
+and stored on a model attribute, it will have the values 1 or 0, rather
+than <tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt>. Normally, this shouldn&#8217;t be a problem, since
+Python guarantees that <tt class="docutils literal"><span class="pre">1</span> <span class="pre">==</span> <span class="pre">True</span></tt> and <tt class="docutils literal"><span class="pre">0</span> <span class="pre">==</span> <span class="pre">False</span></tt> are both true.
+Just be careful if you&#8217;re writing something like <tt class="docutils literal"><span class="pre">obj</span> <span class="pre">is</span> <span class="pre">True</span></tt> when
+<tt class="docutils literal"><span class="pre">obj</span></tt> is a value from a boolean attribute on a model. If that model was
+constructed using the <tt class="docutils literal"><span class="pre">mysql</span></tt> backend, the &#8220;<tt class="docutils literal"><span class="pre">is</span></tt>&#8221; test will fail.
+Prefer an equality test (using &#8220;<tt class="docutils literal"><span class="pre">==</span></tt>&#8221;) in cases like this.</p>
+</div>
+</div>
+<div class="section" id="charfield">
+<h3>CharField</h3>
+<p>A string field, for small- to large-sized strings.</p>
+<p>For very large amounts of text, use <tt class="docutils literal"><span class="pre">TextField</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">CharField</span></tt> has one extra required argument: <tt class="docutils literal"><span class="pre">max_length</span></tt>. This is the
+maximum length (in characters) of the field. The <tt class="docutils literal"><span class="pre">max_length</span></tt> is enforced
+at the database level and in Django&#8217;s validation.</p>
+</div>
+<div class="section" id="commaseparatedintegerfield">
+<h3>CommaSeparatedIntegerField</h3>
+<p>A field of integers separated by commas. As in <tt class="docutils literal"><span class="pre">CharField</span></tt>, the
+<tt class="docutils literal"><span class="pre">max_length</span></tt> argument is required.</p>
+</div>
+<div class="section" id="datefield">
+<h3>DateField</h3>
+<p>A date, represented in Python by a <tt class="docutils literal"><span class="pre">datetime.date</span></tt> instance.</p>
+</div>
+<div class="section" id="datetimefield">
+<h3>DateTimeField</h3>
+<p>A date and time, represented in Python by a <tt class="docutils literal"><span class="pre">datetime.datetime</span></tt> instance.</p>
+</div>
+<div class="section" id="decimalfield">
+<h3>DecimalField</h3>
+<p>A fixed-precision decimal number, represented in Python by a
+<tt class="docutils literal"><span class="pre">decimal.Decimal</span></tt> instance. Has two <strong>required</strong> arguments:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">max_digits</span></tt></dt>
+<dd>The maximum number of digits allowed in the number</dd>
+<dt><tt class="docutils literal"><span class="pre">decimal_places</span></tt></dt>
+<dd>The number of decimal places to store with the number</dd>
+</dl>
+<p>For example, to store numbers up to 999 with a resolution of 2 decimal places,
+you&#8217;d use:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>And to store numbers up to approximately one billion with a resolution of 10
+decimal places:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">models</span><span class="o">.</span><span class="n">DecimalField</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">max_digits</span><span class="o">=</span><span class="mi">19</span><span class="p">,</span> <span class="n">decimal_places</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When assigning to a <tt class="docutils literal"><span class="pre">DecimalField</span></tt>, use either a <tt class="docutils literal"><span class="pre">decimal.Decimal</span></tt> object
+or a string &#8211; not a Python float.</p>
+</div>
+<div class="section" id="emailfield">
+<h3>EmailField</h3>
+<p>A <tt class="docutils literal"><span class="pre">CharField</span></tt> that checks that the value is a valid e-mail address.</p>
+</div>
+<div class="section" id="filefield">
+<h3>FileField</h3>
+<p>A file-upload field.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The <tt class="docutils literal"><span class="pre">primary_key</span></tt> and <tt class="docutils literal"><span class="pre">unique</span></tt> arguments are not supported, and will
+raise a <tt class="docutils literal"><span class="pre">TypeError</span></tt> if used.</p>
+</div>
+<p>Has one <strong>required</strong> argument:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">upload_to</span></tt></dt>
+<dd><p class="first">A local filesystem path that will be appended to your <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt>
+setting to determine the value of the <tt class="docutils literal"><span class="pre">django.core.files.File.url</span></tt>
+attribute.</p>
+<p>This path may contain &#8220;strftime formatting&#8221; (see the Python docs for the
+<tt class="docutils literal"><span class="pre">time</span></tt> standard library module), which will be replaced using the
+date/time of the file upload (so that uploaded files don&#8217;t fill up the given
+directory).</p>
+<p>This may also be a callable, such as a function, which will be called to
+obtain the upload path, including the filename. This callable must be able
+to accept two arguments, and return a Unix-style path (with forward slashes)
+to be passed along to the storage system. The two arguments that will be
+passed are:</p>
+<table border="1" class="last docutils">
+<colgroup>
+<col width="32%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Argument</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">instance</span></tt></td>
+<td><p class="first">An instance of the model where the
+<tt class="docutils literal"><span class="pre">FileField</span></tt> is defined. More specifically,
+this is the particular instance where the
+current file is being attached.</p>
+<p class="last">In most cases, this object will not have been
+saved to the database yet, so if it uses the
+default <tt class="docutils literal"><span class="pre">AutoField</span></tt>, <em>it might not yet have a
+value for its primary key field</em>.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">filename</span></tt></td>
+<td>The filename that was originally given to the
+file. This may or may not be taken into account
+when determining the final destination path.</td>
+</tr>
+</tbody>
+</table>
+</dd>
+</dl>
+<p>Also has one optional argument:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">storage</span></tt></dt>
+<dd>Optional. A storage object, which handles the storage and retrieval of your
+files.</dd>
+</dl>
+<p>Using a <tt class="docutils literal"><span class="pre">FileField</span></tt> or an <tt class="docutils literal"><span class="pre">ImageField</span></tt> (see below) in a model
+takes a few steps:</p>
+<ol class="arabic simple">
+<li>In your settings file, you&#8217;ll need to define <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt> as the
+full path to a directory where you&#8217;d like Django to store uploaded files.
+(For performance, these files are not stored in the database.) Define
+<tt class="docutils literal"><span class="pre">MEDIA_URL</span></tt> as the base public URL of that directory. Make sure
+that this directory is writable by the Web server&#8217;s user account.</li>
+<li>Add the <tt class="docutils literal"><span class="pre">FileField</span></tt> or <tt class="docutils literal"><span class="pre">ImageField</span></tt> to your model, making
+sure to define the <tt class="docutils literal"><span class="pre">upload_to</span></tt> option to tell Django
+to which subdirectory of <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt> it should upload files.</li>
+<li>All that will be stored in your database is a path to the file
+(relative to <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt>). You&#8217;ll most likely want to use the
+convenience <tt class="docutils literal"><span class="pre">url</span></tt> function provided by
+Django. For example, if your <tt class="docutils literal"><span class="pre">ImageField</span></tt> is called <tt class="docutils literal"><span class="pre">mug_shot</span></tt>,
+you can get the absolute URL to your image in a template with
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">object.mug_shot.url</span> <span class="pre">}}</span></tt>.</li>
+</ol>
+<p>For example, say your <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt> is set to <tt class="docutils literal"><span class="pre">'/home/media'</span></tt>, and
+<tt class="docutils literal"><span class="pre">upload_to</span></tt> is set to <tt class="docutils literal"><span class="pre">'photos/%Y/%m/%d'</span></tt>. The <tt class="docutils literal"><span class="pre">'%Y/%m/%d'</span></tt>
+part of <tt class="docutils literal"><span class="pre">upload_to</span></tt> is strftime formatting; <tt class="docutils literal"><span class="pre">'%Y'</span></tt> is the
+four-digit year, <tt class="docutils literal"><span class="pre">'%m'</span></tt> is the two-digit month and <tt class="docutils literal"><span class="pre">'%d'</span></tt> is the two-digit
+day. If you upload a file on Jan. 15, 2007, it will be saved in the directory
+<tt class="docutils literal"><span class="pre">/home/media/photos/2007/01/15</span></tt>.</p>
+<p>If you want to retrieve the upload file&#8217;s on-disk filename, or a URL that refers
+to that file, or the file&#8217;s size, you can use the
+<tt class="docutils literal"><span class="pre">name</span></tt>, <tt class="docutils literal"><span class="pre">url</span></tt> and <tt class="docutils literal"><span class="pre">size</span></tt> attributes.</p>
+<p>Note that whenever you deal with uploaded files, you should pay close attention
+to where you&#8217;re uploading them and what type of files they are, to avoid
+security holes. <em>Validate all uploaded files</em> so that you&#8217;re sure the files are
+what you think they are. For example, if you blindly let somebody upload files,
+without validation, to a directory that&#8217;s within your Web server&#8217;s document
+root, then somebody could upload a CGI or PHP script and execute that script by
+visiting its URL on your site. Don&#8217;t allow that.</p>
+<p>By default, <tt class="docutils literal"><span class="pre">FileField</span></tt> instances are
+created as <tt class="docutils literal"><span class="pre">varchar(100)</span></tt> columns in your database. As with other fields, you
+can change the maximum length using the <tt class="docutils literal"><span class="pre">max_length</span></tt> argument.</p>
+</div>
+<div class="section" id="filepathfield">
+<h3>FilePathField</h3>
+<p>A <tt class="docutils literal"><span class="pre">CharField</span></tt> whose choices are limited to the filenames in a certain
+directory on the filesystem. Has three special arguments, of which the first is
+<strong>required</strong>:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">path</span></tt></dt>
+<dd>Required. The absolute filesystem path to a directory from which this
+<tt class="docutils literal"><span class="pre">FilePathField</span></tt> should get its choices. Example: <tt class="docutils literal"><span class="pre">&quot;/home/images&quot;</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">match</span></tt></dt>
+<dd>Optional. A regular expression, as a string, that <tt class="docutils literal"><span class="pre">FilePathField</span></tt>
+will use to filter filenames. Note that the regex will be applied to the
+base filename, not the full path. Example: <tt class="docutils literal"><span class="pre">&quot;foo.*\.txt$&quot;</span></tt>, which will
+match a file called <tt class="docutils literal"><span class="pre">foo23.txt</span></tt> but not <tt class="docutils literal"><span class="pre">bar.txt</span></tt> or <tt class="docutils literal"><span class="pre">foo23.gif</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">recursive</span></tt></dt>
+<dd>Optional. Either <tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt>. Default is <tt class="docutils literal"><span class="pre">False</span></tt>. Specifies
+whether all subdirectories of <tt class="docutils literal"><span class="pre">path</span></tt> should be included.</dd>
+</dl>
+<p>Of course, these arguments can be used together.</p>
+<p>The one potential gotcha is that <tt class="docutils literal"><span class="pre">match</span></tt> applies to the
+base filename, not the full path. So, this example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">FilePathField</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s">&quot;/home/images&quot;</span><span class="p">,</span> <span class="n">match</span><span class="o">=</span><span class="s">&quot;foo.*&quot;</span><span class="p">,</span> <span class="n">recursive</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>...will match <tt class="docutils literal"><span class="pre">/home/images/bar/foo.gif</span></tt> but not <tt class="docutils literal"><span class="pre">/home/images/foo/bar.gif</span></tt>
+because the <tt class="docutils literal"><span class="pre">match</span></tt> applies to the base filename
+(<tt class="docutils literal"><span class="pre">foo.gif</span></tt> and <tt class="docutils literal"><span class="pre">bar.gif</span></tt>).</p>
+<p>By default, <tt class="docutils literal"><span class="pre">FilePathField</span></tt> instances are
+created as <tt class="docutils literal"><span class="pre">varchar(100)</span></tt> columns in your database. As with other fields, you
+can change the maximum length using the <tt class="docutils literal"><span class="pre">max_length</span></tt> argument.</p>
+</div>
+<div class="section" id="floatfield">
+<h3>FloatField</h3>
+<p>A floating-point number represented in Python by a <tt class="docutils literal"><span class="pre">float</span></tt> instance.</p>
+</div>
+<div class="section" id="imagefield">
+<h3>ImageField</h3>
+<p>Like <tt class="docutils literal"><span class="pre">FileField</span></tt>, but validates that the uploaded object is a valid
+image. Has two extra optional arguments:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">height_field</span></tt></dt>
+<dd>Name of a model field which will be auto-populated with the height of the
+image each time the model instance is saved.</dd>
+<dt><tt class="docutils literal"><span class="pre">width_field</span></tt></dt>
+<dd>Name of a model field which will be auto-populated with the width of the
+image each time the model instance is saved.</dd>
+</dl>
+<p>In addition to the special attributes that are available for FileField``,
+an <tt class="docutils literal"><span class="pre">ImageField</span></tt> also has <tt class="docutils literal"><span class="pre">height</span></tt> and <tt class="docutils literal"><span class="pre">width</span></tt> attributes, both of which
+correspond to the image&#8217;s height and width in pixels.</p>
+<p>Requires the Python Imaging Library, available at <a class="reference external" href="http://www.pythonware.com/products/pil/">http://www.pythonware.com/products/pil/</a>.</p>
+<p>By default, <tt class="docutils literal"><span class="pre">ImageField</span></tt> instances are
+created as <tt class="docutils literal"><span class="pre">varchar(100)</span></tt> columns in your database. As with other fields, you
+can change the maximum length using the <tt class="docutils literal"><span class="pre">max_length</span></tt> argument.</p>
+</div>
+<div class="section" id="integerfield">
+<h3>IntegerField</h3>
+<p>An integer.</p>
+</div>
+<div class="section" id="ipaddressfield">
+<h3>IPAddressField</h3>
+<p>An IP address, in string format (e.g. <tt class="docutils literal"><span class="pre">'192.0.2.30'</span></tt>).</p>
+</div>
+<div class="section" id="nullbooleanfield">
+<h3>NullBooleanField</h3>
+<p>Like a <tt class="docutils literal"><span class="pre">BooleanField</span></tt>, but allows <tt class="docutils literal"><span class="pre">NULL</span></tt> as one of the options. Use
+this instead of a <tt class="docutils literal"><span class="pre">BooleanField</span></tt> with <tt class="docutils literal"><span class="pre">null=True</span></tt>.</p>
+</div>
+<div class="section" id="positiveintegerfield">
+<h3>PositiveIntegerField</h3>
+<p>Like an <tt class="docutils literal"><span class="pre">IntegerField</span></tt>, but must be positive.</p>
+</div>
+<div class="section" id="positivesmallintegerfield">
+<h3>PositiveSmallIntegerField</h3>
+<p>Like a <tt class="docutils literal"><span class="pre">PositiveIntegerField</span></tt>, but only allows values under a certain
+(database-dependent) point.</p>
+</div>
+<div class="section" id="slugfield">
+<h3>SlugField</h3>
+<p>&#8220;Slug&#8221; is a newspaper term. A slug is a short label for something,
+containing only letters, numbers, underscores or hyphens. They&#8217;re generally used
+in URLs.</p>
+<p>Like a <tt class="docutils literal"><span class="pre">CharField</span></tt>, you can specify <tt class="docutils literal"><span class="pre">max_length</span></tt>. If <tt class="docutils literal"><span class="pre">max_length</span></tt> is not
+specified, Django will use a default length of 50.</p>
+<p>Implies setting <tt class="docutils literal"><span class="pre">db_index</span></tt> to <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+</div>
+<div class="section" id="smallintegerfield">
+<h3>SmallIntegerField</h3>
+<p>Like an <tt class="docutils literal"><span class="pre">IntegerField</span></tt>, but only allows values under a certain
+(database-dependent) point.</p>
+</div>
+<div class="section" id="textfield">
+<h3>TextField</h3>
+<p>A large text field.</p>
+<p>Also see <tt class="docutils literal"><span class="pre">CharField</span></tt> for storing smaller bits of text.</p>
+</div>
+<div class="section" id="timefield">
+<h3>TimeField</h3>
+<p>A time, represented in Python by a <tt class="docutils literal"><span class="pre">datetime.time</span></tt> instance. Accepts the same
+auto-population options as <tt class="docutils literal"><span class="pre">DateField</span></tt>.</p>
+</div>
+<div class="section" id="urlfield">
+<h3>URLField</h3>
+<p>A <tt class="docutils literal"><span class="pre">CharField</span></tt> for a URL. Has one extra optional argument:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">verify_exists</span></tt></dt>
+<dd>If <tt class="docutils literal"><span class="pre">True</span></tt> (the default), the URL given will be checked for existence
+(i.e., the URL actually loads and doesn&#8217;t give a 404 response). It should
+be noted that when using the single-threaded development server, validating
+a url being served by the same server will hang.
+This should not be a problem for multithreaded servers.</dd>
+</dl>
+<p>Like all <tt class="docutils literal"><span class="pre">CharField</span></tt> subclasses, <tt class="docutils literal"><span class="pre">URLField</span></tt> takes the optional
+<tt class="docutils literal"><span class="pre">max_length</span></tt> argument. If you don&#8217;t specify
+<tt class="docutils literal"><span class="pre">max_length</span></tt>, a default of 200 is used.</p>
+</div>
+<div class="section" id="xmlfield">
+<h3>XMLField</h3>
+<p>A <tt class="docutils literal"><span class="pre">TextField</span></tt> that checks that the value is valid XML that matches a
+given schema. Takes one required argument:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">schema_path</span></tt></dt>
+<dd>The filesystem path to a RelaxNG schema against which to validate the
+field. For more on RelaxNG, see <a class="reference external" href="http://www.relaxng.org/">http://www.relaxng.org/</a>.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="universal-field-options">
+<h2>Universal Field Options</h2>
+<p>The following arguments are available to all field types. All are optional.</p>
+<div class="section" id="null">
+<h3>null</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, Django will store empty values as <tt class="docutils literal"><span class="pre">NULL</span></tt> in the database. If
+<tt class="docutils literal"><span class="pre">False</span></tt>, saving empty values will likely result in a database error. Default
+is <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+<p>Note that empty string values will always get stored as empty strings, not as
+<tt class="docutils literal"><span class="pre">NULL</span></tt>. Only use <tt class="docutils literal"><span class="pre">null=True</span></tt> for non-string fields such as integers,
+booleans and dates. For both types of fields, you will also need to set
+<tt class="docutils literal"><span class="pre">blank=True</span></tt> if you wish to permit empty values in forms, as the
+<tt class="docutils literal"><span class="pre">null</span></tt> parameter only affects database storage (see
+<tt class="docutils literal"><span class="pre">blank</span></tt>).</p>
+<p>Avoid using <tt class="docutils literal"><span class="pre">null</span></tt> on string-based fields such as
+<tt class="docutils literal"><span class="pre">CharField</span></tt> and <tt class="docutils literal"><span class="pre">TextField</span></tt> unless you have an excellent reason.
+If a string-based field has <tt class="docutils literal"><span class="pre">null=True</span></tt>, that means it has two possible values
+for &#8220;no data&#8221;: <tt class="docutils literal"><span class="pre">NULL</span></tt>, and the empty string. In most cases, it&#8217;s redundant to
+have two possible values for &#8220;no data;&#8221; Django&#8217;s convention is to use the empty
+string, not <tt class="docutils literal"><span class="pre">NULL</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">When using the Oracle database backend, the <tt class="docutils literal"><span class="pre">null=True</span></tt> option will be
+coerced for string-based fields that have the empty string as a possible
+value, and the value <tt class="docutils literal"><span class="pre">NULL</span></tt> will be stored to denote the empty string.</p>
+</div>
+<p>For more on this, see the section &#8220;Making Date and Numeric Fields Optional&#8221; in
+Chapter 6.</p>
+</div>
+<div class="section" id="blank">
+<h3>blank</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, the field is allowed to be blank. Default is <tt class="docutils literal"><span class="pre">False</span></tt>.</p>
+<p>Note that this is different than <tt class="docutils literal"><span class="pre">null</span></tt>. <tt class="docutils literal"><span class="pre">null</span></tt> is
+purely database-related, whereas <tt class="docutils literal"><span class="pre">blank</span></tt> is validation-related. If
+a field has <tt class="docutils literal"><span class="pre">blank=True</span></tt>, validation on Django&#8217;s admin site will allow entry
+of an empty value. If a field has <tt class="docutils literal"><span class="pre">blank=False</span></tt>, the field will be required.</p>
+</div>
+<div class="section" id="choices">
+<h3>choices</h3>
+<p>An iterable (e.g., a list or tuple) of 2-tuples to use as choices for this
+field.</p>
+<p>A choices list looks like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">YEAR_IN_SCHOOL_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;FR&#39;</span><span class="p">,</span> <span class="s">&#39;Freshman&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;SO&#39;</span><span class="p">,</span> <span class="s">&#39;Sophomore&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;JR&#39;</span><span class="p">,</span> <span class="s">&#39;Junior&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;SR&#39;</span><span class="p">,</span> <span class="s">&#39;Senior&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;GR&#39;</span><span class="p">,</span> <span class="s">&#39;Graduate&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The first element in each tuple is the actual value to be stored. The second
+element is the human-readable name for the option.</p>
+<p>The choices list can be defined either as part of your model class:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">GENDER_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;Male&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="s">&#39;Female&#39;</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">gender</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">GENDER_CHOICES</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or outside your model class altogether:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">GENDER_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;Male&#39;</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="s">&#39;Female&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+<span class="k">class</span> <span class="nc">Foo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">gender</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="n">GENDER_CHOICES</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can also collect your available choices into named groups that can
+be used for organizational purposes in a form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">MEDIA_CHOICES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;Audio&#39;</span><span class="p">,</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s">&#39;vinyl&#39;</span><span class="p">,</span> <span class="s">&#39;Vinyl&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;cd&#39;</span><span class="p">,</span> <span class="s">&#39;CD&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;Video&#39;</span><span class="p">,</span> <span class="p">(</span>
+            <span class="p">(</span><span class="s">&#39;vhs&#39;</span><span class="p">,</span> <span class="s">&#39;VHS Tape&#39;</span><span class="p">),</span>
+            <span class="p">(</span><span class="s">&#39;dvd&#39;</span><span class="p">,</span> <span class="s">&#39;DVD&#39;</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="p">(</span><span class="s">&#39;unknown&#39;</span><span class="p">,</span> <span class="s">&#39;Unknown&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The first element in each tuple is the name to apply to the group. The
+second element is an iterable of 2-tuples, with each 2-tuple containing
+a value and a human-readable name for an option. Grouped options may be
+combined with ungrouped options within a single list (such as the
+<cite>unknown</cite> option in this example).</p>
+<p>Finally, note that choices can be any iterable object &#8211; not necessarily a list
+or tuple. This lets you construct choices dynamically. But if you find yourself
+hacking <tt class="docutils literal"><span class="pre">choices</span></tt> to be dynamic, you&#8217;re probably better off using a
+proper database table with a <cite>ForeignKey`</cite>. <tt class="docutils literal"><span class="pre">choices</span></tt> is
+meant for static data that doesn&#8217;t change much, if ever.</p>
+</div>
+<div class="section" id="db-column">
+<h3>db_column</h3>
+<p>The name of the database column to use for this field. If this isn&#8217;t given,
+Django will use the field&#8217;s name.</p>
+<p>If your database column name is an SQL reserved word, or contains
+characters that aren&#8217;t allowed in Python variable names &#8211; notably, the
+hyphen &#8211; that&#8217;s OK. Django quotes column and table names behind the
+scenes.</p>
+</div>
+<div class="section" id="db-index">
+<h3>db_index</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">sqlindexes</span></tt> will output a
+<tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">INDEX</span></tt> statement for this field.</p>
+</div>
+<div class="section" id="db-tablespace">
+<h3>db_tablespace</h3>
+<p>The name of the database tablespace to use for this field&#8217;s index, if this field
+is indexed. The default is the project&#8217;s <tt class="docutils literal"><span class="pre">DEFAULT_INDEX_TABLESPACE</span></tt>
+setting, if set, or the <tt class="docutils literal"><span class="pre">db_tablespace</span></tt> of the model, if any. If
+the backend doesn&#8217;t support tablespaces, this option is ignored.</p>
+</div>
+<div class="section" id="default">
+<h3>default</h3>
+<p>The default value for the field. This can be a value or a callable object. If
+callable it will be called every time a new object is created.</p>
+</div>
+<div class="section" id="editable">
+<h3>editable</h3>
+<p>If <tt class="docutils literal"><span class="pre">False</span></tt>, the field will not be editable in the admin or via forms
+automatically generated from the model class. Default is <tt class="docutils literal"><span class="pre">True</span></tt>.</p>
+</div>
+<div class="section" id="help-text">
+<h3>help_text</h3>
+<p>Extra &#8220;help&#8221; text to be displayed under the field on the object&#8217;s admin form.
+It&#8217;s useful for documentation even if your object doesn&#8217;t have an admin form.</p>
+<p>Note that this value is <em>not</em> HTML-escaped when it&#8217;s displayed in the admin
+interface. This lets you include HTML in <tt class="docutils literal"><span class="pre">help_text</span></tt> if you so
+desire. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">help_text</span><span class="o">=</span><span class="s">&quot;Please use the following format: &lt;em&gt;YYYY-MM-DD&lt;/em&gt;.&quot;</span>
+</pre></div>
+</div>
+<p>Alternatively you can use plain text and
+<tt class="docutils literal"><span class="pre">django.utils.html.escape()</span></tt> to escape any HTML special characters.</p>
+</div>
+<div class="section" id="primary-key">
+<h3>primary_key</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, this field is the primary key for the model.</p>
+<p>If you don&#8217;t specify <tt class="docutils literal"><span class="pre">primary_key=True</span></tt> for any fields in your model, Django
+will automatically add an <tt class="docutils literal"><span class="pre">AutoField</span></tt> to hold the primary key, so you
+don&#8217;t need to set <tt class="docutils literal"><span class="pre">primary_key=True</span></tt> on any of your fields unless you want to
+override the default primary-key behavior.</p>
+<p><tt class="docutils literal"><span class="pre">primary_key=True</span></tt> implies <tt class="docutils literal"><span class="pre">null=False</span></tt> and <tt class="docutils literal"><span class="pre">unique=True</span></tt>.
+Only one primary key is allowed on an object.</p>
+</div>
+<div class="section" id="unique">
+<h3>unique</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, this field must be unique throughout the table.</p>
+<p>This is enforced at the database level and at the level of forms created with
+<tt class="docutils literal"><span class="pre">ModelForm</span></tt> (including forms in the Django admin site). If
+you try to save a model with a duplicate value in a <tt class="docutils literal"><span class="pre">unique</span></tt>
+field, an <tt class="docutils literal"><span class="pre">IntegrityError</span></tt> will be raised by the model&#8217;s
+<tt class="docutils literal"><span class="pre">save</span></tt> method.</p>
+<p>This option is valid on all field types except <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt>,
+<tt class="docutils literal"><span class="pre">FileField</span></tt> and <tt class="docutils literal"><span class="pre">ImageField</span></tt>.</p>
+</div>
+<div class="section" id="unique-for-date">
+<h3>unique_for_date</h3>
+<p>Set this to the name of a <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> to
+require that this field be unique for the value of the date field.</p>
+<p>For example, if you have a field <tt class="docutils literal"><span class="pre">title</span></tt> that has
+<tt class="docutils literal"><span class="pre">unique_for_date=&quot;pub_date&quot;</span></tt>, then Django wouldn&#8217;t allow the entry of two
+records with the same <tt class="docutils literal"><span class="pre">title</span></tt> and <tt class="docutils literal"><span class="pre">pub_date</span></tt>.</p>
+<p>This is enforced at the level of forms created with <tt class="docutils literal"><span class="pre">ModelForm</span></tt> (including
+forms in the Django admin site) but not at the database level.</p>
+</div>
+<div class="section" id="unique-for-month">
+<h3>unique_for_month</h3>
+<p>Like <tt class="docutils literal"><span class="pre">unique_for_date</span></tt>, but requires the field to be unique with
+respect to the month.</p>
+</div>
+<div class="section" id="unique-for-year">
+<h3>unique_for_year</h3>
+<p>Like <tt class="docutils literal"><span class="pre">unique_for_date</span></tt> and <tt class="docutils literal"><span class="pre">unique_for_month</span></tt>.</p>
+</div>
+<div class="section" id="verbose-name">
+<h3>verbose_name</h3>
+<p>A human-readable name for the field. If the verbose name isn&#8217;t given, Django
+will automatically create it using the field&#8217;s attribute name, converting
+underscores to spaces.</p>
+</div>
+</div>
+<div class="section" id="relationships">
+<h2>Relationships</h2>
+<p>Clearly, the power of relational databases lies in relating tables to each
+other. Django offers ways to define the three most common types of database
+relationships: many-to-one, many-to-many, and one-to-one.</p>
+<div class="section" id="foreignkey">
+<h3>ForeignKey</h3>
+<p>A many-to-one relationship. Requires a positional argument: the class to which
+the model is related.</p>
+<p>To create a recursive relationship &#8211; an object that has a many-to-one
+relationship with itself &#8211; use <tt class="docutils literal"><span class="pre">models.ForeignKey('self')</span></tt>.</p>
+<p>If you need to create a relationship on a model that has not yet been defined,
+you can use the name of the model, rather than the model object itself:</p>
+<div class="highlight-python"><pre>class Car(models.Model):
+    manufacturer = models.ForeignKey('Manufacturer')
+    # ...
+
+class Manufacturer(models.Model):
+    # ...</pre>
+</div>
+<p>Note, however, that this only refers to models in the same <tt class="docutils literal"><span class="pre">models.py</span></tt> file.</p>
+<p>To refer to models defined in another
+application, you must instead explicitly specify the application label. For
+example, if the <tt class="docutils literal"><span class="pre">Manufacturer</span></tt> model above is defined in another application
+called <tt class="docutils literal"><span class="pre">production</span></tt>, you&#8217;d need to use:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Car</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">manufacturer</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="s">&#39;production.Manufacturer&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Behind the scenes, Django appends <tt class="docutils literal"><span class="pre">&quot;_id&quot;</span></tt> to the field name to create its
+database column name. In the above example, the database table for the <tt class="docutils literal"><span class="pre">Car</span></tt>
+model will have a <tt class="docutils literal"><span class="pre">manufacturer_id</span></tt> column. (You can change this explicitly by
+specifying <tt class="docutils literal"><span class="pre">db_column</span></tt>) However, your code should never have to
+deal with the database column name, unless you write custom SQL. You&#8217;ll always
+deal with the field names of your model object.</p>
+<p><tt class="docutils literal"><span class="pre">ForeignKey</span></tt> accepts an extra set of arguments &#8211; all optional &#8211; that
+define the details of how the relation works.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">limit_choices_to</span></tt></dt>
+<dd><p class="first">A dictionary of lookup arguments and values
+that limit the available admin choices for this object. Use this with
+functions from the Python <tt class="docutils literal"><span class="pre">datetime</span></tt> module to limit choices of objects by
+date. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">limit_choices_to</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;pub_date__lte&#39;</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>only allows the choice of related objects with a <tt class="docutils literal"><span class="pre">pub_date</span></tt> before the
+current date/time to be chosen.</p>
+<p class="last"><tt class="docutils literal"><span class="pre">limit_choices_to</span></tt> has no effect on the inline FormSets that are created
+to display related objects in the admin.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">related_name</span></tt></dt>
+<dd>The name to use for the relation from the related object back to this one.</dd>
+<dt><tt class="docutils literal"><span class="pre">to_field</span></tt></dt>
+<dd>The field on the related object that the relation is to. By default, Django
+uses the primary key of the related object.</dd>
+</dl>
+</div>
+<div class="section" id="manytomanyfield">
+<h3>ManyToManyField</h3>
+<p>A many-to-many relationship. Requires a positional argument: the class to which
+the model is related. This works exactly the same as it does for
+<tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, including all the options regarding recursive relationships
+and lazy relationships.</p>
+<p>Behind the scenes, Django creates an intermediary join table to represent the
+many-to-many relationship. By default, this table name is generated using the
+names of the two tables being joined. Since some databases don&#8217;t support table
+names above a certain length, these table names will be automatically
+truncated to 64 characters and a uniqueness hash will be used. This means you
+might see table names like <tt class="docutils literal"><span class="pre">author_books_9cdf4</span></tt>; this is perfectly normal.
+You can manually provide the name of the join table using the
+<tt class="docutils literal"><span class="pre">db_table</span></tt> option.</p>
+<p><tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> accepts an extra set of arguments &#8211; all optional &#8211;
+that control how the relationship functions.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">related_name</span></tt></dt>
+<dd>Same as <tt class="docutils literal"><span class="pre">related_name</span></tt> in <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>.</dd>
+<dt><tt class="docutils literal"><span class="pre">limit_choices_to</span></tt></dt>
+<dd><p class="first">Same as <tt class="docutils literal"><span class="pre">limit_choices_to</span></tt> in <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>.</p>
+<p class="last"><tt class="docutils literal"><span class="pre">limit_choices_to</span></tt> has no effect when used on a <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> with a
+custom intermediate table specified using the
+<tt class="docutils literal"><span class="pre">through</span></tt> paramter.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">symmetrical</span></tt></dt>
+<dd><p class="first">Only used in the definition of ManyToManyFields on self. Consider the
+following model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">friends</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="s">&quot;self&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>When Django processes this model, it identifies that it has a
+<tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> on itself, and as a result, it doesn&#8217;t add a
+<tt class="docutils literal"><span class="pre">person_set</span></tt> attribute to the <tt class="docutils literal"><span class="pre">Person</span></tt> class. Instead, the
+<tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> is assumed to be symmetrical &#8211; that is, if I am
+your friend, then you are my friend.</p>
+<p class="last">If you do not want symmetry in many-to-many relationships with <tt class="docutils literal"><span class="pre">self</span></tt>, set
+<tt class="docutils literal"><span class="pre">symmetrical</span></tt> to <tt class="docutils literal"><span class="pre">False</span></tt>. This will force Django to
+add the descriptor for the reverse relationship, allowing
+<tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> relationships to be non-symmetrical.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">through</span></tt></dt>
+<dd><p class="first">Django will automatically generate a table to manage many-to-many
+relationships. However, if you want to manually specify the intermediary
+table, you can use the <tt class="docutils literal"><span class="pre">through</span></tt> option to specify
+the Django model that represents the intermediate table that you want to
+use.</p>
+<p class="last">The most common use for this option is when you want to associate
+extra data with a many-to-many relationship.</p>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">db_table</span></tt></dt>
+<dd>The name of the table to create for storing the many-to-many data. If this
+is not provided, Django will assume a default name based upon the names of
+the two tables being joined.</dd>
+</dl>
+</div>
+<div class="section" id="onetoonefield">
+<h3>OneToOneField</h3>
+<p>A one-to-one relationship. Conceptually, this is similar to a
+<tt class="docutils literal"><span class="pre">ForeignKey</span></tt> with <tt class="docutils literal"><span class="pre">unique=True</span></tt>, but the
+&#8220;reverse&#8221; side of the relation will directly return a single object.</p>
+<p>This is most useful as the primary key of a model which &#8220;extends&#8221;
+another model in some way; multi-table-inheritance is
+implemented by adding an implicit one-to-one relation from the child
+model to the parent model, for example.</p>
+<p>One positional argument is required: the class to which the model will be
+related. This works exactly the same as it does for <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>,
+including all the options regarding recursive relationships and lazy
+relationships.</p>
+<p>Additionally, <tt class="docutils literal"><span class="pre">OneToOneField</span></tt> accepts all of the extra arguments
+accepted by <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, plus one extra argument:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">parent_link</span></tt></dt>
+<dd>When <tt class="docutils literal"><span class="pre">True</span></tt> and used in a model which inherits from another
+(concrete) model, indicates that this field should be used as the
+link back to the parent class, rather than the extra
+<tt class="docutils literal"><span class="pre">OneToOneField</span></tt> which would normally be implicitly created by
+subclassing.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="model-metadata-options">
+<h2>Model Metadata Options</h2>
+<p>Model-specific metadata lives in a <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Meta</span></tt> defined in the body of your
+model class:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">maxlength</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="c"># model metadata options go here</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>Model metadata is &#8220;anything that&#8217;s not a field,&#8221; such as ordering options and so forth.</p>
+<p>The sections that follow present a list of all possible <tt class="docutils literal"><span class="pre">Meta</span></tt> options.
+No options are required. Adding <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Meta</span></tt> to a model is completely optional.</p>
+<div class="section" id="abstract">
+<h3>abstract</h3>
+<p>If <tt class="docutils literal"><span class="pre">True</span></tt>, this model will be an abstract base class. See the Django
+documentation for more on abstract base classes.</p>
+</div>
+<div class="section" id="db-table">
+<h3>db_table</h3>
+<p>The name of the database table to use for the model:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">db_table</span> <span class="o">=</span> <span class="s">&#39;music_album&#39;</span>
+</pre></div>
+</div>
+<div class="section" id="table-names">
+<h4>Table names</h4>
+<p>To save you time, Django automatically derives the name of the database table
+from the name of your model class and the app that contains it. A model&#8217;s
+database table name is constructed by joining the model&#8217;s &#8220;app label&#8221; &#8211; the
+name you used in <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">startapp</span></tt> &#8211; to the model&#8217;s class name, with an
+underscore between them.</p>
+<p>For example, if you have an app <tt class="docutils literal"><span class="pre">bookstore</span></tt> (as created by
+<tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">startapp</span> <span class="pre">bookstore</span></tt>), a model defined as <tt class="docutils literal"><span class="pre">class</span> <span class="pre">Book</span></tt> will have
+a database table named <tt class="docutils literal"><span class="pre">bookstore_book</span></tt>.</p>
+<p>To override the database table name, use the <tt class="docutils literal"><span class="pre">db_table</span></tt> parameter in
+<tt class="docutils literal"><span class="pre">class</span> <span class="pre">Meta</span></tt>.</p>
+<p>If your database table name is an SQL reserved word, or contains characters that
+aren&#8217;t allowed in Python variable names &#8211; notably, the hyphen &#8211; that&#8217;s OK.
+Django quotes column and table names behind the scenes.</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>db_tablespace</h3>
+<p>The name of the database tablespace to use for the model. If the backend doesn&#8217;t
+support tablespaces, this option is ignored.</p>
+</div>
+<div class="section" id="get-latest-by">
+<h3>get_latest_by</h3>
+<p>The name of a <tt class="docutils literal"><span class="pre">DateField</span></tt> or <tt class="docutils literal"><span class="pre">DateTimeField</span></tt> in the model. This
+specifies the default field to use in your model <tt class="docutils literal"><span class="pre">Manager</span></tt>&#8216;s
+<tt class="docutils literal"><span class="pre">latest</span></tt> method.</p>
+<p>Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">get_latest_by</span> <span class="o">=</span> <span class="s">&quot;order_date&quot;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="managed">
+<h3>managed</h3>
+<p>Defaults to <tt class="docutils literal"><span class="pre">True</span></tt>, meaning Django will create the appropriate database
+tables in <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">syncdb</span></tt> and remove them as part of a <tt class="docutils literal"><span class="pre">reset</span></tt>
+management command. That is, Django <em>manages</em> the database tables&#8217; lifecycles.</p>
+<p>If <tt class="docutils literal"><span class="pre">False</span></tt>, no database table creation or deletion operations will be
+performed for this model. This is useful if the model represents an existing
+table or a database view that has been created by some other means. This is
+the <em>only</em> difference when <tt class="docutils literal"><span class="pre">managed</span></tt> is <tt class="docutils literal"><span class="pre">False</span></tt>. All other aspects of
+model handling are exactly the same as normal. This includes</p>
+<ol class="arabic">
+<li><p class="first">Adding an automatic primary key field to the model if you don&#8217;t declare
+it. To avoid confusion for later code readers, it&#8217;s recommended to
+specify all the columns from the database table you are modeling when
+using unmanaged models.</p>
+</li>
+<li><p class="first">If a model with <tt class="docutils literal"><span class="pre">managed=False</span></tt> contains a
+<tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> that points to another
+unmanaged model, then the intermediary table for the many-to-many join
+will also not be created. However, the intermediary table between one
+managed and one unmanaged model <em>will</em> be created.</p>
+<p>If you need to change this default behavior, create the intermediary
+table as an explicit model (with <tt class="docutils literal"><span class="pre">managed</span></tt> set as needed) and use the
+<tt class="docutils literal"><span class="pre">through</span></tt> attribute to make the relation use your
+custom model.</p>
+</li>
+</ol>
+<p>For tests involving models with <tt class="docutils literal"><span class="pre">managed=False</span></tt>, it&#8217;s up to you to ensure
+the correct tables are created as part of the test setup.</p>
+<p>If you&#8217;re interested in changing the Python-level behavior of a model class,
+you <em>could</em> use <tt class="docutils literal"><span class="pre">managed=False</span></tt> and create a copy of an existing model.
+However, there&#8217;s a better approach for that situation: proxy-models.</p>
+</div>
+<div class="section" id="ordering">
+<h3>ordering</h3>
+<p>The default ordering for the object, for use when obtaining lists of objects:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-order_date&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>This is a tuple or list of strings. Each string is a field name with an optional
+&#8220;-&#8221; prefix, which indicates descending order. Fields without a leading &#8220;-&#8221; will
+be ordered ascending. Use the string &#8221;?&#8221; to order randomly.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Regardless of how many fields are in <tt class="docutils literal"><span class="pre">ordering</span></tt>, the admin
+site uses only the first field.</p>
+</div>
+<p>For example, to order by a <tt class="docutils literal"><span class="pre">pub_date</span></tt> field ascending, use this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;pub_date&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>To order by <tt class="docutils literal"><span class="pre">pub_date</span></tt> descending, use this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-pub_date&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>To order by <tt class="docutils literal"><span class="pre">pub_date</span></tt> descending, then by <tt class="docutils literal"><span class="pre">author</span></tt> ascending, use this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ordering</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;-pub_date&#39;</span><span class="p">,</span> <span class="s">&#39;author&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="proxy">
+<h3>proxy</h3>
+<p>If set to <tt class="docutils literal"><span class="pre">True</span></tt>, a model which subclasses another model will be treated as
+a proxy model. For more on proxy models, see the Django documentation.</p>
+</div>
+<div class="section" id="unique-together">
+<h3>unique_together</h3>
+<p>Sets of field names that, taken together, must be unique:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">unique_together</span> <span class="o">=</span> <span class="p">((</span><span class="s">&quot;driver&quot;</span><span class="p">,</span> <span class="s">&quot;restaurant&quot;</span><span class="p">),)</span>
+</pre></div>
+</div>
+<p>This is a list of lists of fields that must be unique when considered together.
+It&#8217;s used by <tt class="docutils literal"><span class="pre">ModelForm</span></tt> forms (including forms in the Django admin site) and
+is enforced at the database level (i.e., the appropriate <tt class="docutils literal"><span class="pre">UNIQUE</span></tt> statements
+are included in the <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TABLE</span></tt> statement).</p>
+<p>For convenience, unique_together can be a single sequence when dealing with a single
+set of fields:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">unique_together</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;driver&quot;</span><span class="p">,</span> <span class="s">&quot;restaurant&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id2">
+<h3>verbose_name</h3>
+<p>A human-readable name for the object, singular:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">verbose_name</span> <span class="o">=</span> <span class="s">&quot;pizza&quot;</span>
+</pre></div>
+</div>
+<p>If this isn&#8217;t given, Django will use a munged version of the class name:
+<tt class="docutils literal"><span class="pre">CamelCase</span></tt> becomes <tt class="docutils literal"><span class="pre">camel</span> <span class="pre">case</span></tt>.</p>
+</div>
+<div class="section" id="verbose-name-plural">
+<h3>verbose_name_plural</h3>
+<p>The plural name for the object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="s">&quot;stories&quot;</span>
+</pre></div>
+</div>
+<p>If this isn&#8217;t given, Django will use <tt class="docutils literal"><span class="pre">verbose_name</span></tt> + <tt class="docutils literal"><span class="pre">&quot;s&quot;</span></tt>.</p>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter20.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixB.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

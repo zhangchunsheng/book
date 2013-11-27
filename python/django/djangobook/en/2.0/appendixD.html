@@ -1,0 +1,813 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Appendix D: Settings</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='appendixC.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixE.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="appendix-d-settings">
+<h1>Appendix D: Settings</h1>
+<p>Your Django settings file contains all the configuration of your Django
+installation. This appendix explains how settings work and which settings are
+available.</p>
+<div class="section" id="what-s-a-settings-file">
+<h2>What&#8217;s a Settings File?</h2>
+<p>A <em>settings file</em> is just a Python module with module-level variables.</p>
+<p>Here are a couple of example settings:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">False</span>
+<span class="n">DEFAULT_FROM_EMAIL</span> <span class="o">=</span> <span class="s">&#39;webmaster@example.com&#39;</span>
+<span class="n">TEMPLATE_DIRS</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;/home/templates/mike&#39;</span><span class="p">,</span> <span class="s">&#39;/home/templates/john&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because a settings file is a Python module, the following apply:</p>
+<ul>
+<li><p class="first">It must be valid Python code; syntax errors aren&#8217;t allowed.</p>
+</li>
+<li><p class="first">It can assign settings dynamically using normal Python syntax,
+for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">MY_SETTING</span> <span class="o">=</span> <span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">30</span><span class="p">)]</span>
+</pre></div>
+</div>
+</li>
+<li><p class="first">It can import values from other settings files.</p>
+</li>
+</ul>
+<div class="section" id="default-settings">
+<h3>Default Settings</h3>
+<p>A Django settings file doesn&#8217;t have to define any settings if it doesn&#8217;t need
+to. Each setting has a sensible default value. These defaults live in the file
+<tt class="docutils literal"><span class="pre">django/conf/global_settings.py</span></tt>.</p>
+<p>Here&#8217;s the algorithm Django uses in compiling settings:</p>
+<ul class="simple">
+<li>Load settings from <tt class="docutils literal"><span class="pre">global_settings.py</span></tt>.</li>
+<li>Load settings from the specified settings file, overriding the global
+settings as necessary.</li>
+</ul>
+<p>Note that a settings file should <em>not</em> import from <tt class="docutils literal"><span class="pre">global_settings</span></tt>, because
+that&#8217;s redundant.</p>
+</div>
+<div class="section" id="seeing-which-settings-you-ve-changed">
+<h3>Seeing Which Settings You&#8217;ve Changed</h3>
+<p>There&#8217;s an easy way to view which of your settings deviate from the default
+settings. The command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">diffsettings</span></tt> displays differences between
+the current settings file and Django&#8217;s default settings.</p>
+<p><tt class="docutils literal"><span class="pre">manage.py</span></tt> is described in more detail in Appendix F.</p>
+</div>
+<div class="section" id="using-settings-in-python-code">
+<h3>Using Settings in Python Code</h3>
+<p>In your Django applications, use settings by importing the object
+<tt class="docutils literal"><span class="pre">django.conf.settings</span></tt>, for example:</p>
+<div class="highlight-python"><pre>from django.conf import settings
+
+if settings.DEBUG:
+    # Do something</pre>
+</div>
+<p>Note that <tt class="docutils literal"><span class="pre">django.conf.settings</span></tt> isn&#8217;t a module &#8211; it&#8217;s an object. So
+importing individual settings is not possible:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.settings</span> <span class="kn">import</span> <span class="n">DEBUG</span>  <span class="c"># This won&#39;t work.</span>
+</pre></div>
+</div>
+<p>Also note that your code should <em>not</em> import from either <tt class="docutils literal"><span class="pre">global_settings</span></tt> or
+your own settings file. <tt class="docutils literal"><span class="pre">django.conf.settings</span></tt> abstracts the concepts of
+default settings and site-specific settings; it presents a single interface.
+It also decouples the code that uses settings from the location of your
+settings.</p>
+</div>
+<div class="section" id="altering-settings-at-runtime">
+<h3>Altering Settings at Runtime</h3>
+<p>You shouldn&#8217;t alter settings in your applications at runtime. For example,
+don&#8217;t do this in a view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span>   <span class="c"># Don&#39;t do this!</span>
+</pre></div>
+</div>
+<p>The only place that settings should be defined in is a settings file.</p>
+</div>
+<div class="section" id="security">
+<h3>Security</h3>
+<p>Because a settings file contains sensitive information, such as the database
+password, you should make every attempt to limit access to it. For example,
+change its file permissions so that only you and your Web server&#8217;s user can
+read it. This is especially important in a shared-hosting environment.</p>
+</div>
+<div class="section" id="creating-your-own-settings">
+<h3>Creating Your Own Settings</h3>
+<p>There&#8217;s nothing stopping you from creating your own settings, for your own
+Django applications. Just follow these conventions:</p>
+<ul class="simple">
+<li>Use all uppercase for setting names.</li>
+<li>For settings that are sequences, use tuples instead of lists. Settings
+should be considered immutable and shouldn&#8217;t be changed once they&#8217;re
+defined. Using tuples mirrors these semantics.</li>
+<li>Don&#8217;t reinvent an already existing setting.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="designating-the-settings-django-settings-module">
+<h2>Designating the Settings: DJANGO_SETTINGS_MODULE</h2>
+<p>When you use Django, you have to tell it which settings you&#8217;re using. Do this
+by using the environment variable <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>.</p>
+<p>The value of <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> should be in Python path syntax (e.g.,
+<tt class="docutils literal"><span class="pre">mysite.settings</span></tt>). Note that the settings module should be on the
+Python import search path (<tt class="docutils literal"><span class="pre">PYTHONPATH</span></tt>).</p>
+<div class="admonition-tip admonition">
+<p class="first admonition-title">Tip:</p>
+<p class="last">A good guide to <tt class="docutils literal"><span class="pre">PYTHONPATH</span></tt> can be found at
+<a class="reference external" href="http://diveintopython.org/getting_to_know_python/everything_is_an_object.html">http://diveintopython.org/getting_to_know_python/everything_is_an_object.html</a>.</p>
+</div>
+<div class="section" id="the-django-admin-py-utility">
+<h3>The django-admin.py Utility</h3>
+<p>When using <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> (see Appendix F), you can either set the
+environment variable once or explicitly pass in the settings module each time
+you run the utility.</p>
+<p>Here&#8217;s an example using the Unix Bash shell:</p>
+<div class="highlight-python"><pre>export DJANGO_SETTINGS_MODULE=mysite.settings
+django-admin.py runserver</pre>
+</div>
+<p>Here&#8217;s an example using the Windows shell:</p>
+<div class="highlight-python"><pre>set DJANGO_SETTINGS_MODULE=mysite.settings
+django-admin.py runserver</pre>
+</div>
+<p>Use the <tt class="docutils literal"><span class="pre">--settings</span></tt> command-line argument to specify the settings manually:</p>
+<div class="highlight-python"><pre>django-admin.py runserver --settings=mysite.settings</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">manage.py</span></tt> utility created by <tt class="docutils literal"><span class="pre">startproject</span></tt> as part of the project
+skeleton sets <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> automatically; see Appendix F for more
+about <tt class="docutils literal"><span class="pre">manage.py</span></tt>.</p>
+</div>
+<div class="section" id="on-the-server-mod-python">
+<h3>On the Server (mod_python)</h3>
+<p>In your live server environment, you&#8217;ll need to tell Apache/mod_python which
+settings file to use. Do that with <tt class="docutils literal"><span class="pre">SetEnv</span></tt>:</p>
+<div class="highlight-python"><pre>&lt;Location "/mysite/"&gt;
+    SetHandler python-program
+    PythonHandler django.core.handlers.modpython
+    SetEnv DJANGO_SETTINGS_MODULE mysite.settings
+&lt;/Location&gt;</pre>
+</div>
+<p>For more information, read the Django mod_python documentation online at
+<a class="reference external" href="http://docs.djangoproject.com/en/dev/howto/deployment/modpython/">http://docs.djangoproject.com/en/dev/howto/deployment/modpython/</a>.</p>
+</div>
+</div>
+<div class="section" id="using-settings-without-setting-django-settings-module">
+<h2>Using Settings Without Setting DJANGO_SETTINGS_MODULE</h2>
+<p>In some cases, you might want to bypass the <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>
+environment variable. For example, if you&#8217;re using the template system by
+itself, you likely don&#8217;t want to have to set up an environment variable
+pointing to a settings module.</p>
+<p>In these cases, you can configure Django&#8217;s settings manually. Do this by
+calling <tt class="docutils literal"><span class="pre">django.conf.settings.configure()</span></tt>. Here&#8217;s an example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span>
+    <span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+    <span class="n">TEMPLATE_DEBUG</span> <span class="o">=</span> <span class="bp">True</span><span class="p">,</span>
+    <span class="n">TEMPLATE_DIRS</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s">&#39;/home/web-apps/myapp&#39;</span><span class="p">,</span>
+        <span class="s">&#39;/home/web-apps/base&#39;</span><span class="p">,</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Pass <tt class="docutils literal"><span class="pre">configure()</span></tt> as many keyword arguments as you&#8217;d like, with each keyword
+argument representing a setting and its value. Each argument name should be all
+uppercase, with the same name as the settings described earlier. If a particular
+setting is not passed to <tt class="docutils literal"><span class="pre">configure()</span></tt> and is needed at some later point,
+Django will use the default setting value.</p>
+<p>Configuring Django in this fashion is mostly necessary &#8211; and, indeed,
+recommended &#8211; when you&#8217;re using a piece of the framework inside a larger
+application.</p>
+<p>Consequently, when configured via <tt class="docutils literal"><span class="pre">settings.configure()</span></tt>, Django will not
+make any modifications to the process environment variables. (See the
+explanation of <tt class="docutils literal"><span class="pre">TIME_ZONE</span></tt> later in this appendix for why this would normally occur.)
+It&#8217;s assumed that you&#8217;re already in full control of your environment in these cases.</p>
+<div class="section" id="custom-default-settings">
+<h3>Custom Default Settings</h3>
+<p>If you&#8217;d like default values to come from somewhere other than
+<tt class="docutils literal"><span class="pre">django.conf.global_settings</span></tt>, you can pass in a module or class that
+provides the default settings as the <tt class="docutils literal"><span class="pre">default_settings</span></tt> argument (or as the
+first positional argument) in the call to <tt class="docutils literal"><span class="pre">configure()</span></tt>.</p>
+<p>In this example, default settings are taken from <tt class="docutils literal"><span class="pre">myapp_defaults</span></tt>, and the
+<tt class="docutils literal"><span class="pre">DEBUG</span></tt> setting is set to <tt class="docutils literal"><span class="pre">True</span></tt>, regardless of its value in
+<tt class="docutils literal"><span class="pre">myapp_defaults</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">myapp</span> <span class="kn">import</span> <span class="n">myapp_defaults</span>
+
+<span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">default_settings</span><span class="o">=</span><span class="n">myapp_defaults</span><span class="p">,</span> <span class="n">DEBUG</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The following example, which uses <tt class="docutils literal"><span class="pre">myapp_defaults</span></tt> as a positional argument,
+is equivalent:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">settings</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="n">myapp_defaults</span><span class="p">,</span> <span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Normally, you will not need to override the defaults in this fashion. The
+Django defaults are sufficiently tame that you can safely use them. Be aware
+that if you do pass in a new default module, it entirely <em>replaces</em> the Django
+defaults, so you must specify a value for every possible setting that might be
+used in that code you are importing. Check in
+<tt class="docutils literal"><span class="pre">django.conf.settings.global_settings</span></tt> for the full list.</p>
+</div>
+<div class="section" id="either-configure-or-django-settings-module-is-required">
+<h3>Either configure() or DJANGO_SETTINGS_MODULE Is Required</h3>
+<p>If you&#8217;re not setting the <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> environment variable, you
+<em>must</em> call <tt class="docutils literal"><span class="pre">configure()</span></tt> at some point before using any code that reads
+settings.</p>
+<p>If you don&#8217;t set <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt> and don&#8217;t call <tt class="docutils literal"><span class="pre">configure()</span></tt>,
+Django will raise an <tt class="docutils literal"><span class="pre">EnvironmentError</span></tt> exception the first time a setting
+is accessed.</p>
+<p>If you set <tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>, access settings values somehow, and <em>then</em>
+call <tt class="docutils literal"><span class="pre">configure()</span></tt>, Django will raise an <tt class="docutils literal"><span class="pre">EnvironmentError</span></tt> stating that settings
+have already been configured.</p>
+<p>Also, it&#8217;s an error to call <tt class="docutils literal"><span class="pre">configure()</span></tt> more than once, or to call
+<tt class="docutils literal"><span class="pre">configure()</span></tt> after any setting has been accessed.</p>
+<p>It boils down to this: use exactly one of either <tt class="docutils literal"><span class="pre">configure()</span></tt> or
+<tt class="docutils literal"><span class="pre">DJANGO_SETTINGS_MODULE</span></tt>, and only once.</p>
+</div>
+</div>
+<div class="section" id="available-settings">
+<h2>Available Settings</h2>
+<p>The following sections consist of a list of the main available settings,
+in alphabetical order, and their default values.</p>
+<div class="section" id="absolute-url-overrides">
+<h3>ABSOLUTE_URL_OVERRIDES</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">{}</span></tt> (empty dictionary)</p>
+<p>This is a dictionary mapping <tt class="docutils literal"><span class="pre">&quot;app_label.model_name&quot;</span></tt> strings to functions that take
+a model object and return its URL. This is a way of overriding
+<tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt> methods on a per-installation basis. Here&#8217;s an example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ABSOLUTE_URL_OVERRIDES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;blogs.weblog&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="s">&quot;/blogs/</span><span class="si">%s</span><span class="s">/&quot;</span> <span class="o">%</span> <span class="n">o</span><span class="o">.</span><span class="n">slug</span><span class="p">,</span>
+    <span class="s">&#39;news.story&#39;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">o</span><span class="p">:</span> <span class="s">&quot;/stories/</span><span class="si">%s</span><span class="s">/</span><span class="si">%s</span><span class="s">/&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">o</span><span class="o">.</span><span class="n">pub_year</span><span class="p">,</span> <span class="n">o</span><span class="o">.</span><span class="n">slug</span><span class="p">),</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Note that the model name used in this setting should be all lowercase, regardless
+of the case of the actual model class name.</p>
+</div>
+<div class="section" id="admin-media-prefix">
+<h3>ADMIN_MEDIA_PREFIX</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'/media/'</span></tt></p>
+<p>This setting is the URL prefix for admin media: CSS, JavaScript, and images.
+Make sure to use a trailing slash.</p>
+</div>
+<div class="section" id="admins">
+<h3>ADMINS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This is a tuple that lists people who get code error notifications. When
+<tt class="docutils literal"><span class="pre">DEBUG=False</span></tt> and a view raises an exception, Django will email these people
+with the full exception information. Each member of the tuple should be a tuple
+of (Full name, e-mail address), for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">((</span><span class="s">&#39;John&#39;</span><span class="p">,</span> <span class="s">&#39;john@example.com&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;Mary&#39;</span><span class="p">,</span> <span class="s">&#39;mary@example.com&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Note that Django will email <em>all</em> of these people whenever an error happens.</p>
+</div>
+<div class="section" id="allowed-include-roots">
+<h3>ALLOWED_INCLUDE_ROOTS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This is a tuple of strings representing allowed prefixes for the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">%}</span></tt> template
+tag. This is a security measure, so that template authors can&#8217;t access files
+that they shouldn&#8217;t be accessing.</p>
+<p>For example, if <tt class="docutils literal"><span class="pre">ALLOWED_INCLUDE_ROOTS</span></tt> is <tt class="docutils literal"><span class="pre">('/home/html',</span> <span class="pre">'/var/www')</span></tt>,
+then <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">/home/html/foo.txt</span> <span class="pre">%}</span></tt> would work, but <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">ssi</span> <span class="pre">/etc/passwd</span> <span class="pre">%}</span></tt>
+wouldn&#8217;t.</p>
+</div>
+<div class="section" id="append-slash">
+<h3>APPEND_SLASH</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">True</span></tt></p>
+<p>This setting indicates whether to append trailing slashes to URLs. This is used only if
+<tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt> is installed (see Chapter 17). See also <tt class="docutils literal"><span class="pre">PREPEND_WWW</span></tt>.</p>
+</div>
+<div class="section" id="cache-backend">
+<h3>CACHE_BACKEND</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'locmem://'</span></tt></p>
+<p>This is the cache back-end to use (see Chapter 15).</p>
+</div>
+<div class="section" id="cache-middleware-key-prefix">
+<h3>CACHE_MIDDLEWARE_KEY_PREFIX</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is the cache key prefix that the cache middleware should use (see Chapter 15).</p>
+</div>
+<div class="section" id="database-engine">
+<h3>DATABASE_ENGINE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This setting indicates which database back-end to use, e.g.
+<tt class="docutils literal"><span class="pre">'postgresql_psycopg2'</span></tt>, or <tt class="docutils literal"><span class="pre">'mysql'</span></tt>.</p>
+</div>
+<div class="section" id="database-host">
+<h3>DATABASE_HOST</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This setting indicates which host to use when connecting to the database.
+An empty string means <tt class="docutils literal"><span class="pre">localhost</span></tt>. This is not used with SQLite.</p>
+<p>If this value starts with a forward slash (<tt class="docutils literal"><span class="pre">'/'</span></tt>) and you&#8217;re using MySQL,
+MySQL will connect via a Unix socket to the specified socket:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">DATABASE_HOST</span> <span class="o">=</span> <span class="s">&#39;/var/run/mysql&#39;</span>
+</pre></div>
+</div>
+<p>If you&#8217;re using MySQL and this value <em>doesn&#8217;t</em> start with a forward slash, then
+this value is assumed to be the host.</p>
+</div>
+<div class="section" id="database-name">
+<h3>DATABASE_NAME</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is the name of the database to use. For SQLite, it&#8217;s the full path to the database
+file.</p>
+</div>
+<div class="section" id="database-options">
+<h3>DATABASE_OPTIONS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">{}</span></tt> (empty dictionary)</p>
+<p>This is extra parameters to use when connecting to the database. Consult the back-end
+module&#8217;s document for available keywords.</p>
+</div>
+<div class="section" id="database-password">
+<h3>DATABASE_PASSWORD</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This setting is the password to use when connecting to the database. It is not used with SQLite.</p>
+</div>
+<div class="section" id="database-port">
+<h3>DATABASE_PORT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is the port to use when connecting to the database. An empty string means the
+default port. It is not used with SQLite.</p>
+</div>
+<div class="section" id="database-user">
+<h3>DATABASE_USER</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This setting is the username to use when connecting to the database. It is not used with SQLite.</p>
+</div>
+<div class="section" id="date-format">
+<h3>DATE_FORMAT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'N</span> <span class="pre">j,</span> <span class="pre">Y'</span></tt> (e.g., <tt class="docutils literal"><span class="pre">Feb.</span> <span class="pre">4,</span> <span class="pre">2003</span></tt>)</p>
+<p>This is the default formatting to use for date fields on Django admin change-list pages
+&#8211; and, possibly, by other parts of the system. It accepts the same format as the
+<tt class="docutils literal"><span class="pre">now</span></tt> tag (see Appendix E, Table E-2).</p>
+<p>See also <tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">YEAR_MONTH_FORMAT</span></tt>, and
+<tt class="docutils literal"><span class="pre">MONTH_DAY_FORMAT</span></tt>.</p>
+</div>
+<div class="section" id="datetime-format">
+<h3>DATETIME_FORMAT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'N</span> <span class="pre">j,</span> <span class="pre">Y,</span> <span class="pre">P'</span></tt> (e.g., <tt class="docutils literal"><span class="pre">Feb.</span> <span class="pre">4,</span> <span class="pre">2003,</span> <span class="pre">4</span> <span class="pre">p.m.</span></tt>)</p>
+<p>This is the default formatting to use for datetime fields on Django admin change-list
+pages &#8211; and, possibly, by other parts of the system. It accepts the same format as the
+<tt class="docutils literal"><span class="pre">now</span></tt> tag (see Appendix E, Table E-2).</p>
+<p>See also <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>,
+<tt class="docutils literal"><span class="pre">YEAR_MONTH_FORMAT</span></tt>, and <tt class="docutils literal"><span class="pre">MONTH_DAY_FORMAT</span></tt>.</p>
+</div>
+<div class="section" id="debug">
+<h3>DEBUG</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting is a Boolean that turns debug mode on and off.</p>
+<p>If you define custom settings, <tt class="docutils literal"><span class="pre">django/views/debug.py</span></tt> has a <tt class="docutils literal"><span class="pre">HIDDEN_SETTINGS</span></tt>
+regular expression that will hide from the <tt class="docutils literal"><span class="pre">DEBUG</span></tt> view anything that contains
+<tt class="docutils literal"><span class="pre">'SECRET</span></tt>, <tt class="docutils literal"><span class="pre">PASSWORD</span></tt>, or <tt class="docutils literal"><span class="pre">PROFANITIES'</span></tt>. This allows untrusted users to
+be able to give backtraces without seeing sensitive (or offensive) settings.</p>
+<p>Still, note that there are always going to be sections of your debug output that
+are inappropriate for public consumption. File paths, configuration options, and
+the like all give attackers extra information about your server. Never deploy a
+site with <tt class="docutils literal"><span class="pre">DEBUG</span></tt> turned on.</p>
+</div>
+<div class="section" id="default-charset">
+<h3>DEFAULT_CHARSET</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'utf-8'</span></tt></p>
+<p>This is the default charset to use for all <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects, if a MIME type isn&#8217;t
+manually specified. It is used with <tt class="docutils literal"><span class="pre">DEFAULT_CONTENT_TYPE</span></tt> to construct the
+<tt class="docutils literal"><span class="pre">Content-Type</span></tt> header. See Appendix G for more about <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects.</p>
+</div>
+<div class="section" id="default-content-type">
+<h3>DEFAULT_CONTENT_TYPE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'text/html'</span></tt></p>
+<p>This is the default content type to use for all <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects, if a MIME type
+isn&#8217;t manually specified. It is used with <tt class="docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt> to construct the
+<tt class="docutils literal"><span class="pre">Content-Type</span></tt> header. See Appendix G for more about <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects.</p>
+</div>
+<div class="section" id="default-from-email">
+<h3>DEFAULT_FROM_EMAIL</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'webmaster&#64;localhost'</span></tt></p>
+<p>This is the default email address to use for various automated correspondence from the
+site manager(s).</p>
+</div>
+<div class="section" id="disallowed-user-agents">
+<h3>DISALLOWED_USER_AGENTS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This is a list of compiled regular expression objects representing User-Agent strings
+that are not allowed to visit any page, systemwide. Use this for bad
+robots/crawlers. This is used only if <tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt> is installed (see
+Chapter 17).</p>
+</div>
+<div class="section" id="email-host">
+<h3>EMAIL_HOST</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'localhost'</span></tt></p>
+<p>This is the host to use for sending email. See also <tt class="docutils literal"><span class="pre">EMAIL_PORT</span></tt>.</p>
+</div>
+<div class="section" id="email-host-password">
+<h3>EMAIL_HOST_PASSWORD</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is the password to use for the SMTP server defined in <tt class="docutils literal"><span class="pre">EMAIL_HOST</span></tt>. This setting is
+used in conjunction with <tt class="docutils literal"><span class="pre">EMAIL_HOST_USER</span></tt> when authenticating to the SMTP
+server. If either of these settings is empty, Django won&#8217;t attempt
+authentication.</p>
+<p>See also <tt class="docutils literal"><span class="pre">EMAIL_HOST_USER</span></tt>.</p>
+</div>
+<div class="section" id="email-host-user">
+<h3>EMAIL_HOST_USER</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is the username to use for the SMTP server defined in <tt class="docutils literal"><span class="pre">EMAIL_HOST</span></tt>. If it&#8217;s empty,
+Django won&#8217;t attempt authentication. See also <tt class="docutils literal"><span class="pre">EMAIL_HOST_PASSWORD</span></tt>.</p>
+</div>
+<div class="section" id="email-port">
+<h3>EMAIL_PORT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">25</span></tt></p>
+<p>This is the port to use for the SMTP server defined in <tt class="docutils literal"><span class="pre">EMAIL_HOST</span></tt>.</p>
+</div>
+<div class="section" id="email-subject-prefix">
+<h3>EMAIL_SUBJECT_PREFIX</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'[Django]</span> <span class="pre">'</span></tt></p>
+<p>This is the subject-line prefix for email messages sent with <tt class="docutils literal"><span class="pre">django.core.mail.mail_admins</span></tt>
+or <tt class="docutils literal"><span class="pre">django.core.mail.mail_managers</span></tt>. You&#8217;ll probably want to include the
+trailing space.</p>
+</div>
+<div class="section" id="fixture-dirs">
+<h3>FIXTURE_DIRS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This is a list of locations of the fixture data files, in search order. Note that these
+paths should use Unix-style forward slashes, even on Windows. It is used by Django&#8217;s
+testing framework, which is covered online at
+<a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/testing/">http://docs.djangoproject.com/en/dev/topics/testing/</a>.</p>
+</div>
+<div class="section" id="ignorable-404-ends">
+<h3>IGNORABLE_404_ENDS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">('mail.pl',</span> <span class="pre">'mailform.pl',</span> <span class="pre">'mail.cgi',</span> <span class="pre">'mailform.cgi',</span> <span class="pre">'favicon.ico',</span>
+<span class="pre">'.php')</span></tt></p>
+<p>This is a tuple of strings that specify beginnings of URLs that should be
+ignored by the 404 e-mailer. (See Chapter 12 for more on the 404 e-mailer.)</p>
+<p>No errors will be sent for URLs end with strings from this sequence.</p>
+<p>See also <tt class="docutils literal"><span class="pre">IGNORABLE_404_STARTS</span></tt> and <tt class="docutils literal"><span class="pre">SEND_BROKEN_LINK_EMAILS</span></tt>.</p>
+</div>
+<div class="section" id="ignorable-404-starts">
+<h3>IGNORABLE_404_STARTS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">('/cgi-bin/',</span> <span class="pre">'/_vti_bin',</span> <span class="pre">'/_vti_inf')</span></tt></p>
+<p>See also <tt class="docutils literal"><span class="pre">SEND_BROKEN_LINK_EMAILS</span></tt> and <tt class="docutils literal"><span class="pre">IGNORABLE_404_ENDS</span></tt>.</p>
+</div>
+<div class="section" id="installed-apps">
+<h3>INSTALLED_APPS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>A tuple of strings designating all applications that are enabled in this Django
+installation. Each string should be a full Python path to a Python package that
+contains a Django application. See Chapter 5 for more about applications.</p>
+</div>
+<div class="section" id="language-code">
+<h3>LANGUAGE_CODE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'en-us'</span></tt></p>
+<p>This is a string representing the language code for this installation. This should be
+in standard language format &#8211; for example, U.S. English is <tt class="docutils literal"><span class="pre">&quot;en-us&quot;</span></tt>. See
+Chapter 19.</p>
+</div>
+<div class="section" id="languages">
+<h3>LANGUAGES</h3>
+<p><em>Default</em>: A tuple of all available languages. This list is continually growing
+and any copy included here would inevitably become rapidly out of date. You can
+see the current list of translated languages by looking in
+<tt class="docutils literal"><span class="pre">django/conf/global_settings.py</span></tt>.</p>
+<p>The list is a tuple of two-tuples in the format (language code, language name)
+&#8211; for example, <tt class="docutils literal"><span class="pre">('ja',</span> <span class="pre">'Japanese')</span></tt>. This specifies which languages are
+available for language selection. See Chapter 19 for more on language selection.</p>
+<p>Generally, the default value should suffice. Only set this setting if you want
+to restrict language selection to a subset of the Django-provided languages.</p>
+<p>If you define a custom <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> setting, it&#8217;s OK to mark the languages as
+translation strings, but you should <em>never</em> import <tt class="docutils literal"><span class="pre">django.utils.translation</span></tt>
+from within your settings file, because that module in itself depends on the
+settings, and that would cause a circular import.</p>
+<p>The solution is to use a &#8220;dummy&#8221; <tt class="docutils literal"><span class="pre">gettext()</span></tt> function. Here&#8217;s a sample
+settings file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">gettext</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span>
+
+<span class="n">LANGUAGES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;de&#39;</span><span class="p">,</span> <span class="n">gettext</span><span class="p">(</span><span class="s">&#39;German&#39;</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s">&#39;en&#39;</span><span class="p">,</span> <span class="n">gettext</span><span class="p">(</span><span class="s">&#39;English&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With this arrangement, <tt class="docutils literal"><span class="pre">make-messages.py</span></tt> will still find and mark these
+strings for translation, but the translation won&#8217;t happen at runtime &#8211; so
+you&#8217;ll have to remember to wrap the languages in the <em>real</em> <tt class="docutils literal"><span class="pre">gettext()</span></tt> in
+any code that uses <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> at runtime.</p>
+</div>
+<div class="section" id="managers">
+<h3>MANAGERS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This tuple is in the same format as <tt class="docutils literal"><span class="pre">ADMINS</span></tt> that specifies who should get
+broken-link notifications when <tt class="docutils literal"><span class="pre">SEND_BROKEN_LINK_EMAILS=True</span></tt>.</p>
+</div>
+<div class="section" id="media-root">
+<h3>MEDIA_ROOT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This is an absolute path to the directory that holds media for this installation (e.g.,
+<tt class="docutils literal"><span class="pre">&quot;/home/media/media.lawrence.com/&quot;</span></tt>). See also <tt class="docutils literal"><span class="pre">MEDIA_URL</span></tt>.</p>
+</div>
+<div class="section" id="media-url">
+<h3>MEDIA_URL</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (empty string)</p>
+<p>This URL handles the media served from <tt class="docutils literal"><span class="pre">MEDIA_ROOT</span></tt> (e.g.,
+<tt class="docutils literal"><span class="pre">&quot;http://media.lawrence.com&quot;</span></tt>).</p>
+<p>Note that this should have a trailing slash if it has a path component:</p>
+<ul class="simple">
+<li><em>Correct</em>: <tt class="docutils literal"><span class="pre">&quot;http://www.example.com/static/&quot;</span></tt></li>
+<li><em>Incorrect</em>: <tt class="docutils literal"><span class="pre">&quot;http://www.example.com/static&quot;</span></tt></li>
+</ul>
+<p>See Chapter 12 for more on deployment and serving media.</p>
+</div>
+<div class="section" id="middleware-classes">
+<h3>MIDDLEWARE_CLASSES</h3>
+<p><em>Default</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&quot;django.contrib.sessions.middleware.SessionMiddleware&quot;</span><span class="p">,</span>
+ <span class="s">&quot;django.contrib.auth.middleware.AuthenticationMiddleware&quot;</span><span class="p">,</span>
+ <span class="s">&quot;django.middleware.common.CommonMiddleware&quot;</span><span class="p">,</span>
+ <span class="s">&quot;django.middleware.doc.XViewMiddleware&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is a tuple of middleware classes to use. See Chapter 17.</p>
+</div>
+<div class="section" id="month-day-format">
+<h3>MONTH_DAY_FORMAT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'F</span> <span class="pre">j'</span></tt></p>
+<p>This is the default formatting to use for date fields on Django admin change-list
+pages &#8211; and, possibly, by other parts of the system &#8211; in cases when only the
+month and day are displayed. It accepts the same format as the
+<tt class="docutils literal"><span class="pre">now</span></tt> tag (see Appendix E, Table E-2).</p>
+<p>For example, when a Django admin change-list page is being filtered by a date,
+the header for a given day displays the day and month. Different locales have
+different formats. For example, U.S. English would have &#8220;January 1,&#8221; whereas
+Spanish might have &#8220;1 Enero.&#8221;</p>
+<p>See also <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>, and
+<tt class="docutils literal"><span class="pre">YEAR_MONTH_FORMAT</span></tt>.</p>
+</div>
+<div class="section" id="prepend-www">
+<h3>PREPEND_WWW</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting indicates whether to prepend the &#8220;www.&#8221; subdomain to URLs that don&#8217;t have it.
+This is used only if <tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt> is installed (see the Chapter 17). See also
+<tt class="docutils literal"><span class="pre">APPEND_SLASH</span></tt>.</p>
+</div>
+<div class="section" id="root-urlconf">
+<h3>ROOT_URLCONF</h3>
+<p><em>Default</em>: Not defined</p>
+<p>This is a string representing the full Python import path to your root URLconf (e.g.,
+<tt class="docutils literal"><span class="pre">&quot;mydjangoapps.urls&quot;</span></tt>). See Chapter 3.</p>
+</div>
+<div class="section" id="secret-key">
+<h3>SECRET_KEY</h3>
+<p><em>Default</em>: (Generated automatically when you start a project)</p>
+<p>This is a secret key for this particular Django installation. It is used to provide a seed in
+secret-key hashing algorithms. Set this to a random string &#8211; the longer, the
+better. <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">startproject</span></tt> creates one automatically and most
+of the time you won&#8217;t need to change it</p>
+</div>
+<div class="section" id="send-broken-link-emails">
+<h3>SEND_BROKEN_LINK_EMAILS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting indicates whether to send an email to the <tt class="docutils literal"><span class="pre">MANAGERS</span></tt> each time somebody visits a
+Django-powered page that is 404-ed with a nonempty referer (i.e., a broken
+link). This is only used if <tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt> is installed (see Chapter 17).
+See also <tt class="docutils literal"><span class="pre">IGNORABLE_404_STARTS</span></tt> and <tt class="docutils literal"><span class="pre">IGNORABLE_404_ENDS</span></tt>.</p>
+</div>
+<div class="section" id="serialization-modules">
+<h3>SERIALIZATION_MODULES</h3>
+<p><em>Default</em>: Not defined.</p>
+<p>Serialization is a feature still under heavy development. Refer to the online
+documentation at <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/serialization/">http://docs.djangoproject.com/en/dev/topics/serialization/</a>
+for more information.</p>
+</div>
+<div class="section" id="server-email">
+<h3>SERVER_EMAIL</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'root&#64;localhost'</span></tt></p>
+<p>This is the email address that error messages come from, such as those sent to
+<tt class="docutils literal"><span class="pre">ADMINS</span></tt> and <tt class="docutils literal"><span class="pre">MANAGERS</span></tt>.</p>
+</div>
+<div class="section" id="session-cookie-age">
+<h3>SESSION_COOKIE_AGE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">1209600</span></tt> (two weeks, in seconds)</p>
+<p>This is the age of session cookies, in seconds. See Chapter 14.</p>
+</div>
+<div class="section" id="session-cookie-domain">
+<h3>SESSION_COOKIE_DOMAIN</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
+<p>This is the domain to use for session cookies. Set this to a string such as
+<tt class="docutils literal"><span class="pre">&quot;.lawrence.com&quot;</span></tt> for cross-domain cookies, or use <tt class="docutils literal"><span class="pre">None</span></tt> for a standard
+domain cookie. See Chapter 14.</p>
+</div>
+<div class="section" id="session-cookie-name">
+<h3>SESSION_COOKIE_NAME</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'sessionid'</span></tt></p>
+<p>This is the name of the cookie to use for sessions; it can be whatever you want.
+See Chapter 14.</p>
+</div>
+<div class="section" id="session-cookie-secure">
+<h3>SESSION_COOKIE_SECURE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting indicates whether to use a secure cookie for the session cookie.
+If this is set to <tt class="docutils literal"><span class="pre">True</span></tt>, the cookie will be marked as &#8220;secure,&#8221;
+which means browsers may ensure that the cookie is only sent under an HTTPS connection.
+See Chapter 14.</p>
+</div>
+<div class="section" id="session-expire-at-browser-close">
+<h3>SESSION_EXPIRE_AT_BROWSER_CLOSE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting indicates whether to expire the session when the user closes
+his browser. See Chapter 14.</p>
+</div>
+<div class="section" id="session-save-every-request">
+<h3>SESSION_SAVE_EVERY_REQUEST</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This setting indicates whether to save the session data on every request. See Chapter 14.</p>
+</div>
+<div class="section" id="site-id">
+<h3>SITE_ID</h3>
+<p><em>Default</em>: Not defined</p>
+<p>This is the ID, as an integer, of the current site in the <tt class="docutils literal"><span class="pre">django_site</span></tt> database
+table. It is used so that application data can hook into specific site(s)
+and a single database can manage content for multiple sites. See Chapter 16.</p>
+</div>
+<div class="section" id="template-context-processors">
+<h3>TEMPLATE_CONTEXT_PROCESSORS</h3>
+<p><em>Default</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&quot;django.core.context_processors.auth&quot;</span><span class="p">,</span>
+<span class="s">&quot;django.core.context_processors.debug&quot;</span><span class="p">,</span>
+<span class="s">&quot;django.core.context_processors.i18n&quot;</span><span class="p">,</span>
+<span class="s">&quot;django.core.context_processors.media&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is a tuple of callables that are used to populate the context in <tt class="docutils literal"><span class="pre">RequestContext</span></tt>.
+These callables take a request object as their argument and return a dictionary
+of items to be merged into the context. See Chapter 9.</p>
+</div>
+<div class="section" id="template-debug">
+<h3>TEMPLATE_DEBUG</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This Boolean turns template debug mode on and off. If it is <tt class="docutils literal"><span class="pre">True</span></tt>, the fancy
+error page will display a detailed report for any <tt class="docutils literal"><span class="pre">TemplateSyntaxError</span></tt>. This
+report contains the relevant snippet of the template, with the appropriate line
+highlighted.</p>
+<p>Note that Django only displays fancy error pages if <tt class="docutils literal"><span class="pre">DEBUG</span></tt> is <tt class="docutils literal"><span class="pre">True</span></tt>, so
+you&#8217;ll want to set that to take advantage of this setting.</p>
+<p>See also <tt class="docutils literal"><span class="pre">DEBUG</span></tt>.</p>
+</div>
+<div class="section" id="template-dirs">
+<h3>TEMPLATE_DIRS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">()</span></tt> (empty tuple)</p>
+<p>This is a list of locations of the template source files, in search order. Note that these
+paths should use Unix-style forward slashes, even on Windows. See Chapters 4 and
+9.</p>
+</div>
+<div class="section" id="template-loaders">
+<h3>TEMPLATE_LOADERS</h3>
+<p><em>Default</em>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;django.template.loaders.filesystem.load_template_source&#39;</span><span class="p">,</span>
+<span class="s">&#39;django.template.loaders.app_directories.load_template_source&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is a tuple of callables (as strings) that know how to import templates from
+various sources. See Chapter 9.</p>
+</div>
+<div class="section" id="template-string-if-invalid">
+<h3>TEMPLATE_STRING_IF_INVALID</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">''</span></tt> (Empty string)</p>
+<p>This is output, as a string, that the template system should use for invalid (e.g.,
+misspelled) variables. See Chapter 9.</p>
+</div>
+<div class="section" id="test-runner">
+<h3>TEST_RUNNER</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'django.test.simple.run_tests'</span></tt></p>
+<p>This is the name of the method to use for starting the test suite. It is used by Django&#8217;s
+testing framework, which is covered online at
+<a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/testing/">http://docs.djangoproject.com/en/dev/topics/testing/</a>.</p>
+</div>
+<div class="section" id="test-database-name">
+<h3>TEST_DATABASE_NAME</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">None</span></tt></p>
+<p>This is the name of database to use when running the test suite. If a value of <tt class="docutils literal"><span class="pre">None</span></tt>
+is specified, the test database will use the name <tt class="docutils literal"><span class="pre">'test_'</span> <span class="pre">+</span>
+<span class="pre">settings.DATABASE_NAME</span></tt>. See the documentation for Django&#8217;s testing framework,
+which is covered online at <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/testing/">http://docs.djangoproject.com/en/dev/topics/testing/</a>.</p>
+</div>
+<div class="section" id="time-format">
+<h3>TIME_FORMAT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'P'</span></tt> (e.g., <tt class="docutils literal"><span class="pre">4</span> <span class="pre">p.m.</span></tt>)</p>
+<p>This is the default formatting to use for time fields on Django admin change-list pages
+&#8211; and, possibly, by other parts of the system. It accepts the same format as the
+<tt class="docutils literal"><span class="pre">now</span></tt> tag (see Appendix E, Table E-2).</p>
+<p>See also <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>,
+<tt class="docutils literal"><span class="pre">YEAR_MONTH_FORMAT</span></tt>, and <tt class="docutils literal"><span class="pre">MONTH_DAY_FORMAT</span></tt>.</p>
+</div>
+<div class="section" id="time-zone">
+<h3>TIME_ZONE</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'America/Chicago'</span></tt></p>
+<p>This is a string representing the time zone for this installation. Time zones are in the
+Unix-standard <tt class="docutils literal"><span class="pre">zic</span></tt> format. One relatively complete list of time zone strings
+can be found at
+<a class="reference external" href="http://www.postgresql.org/docs/8.1/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE">http://www.postgresql.org/docs/8.1/static/datetime-keywords.html#DATETIME-TIMEZONE-SET-TABLE</a>.</p>
+<p>This is the time zone to which Django will convert all dates/times &#8211;
+not necessarily the time zone of the server. For example, one server may serve
+multiple Django-powered sites, each with a separate time-zone setting.</p>
+<p>Normally, Django sets the <tt class="docutils literal"><span class="pre">os.environ['TZ']</span></tt> variable to the time zone you
+specify in the <tt class="docutils literal"><span class="pre">TIME_ZONE</span></tt> setting. Thus, all your views and models will
+automatically operate in the correct time zone. However, if you&#8217;re using the
+manually configuring settings (described above in the section titled &#8220;Using
+Settings Without Setting DJANGO_SETTINGS_MODULE&#8221;), Django will <em>not</em> touch the
+<tt class="docutils literal"><span class="pre">TZ</span></tt> environment variable, and it will be up to you to ensure your processes
+are running in the correct environment.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Django cannot reliably use alternate time zones in a Windows environment. If
+you&#8217;re running Django on Windows, this variable must be set to match the
+system time zone.</p>
+</div>
+</div>
+<div class="section" id="url-validator-user-agent">
+<h3>URL_VALIDATOR_USER_AGENT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">Django/&lt;version&gt;</span> <span class="pre">(http://www.djangoproject.com/)</span></tt></p>
+<p>This is the string to use as the <tt class="docutils literal"><span class="pre">User-Agent</span></tt> header when checking to see if URLs
+exist (see the <tt class="docutils literal"><span class="pre">verify_exists</span></tt> option on <tt class="docutils literal"><span class="pre">URLField</span></tt>; see Appendix A).</p>
+</div>
+<div class="section" id="use-etags">
+<h3>USE_ETAGS</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">False</span></tt></p>
+<p>This Boolean specifies whether to output the ETag header. It saves
+bandwidth but slows down performance. This is only used if <tt class="docutils literal"><span class="pre">CommonMiddleware</span></tt>
+is installed (see Chapter 17).</p>
+</div>
+<div class="section" id="use-i18n">
+<h3>USE_I18N</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">True</span></tt></p>
+<p>This Boolean specifies whether Django&#8217;s internationalization system (see
+Chapter 19) should be enabled. It provides an easy way to turn off internationalization, for
+performance. If this is set to <tt class="docutils literal"><span class="pre">False</span></tt>, Django will make some optimizations so
+as not to load the internationalization machinery.</p>
+</div>
+<div class="section" id="year-month-format">
+<h3>YEAR_MONTH_FORMAT</h3>
+<p><em>Default</em>: <tt class="docutils literal"><span class="pre">'F</span> <span class="pre">Y'</span></tt></p>
+<p>This is the default formatting to use for date fields on Django admin change-list pages
+&#8211; and, possibly, by other parts of the system &#8211; in cases when only the year
+and month are displayed. It accepts the same format as the <tt class="docutils literal"><span class="pre">now</span></tt> tag (see
+Appendix E).</p>
+<p>For example, when a Django admin change-list page is being filtered by a date
+drill-down, the header for a given month displays the month and the year.
+Different locales have different formats. For example, U.S. English would use
+&#8220;January 2006,&#8221; whereas another locale might use &#8220;2006/January.&#8221;</p>
+<p>See also <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt>, <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>, and
+<tt class="docutils literal"><span class="pre">MONTH_DAY_FORMAT</span></tt>.</p>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='appendixC.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='appendixE.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

@@ -1,0 +1,595 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 10: Advanced Models</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter09.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter11.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-10-advanced-models">
+<h1>Chapter 10: Advanced Models</h1>
+<p>In Chapter 5, we presented an introduction to Django&#8217;s database layer &#8211;
+how to define models and how to use the database API to create, retrieve,
+update and delete records. In this chapter, we&#8217;ll introduce you to some more
+advanced features of this part of Django.</p>
+<div class="section" id="related-objects">
+<h2>Related Objects</h2>
+<p>Recall our book models from Chapter 5:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Publisher</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">city</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+    <span class="n">state_province</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">country</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">website</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">URLField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+
+<span class="k">class</span> <span class="nc">Author</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">EmailField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">u&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Book</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">authors</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Author</span><span class="p">)</span>
+    <span class="n">publisher</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Publisher</span><span class="p">)</span>
+    <span class="n">publication_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__unicode__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">title</span>
+</pre></div>
+</div>
+<p>As we explained in Chapter 5, accessing the value for a particular field on
+a database object is as straightforward as using an attribute. For example,
+to determine the title of the book with ID 50, we&#8217;d do the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mysite.books.models</span> <span class="kn">import</span> <span class="n">Book</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">title</span>
+<span class="go">u&#39;The Django Book&#39;</span>
+</pre></div>
+</div>
+<p>But one thing we didn&#8217;t mention previously is that related objects &#8211; fields
+expressed as either a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> &#8211; act slightly
+differently.</p>
+<div class="section" id="accessing-foreign-key-values">
+<h3>Accessing Foreign Key Values</h3>
+<p>When you access a field that&#8217;s a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>, you&#8217;ll get the
+related model object. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">publisher</span>
+<span class="go">&lt;Publisher: Apress Publishing&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">publisher</span><span class="o">.</span><span class="n">website</span>
+<span class="go">u&#39;http://www.apress.com/&#39;</span>
+</pre></div>
+</div>
+<p>With <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> fields, it works the other way, too, but it&#8217;s slightly
+different due to the non-symmetrical nature of the relationship. To get a list
+of books for a given publisher, use <tt class="docutils literal"><span class="pre">publisher.book_set.all()</span></tt>, like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Publisher</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;Apress Publishing&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">book_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="go">[&lt;Book: The Django Book&gt;, &lt;Book: Dive Into Python&gt;, ...]</span>
+</pre></div>
+</div>
+<p>Behind the scenes, <tt class="docutils literal"><span class="pre">book_set</span></tt> is just a <tt class="docutils literal"><span class="pre">QuerySet</span></tt> (as covered in
+Chapter 5), and it can be filtered and sliced like any other <tt class="docutils literal"><span class="pre">QuerySet</span></tt>.
+For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Publisher</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&#39;Apress Publishing&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">book_set</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__icontains</span><span class="o">=</span><span class="s">&#39;django&#39;</span><span class="p">)</span>
+<span class="go">[&lt;Book: The Django Book&gt;, &lt;Book: Pro Django&gt;]</span>
+</pre></div>
+</div>
+<p>The attribute name <tt class="docutils literal"><span class="pre">book_set</span></tt> is generated by appending the lower case
+model name to <tt class="docutils literal"><span class="pre">_set</span></tt>.</p>
+</div>
+<div class="section" id="accessing-many-to-many-values">
+<h3>Accessing Many-to-Many Values</h3>
+<p>Many-to-many values work like foreign-key values, except we deal with
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt> values instead of model instances. For example, here&#8217;s how to
+view the authors for a book:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">b</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">authors</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="go">[&lt;Author: Adrian Holovaty&gt;, &lt;Author: Jacob Kaplan-Moss&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">authors</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s">&#39;Adrian&#39;</span><span class="p">)</span>
+<span class="go">[&lt;Author: Adrian Holovaty&gt;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">b</span><span class="o">.</span><span class="n">authors</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s">&#39;Adam&#39;</span><span class="p">)</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<p>It works in reverse, too. To view all of the books for an author, use
+<tt class="docutils literal"><span class="pre">author.book_set</span></tt>, like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">a</span> <span class="o">=</span> <span class="n">Author</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s">&#39;Adrian&#39;</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s">&#39;Holovaty&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">a</span><span class="o">.</span><span class="n">book_set</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="go">[&lt;Book: The Django Book&gt;, &lt;Book: Adrian&#39;s Other Book&gt;]</span>
+</pre></div>
+</div>
+<p>Here, as with <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> fields, the attribute name <tt class="docutils literal"><span class="pre">book_set</span></tt> is
+generated by appending the lower case model name to <tt class="docutils literal"><span class="pre">_set</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="making-changes-to-a-database-schema">
+<h2>Making Changes to a Database Schema</h2>
+<p>When we introduced the <tt class="docutils literal"><span class="pre">syncdb</span></tt> command in Chapter 5, we noted that
+<tt class="docutils literal"><span class="pre">syncdb</span></tt> merely creates tables that don&#8217;t yet exist in your database &#8211;
+it does <em>not</em> sync changes in models or perform deletions of models. If you
+add or change a model&#8217;s field, or if you delete a model, you&#8217;ll need to make
+the change in your database manually. This section explains how to do that.</p>
+<p>When dealing with schema changes, it&#8217;s important to keep a few things in mind
+about how Django&#8217;s database layer works:</p>
+<ul class="simple">
+<li>Django will complain loudly if a model contains a field that has not yet
+been created in the database table. This will cause an error the first
+time you use the Django database API to query the given table (i.e., it
+will happen at code execution time, not at compilation time).</li>
+<li>Django does <em>not</em> care if a database table contains columns that are not
+defined in the model.</li>
+<li>Django does <em>not</em> care if a database contains a table that is not
+represented by a model.</li>
+</ul>
+<p>Making schema changes is a matter of changing the various pieces &#8211; the Python
+code and the database itself &#8211; in the right order.</p>
+<div class="section" id="adding-fields">
+<h3>Adding Fields</h3>
+<p>When adding a field to a table/model in a production setting, the trick is to
+take advantage of the fact that Django doesn&#8217;t care if a table contains columns
+that aren&#8217;t defined in the model. The strategy is to add the column in the
+database, and then update the Django model to include the new field.</p>
+<p>However, there&#8217;s a bit of a chicken-and-egg problem here, because in order to
+know how the new database column should be expressed in SQL, you need to look
+at the output of Django&#8217;s <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">sqlall</span></tt> command, which requires that the
+field exist in the model. (Note that you&#8217;re not <em>required</em> to create your
+column with exactly the same SQL that Django would, but it&#8217;s a good idea to do
+so, just to be sure everything&#8217;s in sync.)</p>
+<p>The solution to the chicken-and-egg problem is to use a development environment
+instead of making the changes on a production server. (You <em>are</em> using a
+testing/development environment, right?) Here are the detailed steps to take.</p>
+<p>First, take these steps in the development environment (i.e., not on the production server):</p>
+<ol class="arabic simple">
+<li>Add the field to your model.</li>
+<li>Run <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">sqlall</span> <span class="pre">[yourapp]</span></tt> to see the new <tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TABLE</span></tt>
+statement for the model. Note the column definition for the new field.</li>
+<li>Start your database&#8217;s interactive shell (e.g., <tt class="docutils literal"><span class="pre">psql</span></tt> or <tt class="docutils literal"><span class="pre">mysql</span></tt>, or
+you can use <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">dbshell</span></tt>). Execute an <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statement
+that adds your new column.</li>
+<li>Launch the Python interactive shell with <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">shell</span></tt>
+and verify that the new field was added properly by importing the model
+and selecting from the table (e.g., <tt class="docutils literal"><span class="pre">MyModel.objects.all()[:5]</span></tt>).
+If you updated the database correctly, the statement should work without
+errors.</li>
+</ol>
+<p>Then on the production server perform these steps:</p>
+<ol class="arabic simple">
+<li>Start your database&#8217;s interactive shell.</li>
+<li>Execute the <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statement you used in step 3 of the
+development environment steps.</li>
+<li>Add the field to your model. If you&#8217;re using source-code revision
+control and you checked in your change in development environment step
+1, now is the time to update the code (e.g., <tt class="docutils literal"><span class="pre">svn</span> <span class="pre">update</span></tt>, with
+Subversion) on the production server.</li>
+<li>Restart the Web server for the code changes to take effect.</li>
+</ol>
+<p>For example, let&#8217;s walk through what we&#8217;d do if we added a <tt class="docutils literal"><span class="pre">num_pages</span></tt> field
+to the <tt class="docutils literal"><span class="pre">Book</span></tt> model from Chapter 5. First, we&#8217;d alter the
+model in our development environment to look like this:</p>
+<pre class="literal-block">
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    authors = models.ManyToManyField(Author)
+    publisher = models.ForeignKey(Publisher)
+    publication_date = models.DateField()
+    <strong>num_pages = models.IntegerField(blank=True, null=True)</strong>
+
+    def __unicode__(self):
+        return self.title
+</pre>
+<p>(Note: Read the section &#8220;Making Fields Optional&#8221; in Chapter 6, plus the
+sidebar &#8220;Adding NOT NULL Columns&#8221; below for important details on why we
+included <tt class="docutils literal"><span class="pre">blank=True</span></tt> and <tt class="docutils literal"><span class="pre">null=True</span></tt>.)</p>
+<p>Then we&#8217;d run the command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">sqlall</span> <span class="pre">books</span></tt> to see the
+<tt class="docutils literal"><span class="pre">CREATE</span> <span class="pre">TABLE</span></tt> statement. Depending on your database backend, it would
+look something like this:</p>
+<div class="highlight-python"><pre>CREATE TABLE "books_book" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "title" varchar(100) NOT NULL,
+    "publisher_id" integer NOT NULL REFERENCES "books_publisher" ("id"),
+    "publication_date" date NOT NULL,
+    "num_pages" integer NULL
+);</pre>
+</div>
+<p>The new column is represented like this:</p>
+<div class="highlight-python"><pre>"num_pages" integer NULL</pre>
+</div>
+<p>Next, we&#8217;d start the database&#8217;s interactive shell for our development database
+by typing <tt class="docutils literal"><span class="pre">psql</span></tt> (for PostgreSQL), and we&#8217;d execute the following statements:</p>
+<div class="highlight-python"><pre>ALTER TABLE books_book ADD COLUMN num_pages integer;</pre>
+</div>
+<div class="admonition-adding-not-null-columns admonition">
+<p class="first admonition-title">Adding NOT NULL Columns</p>
+<p>There&#8217;s a subtlety here that deserves mention. When we added the
+<tt class="docutils literal"><span class="pre">num_pages</span></tt> field to our model, we included the <tt class="docutils literal"><span class="pre">blank=True</span></tt> and
+<tt class="docutils literal"><span class="pre">null=True</span></tt> options. We did this because a database column will contain
+NULL values when you first create it.</p>
+<p>However, it&#8217;s also possible to add columns that cannot contain NULL values.
+To do this, you have to create the column as <tt class="docutils literal"><span class="pre">NULL</span></tt>, then populate the
+column&#8217;s values using some default(s), and then alter the column to set the
+<tt class="docutils literal"><span class="pre">NOT</span> <span class="pre">NULL</span></tt> modifier. For example:</p>
+<div class="highlight-python"><pre>BEGIN;
+ALTER TABLE books_book ADD COLUMN num_pages integer;
+UPDATE books_book SET num_pages=0;
+ALTER TABLE books_book ALTER COLUMN num_pages SET NOT NULL;
+COMMIT;</pre>
+</div>
+<p class="last">If you go down this path, remember that you should leave off
+<tt class="docutils literal"><span class="pre">blank=True</span></tt> and <tt class="docutils literal"><span class="pre">null=True</span></tt> in your model (obviously).</p>
+</div>
+<p>After the <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statement, we&#8217;d verify that the change worked
+properly by starting the Python shell and running this code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">mysite.books.models</span> <span class="kn">import</span> <span class="n">Book</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>If that code didn&#8217;t cause errors, we&#8217;d switch to our production server and
+execute the <tt class="docutils literal"><span class="pre">ALTER</span> <span class="pre">TABLE</span></tt> statement on the production database. Then, we&#8217;d
+update the model in the production environment and restart the Web server.</p>
+</div>
+<div class="section" id="removing-fields">
+<h3>Removing Fields</h3>
+<p>Removing a field from a model is a lot easier than adding one. To remove a
+field, just follow these steps:</p>
+<ol class="arabic">
+<li><p class="first">Remove the field from your model and restart the Web server.</p>
+</li>
+<li><p class="first">Remove the column from your database, using a command like this:</p>
+<div class="highlight-python"><pre>ALTER TABLE books_book DROP COLUMN num_pages;</pre>
+</div>
+</li>
+</ol>
+<p>Make sure to do it in this order. If you remove the column from your database
+first, Django will immediately begin raising errors.</p>
+</div>
+<div class="section" id="removing-many-to-many-fields">
+<h3>Removing Many-to-Many Fields</h3>
+<p>Because many-to-many fields are different than normal fields, the removal
+process is different:</p>
+<ol class="arabic">
+<li><p class="first">Remove the <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> from your model and restart the Web
+server.</p>
+</li>
+<li><p class="first">Remove the many-to-many table from your database, using a command like
+this:</p>
+<div class="highlight-python"><pre>DROP TABLE books_book_authors;</pre>
+</div>
+</li>
+</ol>
+<p>As in the previous section, make sure to do it in this order.</p>
+</div>
+<div class="section" id="removing-models">
+<h3>Removing Models</h3>
+<p>Removing a model entirely is as easy as removing a field. To remove a model,
+just follow these steps:</p>
+<ol class="arabic">
+<li><p class="first">Remove the model from your <tt class="docutils literal"><span class="pre">models.py</span></tt> file and restart the Web server.</p>
+</li>
+<li><p class="first">Remove the table from your database, using a command like this:</p>
+<div class="highlight-python"><pre>DROP TABLE books_book;</pre>
+</div>
+<p>Note that you might need to remove any dependent tables from your
+database first &#8211; e.g., any tables that have foreign keys to
+<tt class="docutils literal"><span class="pre">books_book</span></tt>.</p>
+</li>
+</ol>
+<p>As in the previous sections, make sure to do it in this order.</p>
+</div>
+</div>
+<div class="section" id="managers">
+<h2>Managers</h2>
+<p>In the statement <tt class="docutils literal"><span class="pre">Book.objects.all()</span></tt>, <tt class="docutils literal"><span class="pre">objects</span></tt> is a special attribute
+through which you query your database. In Chapter 5, we briefly identified this
+as the model&#8217;s <em>manager</em>. Now it&#8217;s time to dive a bit deeper into what managers
+are and how you can use them.</p>
+<p>In short, a model&#8217;s manager is an object through which Django models perform
+database queries. Each Django model has at least one manager, and you can
+create custom managers in order to customize database access.</p>
+<p>There are two reasons you might want to create a custom manager: to add extra
+manager methods, and/or to modify the initial <tt class="docutils literal"><span class="pre">QuerySet</span></tt> the manager
+returns.</p>
+<div class="section" id="adding-extra-manager-methods">
+<h3>Adding Extra Manager Methods</h3>
+<p>Adding extra manager methods is the preferred way to add &#8220;table-level&#8221;
+functionality to your models. (For &#8220;row-level&#8221; functionality &#8211; i.e., functions
+that act on a single instance of a model object &#8211; use model methods, which are
+explained later in this chapter.)</p>
+<p>For example, let&#8217;s give our <tt class="docutils literal"><span class="pre">Book</span></tt> model a manager method <tt class="docutils literal"><span class="pre">title_count()</span></tt>
+that takes a keyword and returns the number of books that have a title
+containing that keyword. (This example is slightly contrived, but it
+demonstrates how managers work.)</p>
+<pre class="literal-block">
+# models.py
+
+from django.db import models
+
+# ... Author and Publisher models here ...
+
+<strong>class BookManager(models.Manager):</strong>
+    <strong>def title_count(self, keyword):</strong>
+        <strong>return self.filter(title__icontains=keyword).count()</strong>
+
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    authors = models.ManyToManyField(Author)
+    publisher = models.ForeignKey(Publisher)
+    publication_date = models.DateField()
+    num_pages = models.IntegerField(blank=True, null=True)
+    <strong>objects = BookManager()</strong>
+
+    def __unicode__(self):
+        return self.title
+</pre>
+<p>With this manager in place, we can now do this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">title_count</span><span class="p">(</span><span class="s">&#39;django&#39;</span><span class="p">)</span>
+<span class="go">4</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">title_count</span><span class="p">(</span><span class="s">&#39;python&#39;</span><span class="p">)</span>
+<span class="go">18</span>
+</pre></div>
+</div>
+<p>Here are some notes about the code:</p>
+<ul class="simple">
+<li>We&#8217;ve created a <tt class="docutils literal"><span class="pre">BookManager</span></tt> class that extends
+<tt class="docutils literal"><span class="pre">django.db.models.Manager</span></tt>. This has a single method,
+<tt class="docutils literal"><span class="pre">title_count()</span></tt>, which does the calculation. Note that the method uses
+<tt class="docutils literal"><span class="pre">self.filter()</span></tt>, where <tt class="docutils literal"><span class="pre">self</span></tt> refers to the manager itself.</li>
+<li>We&#8217;ve assigned <tt class="docutils literal"><span class="pre">BookManager()</span></tt> to the <tt class="docutils literal"><span class="pre">objects</span></tt> attribute on the
+model. This has the effect of replacing the &#8220;default&#8221; manager for the
+model, which is called <tt class="docutils literal"><span class="pre">objects</span></tt> and is automatically created if you
+don&#8217;t specify a custom manager. We call it <tt class="docutils literal"><span class="pre">objects</span></tt> rather than
+something else, so as to be consistent with automatically created
+managers.</li>
+</ul>
+<p>Why would we want to add a method such as <tt class="docutils literal"><span class="pre">title_count()</span></tt>? To encapsulate
+commonly executed queries so that we don&#8217;t have to duplicate code.</p>
+</div>
+<div class="section" id="modifying-initial-manager-querysets">
+<h3>Modifying Initial Manager QuerySets</h3>
+<p>A manager&#8217;s base <tt class="docutils literal"><span class="pre">QuerySet</span></tt> returns all objects in the system. For
+example, <tt class="docutils literal"><span class="pre">Book.objects.all()</span></tt> returns all books in the book database.</p>
+<p>You can override a manager&#8217;s base <tt class="docutils literal"><span class="pre">QuerySet</span></tt> by overriding the
+<tt class="docutils literal"><span class="pre">Manager.get_query_set()</span></tt> method. <tt class="docutils literal"><span class="pre">get_query_set()</span></tt> should return a
+<tt class="docutils literal"><span class="pre">QuerySet</span></tt> with the properties you require.</p>
+<p>For example, the following model has <em>two</em> managers &#8211; one that returns
+all objects, and one that returns only the books by Roald Dahl.</p>
+<pre class="literal-block">
+from django.db import models
+
+<strong># First, define the Manager subclass.</strong>
+<strong>class DahlBookManager(models.Manager):</strong>
+    <strong>def get_query_set(self):</strong>
+        <strong>return super(DahlBookManager, self).get_query_set().filter(author='Roald Dahl')</strong>
+
+<strong># Then hook it into the Book model explicitly.</strong>
+class Book(models.Model):
+    title = models.CharField(max_length=100)
+    author = models.CharField(max_length=50)
+    # ...
+
+    <strong>objects = models.Manager() # The default manager.</strong>
+    <strong>dahl_objects = DahlBookManager() # The Dahl-specific manager.</strong>
+</pre>
+<p>With this sample model, <tt class="docutils literal"><span class="pre">Book.objects.all()</span></tt> will return all books in the
+database, but <tt class="docutils literal"><span class="pre">Book.dahl_objects.all()</span></tt> will only return the ones written by
+Roald Dahl. Note that we explicitly set <tt class="docutils literal"><span class="pre">objects</span></tt> to a vanilla <tt class="docutils literal"><span class="pre">Manager</span></tt>
+instance, because if we hadn&#8217;t, the only available manager would be
+<tt class="docutils literal"><span class="pre">dahl_objects</span></tt>.</p>
+<p>Of course, because <tt class="docutils literal"><span class="pre">get_query_set()</span></tt> returns a <tt class="docutils literal"><span class="pre">QuerySet</span></tt> object, you can
+use <tt class="docutils literal"><span class="pre">filter()</span></tt>, <tt class="docutils literal"><span class="pre">exclude()</span></tt> and all the other <tt class="docutils literal"><span class="pre">QuerySet</span></tt> methods on it.
+So these statements are all legal:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Book</span><span class="o">.</span><span class="n">dahl_objects</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+<span class="n">Book</span><span class="o">.</span><span class="n">dahl_objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s">&#39;Matilda&#39;</span><span class="p">)</span>
+<span class="n">Book</span><span class="o">.</span><span class="n">dahl_objects</span><span class="o">.</span><span class="n">count</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This example also pointed out another interesting technique: using multiple
+managers on the same model. You can attach as many <tt class="docutils literal"><span class="pre">Manager()</span></tt> instances to
+a model as you&#8217;d like. This is an easy way to define common &#8220;filters&#8221; for your
+models.</p>
+<p>For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">class</span> <span class="nc">MaleManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_query_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">MaleManager</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_query_set</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">sex</span><span class="o">=</span><span class="s">&#39;M&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">FemaleManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_query_set</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">FemaleManager</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_query_set</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">sex</span><span class="o">=</span><span class="s">&#39;F&#39;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">sex</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">((</span><span class="s">&#39;M&#39;</span><span class="p">,</span> <span class="s">&#39;Male&#39;</span><span class="p">),</span> <span class="p">(</span><span class="s">&#39;F&#39;</span><span class="p">,</span> <span class="s">&#39;Female&#39;</span><span class="p">)))</span>
+    <span class="n">people</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>
+    <span class="n">men</span> <span class="o">=</span> <span class="n">MaleManager</span><span class="p">()</span>
+    <span class="n">women</span> <span class="o">=</span> <span class="n">FemaleManager</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This example allows you to request <tt class="docutils literal"><span class="pre">Person.men.all()</span></tt>, <tt class="docutils literal"><span class="pre">Person.women.all()</span></tt>,
+and <tt class="docutils literal"><span class="pre">Person.people.all()</span></tt>, yielding predictable results.</p>
+<p>If you use custom <tt class="docutils literal"><span class="pre">Manager</span></tt> objects, take note that the first
+<tt class="docutils literal"><span class="pre">Manager</span></tt> Django encounters (in the order in which they&#8217;re defined
+in the model) has a special status. Django interprets this first
+<tt class="docutils literal"><span class="pre">Manager</span></tt> defined in a class as the &#8220;default&#8221; <tt class="docutils literal"><span class="pre">Manager</span></tt>, and
+several parts of Django (though not the admin application) will use
+that <tt class="docutils literal"><span class="pre">Manager</span></tt> exclusively for that model. As a result, it&#8217;s often a
+good idea to be careful in your choice of default manager, in order to
+avoid a situation where overriding of <tt class="docutils literal"><span class="pre">get_query_set()</span></tt> results in
+an inability to retrieve objects you&#8217;d like to work with.</p>
+</div>
+</div>
+<div class="section" id="model-methods">
+<h2>Model methods</h2>
+<p>Define custom methods on a model to add custom &#8220;row-level&#8221; functionality to your
+objects. Whereas managers are intended to do &#8220;table-wide&#8221; things, model methods
+should act on a particular model instance.</p>
+<p>This is a valuable technique for keeping business logic in one place &#8211; the
+model.</p>
+<p>An example is the easiest way to explain this. Here&#8217;s a model with a few custom
+methods:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.localflavor.us.models</span> <span class="kn">import</span> <span class="n">USStateField</span>
+<span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">birth_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">address</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">city</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">USStateField</span><span class="p">()</span> <span class="c"># Yes, this is U.S.-centric...</span>
+
+    <span class="k">def</span> <span class="nf">baby_boomer_status</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Returns the person&#39;s baby-boomer status.&quot;</span>
+        <span class="kn">import</span> <span class="nn">datetime</span>
+        <span class="k">if</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1945</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth_date</span> <span class="o">&lt;=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1964</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&quot;Baby boomer&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">birth_date</span> <span class="o">&lt;</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">1945</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s">&quot;Pre-boomer&quot;</span>
+        <span class="k">return</span> <span class="s">&quot;Post-boomer&quot;</span>
+
+    <span class="k">def</span> <span class="nf">is_midwestern</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Returns True if this person is from the Midwest.&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;IL&#39;</span><span class="p">,</span> <span class="s">&#39;WI&#39;</span><span class="p">,</span> <span class="s">&#39;MI&#39;</span><span class="p">,</span> <span class="s">&#39;IN&#39;</span><span class="p">,</span> <span class="s">&#39;OH&#39;</span><span class="p">,</span> <span class="s">&#39;IA&#39;</span><span class="p">,</span> <span class="s">&#39;MO&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_full_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="s">&quot;Returns the person&#39;s full name.&quot;</span>
+        <span class="k">return</span> <span class="s">u&#39;</span><span class="si">%s</span><span class="s"> </span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">first_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_name</span><span class="p">)</span>
+    <span class="n">full_name</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">_get_full_name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The last method in this example is a &#8220;property.&#8221; Read more about properties
+at <a class="reference external" href="http://www.python.org/download/releases/2.2/descrintro/#property">http://www.python.org/download/releases/2.2/descrintro/#property</a></p>
+<p>And here&#8217;s example usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">p</span> <span class="o">=</span> <span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">first_name</span><span class="o">=</span><span class="s">&#39;Barack&#39;</span><span class="p">,</span> <span class="n">last_name</span><span class="o">=</span><span class="s">&#39;Obama&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">birth_date</span>
+<span class="go">datetime.date(1961, 8, 4)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">baby_boomer_status</span><span class="p">()</span>
+<span class="go">&#39;Baby boomer&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">is_midwestern</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">p</span><span class="o">.</span><span class="n">full_name</span>  <span class="c"># Note this isn&#39;t a method -- it&#39;s treated as an attribute</span>
+<span class="go">u&#39;Barack Obama&#39;</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="executing-raw-sql-queries">
+<h2>Executing Raw SQL Queries</h2>
+<p>Sometimes you&#8217;ll find that the Django database API can only take you so far,
+and you&#8217;ll want to write custom SQL queries against your database. You can do
+this very easily by accessing the object <tt class="docutils literal"><span class="pre">django.db.connection</span></tt>, which
+represents the current database connection. To use it, call
+<tt class="docutils literal"><span class="pre">connection.cursor()</span></tt> to get a cursor object. Then, call
+<tt class="docutils literal"><span class="pre">cursor.execute(sql,</span> <span class="pre">[params])</span></tt> to execute the SQL and
+<tt class="docutils literal"><span class="pre">cursor.fetchone()</span></tt> or <tt class="docutils literal"><span class="pre">cursor.fetchall()</span></tt> to return the resulting
+rows. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">connection</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="gp">... </span><span class="s">   SELECT DISTINCT first_name</span>
+<span class="gp">... </span><span class="s">   FROM people_person</span>
+<span class="gp">... </span><span class="s">   WHERE last_name = </span><span class="si">%s</span><span class="s">&quot;&quot;&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;Lennon&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">row</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">row</span>
+<span class="go">[&#39;John&#39;]</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">connection</span></tt> and <tt class="docutils literal"><span class="pre">cursor</span></tt> mostly implement the standard Python &#8220;DB-API,&#8221;
+which you can read about at <a class="reference external" href="http://www.python.org/peps/pep-0249.html">http://www.python.org/peps/pep-0249.html</a>. If you&#8217;re
+not familiar with the Python DB-API, note that the SQL statement in
+<tt class="docutils literal"><span class="pre">cursor.execute()</span></tt> uses placeholders, <tt class="docutils literal"><span class="pre">&quot;%s&quot;</span></tt>, rather than adding parameters
+directly within the SQL. If you use this technique, the underlying database
+library will automatically add quotes and escaping to your parameter(s) as
+necessary.</p>
+<p>Rather than littering your view code with these <tt class="docutils literal"><span class="pre">django.db.connection</span></tt>
+statements, it&#8217;s a good idea to put them in custom model methods or manager
+methods. For example, the above example could be integrated into a custom
+manager method like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">connection</span><span class="p">,</span> <span class="n">models</span>
+
+<span class="k">class</span> <span class="nc">PersonManager</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">first_names</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">last_name</span><span class="p">):</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;&quot;&quot;</span>
+<span class="s">            SELECT DISTINCT first_name</span>
+<span class="s">            FROM people_person</span>
+<span class="s">            WHERE last_name = </span><span class="si">%s</span><span class="s">&quot;&quot;&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">last_name</span><span class="p">])</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()]</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">first_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">last_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">PersonManager</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>And sample usage:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">first_names</span><span class="p">(</span><span class="s">&#39;Lennon&#39;</span><span class="p">)</span>
+<span class="go">[&#39;John&#39;, &#39;Cynthia&#39;]</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>In the <a class="reference external" href="chapter11.html">next chapter</a>, we&#8217;ll show you Django&#8217;s &#8220;generic views&#8221; framework, which
+lets you save time in building Web sites that follow common patterns.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter09.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter11.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

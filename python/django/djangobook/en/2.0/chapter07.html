@@ -1,0 +1,1222 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 7: Forms</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter06.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter08.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-7-forms">
+<h1>Chapter 7: Forms</h1>
+<p>HTML forms are the backbone of interactive Web sites, from the simplicity of
+Google&#8217;s single search box to ubiquitous blog comment-submission forms to
+complex custom data-entry interfaces. This chapter covers how you can use
+Django to access user-submitted form data, validate it and do something with
+it. Along the way, we&#8217;ll cover <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> and <tt class="docutils literal"><span class="pre">Form</span></tt> objects.</p>
+<div class="section" id="getting-data-from-the-request-object">
+<h2>Getting Data From the Request Object</h2>
+<p>We introduced <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects in Chapter 3 when we first covered view
+functions, but we didn&#8217;t have much to say about them at the time. Recall that
+each view function takes an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object as its first parameter, as
+in our <tt class="docutils literal"><span class="pre">hello()</span></tt> view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">hello</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Hello world&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects, such as the variable <tt class="docutils literal"><span class="pre">request</span></tt> here, have a number
+of interesting attributes and methods that you should familiarize yourself
+with, so that you know what&#8217;s possible. You can use these attributes to get
+information about the current request (i.e., the user/Web browser that&#8217;s
+loading the current page on your Django-powered site), at the time the view
+function is executed.</p>
+<div class="section" id="information-about-the-url">
+<h3>Information About the URL</h3>
+<p><tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects contain several pieces of information about the
+currently requested URL:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="41%" />
+<col width="28%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Attribute/method</th>
+<th class="head">Description</th>
+<th class="head">Example</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">request.path</span></tt></td>
+<td>The full path, not including the
+domain but including the leading
+slash.</td>
+<td><tt class="docutils literal"><span class="pre">&quot;/hello/&quot;</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">request.get_host()</span></tt></td>
+<td>The host (i.e., the &#8220;domain,&#8221; in
+common parlance).</td>
+<td><tt class="docutils literal"><span class="pre">&quot;127.0.0.1:8000&quot;</span></tt>
+or <tt class="docutils literal"><span class="pre">&quot;www.example.com&quot;</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">request.get_full_path()</span></tt></td>
+<td>The <tt class="docutils literal"><span class="pre">path</span></tt>, plus a query string
+(if available).</td>
+<td><tt class="docutils literal"><span class="pre">&quot;/hello/?print=true&quot;</span></tt></td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">request.is_secure()</span></tt></td>
+<td><tt class="docutils literal"><span class="pre">True</span></tt> if the request was made via
+HTTPS. Otherwise, <tt class="docutils literal"><span class="pre">False</span></tt>.</td>
+<td><tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt></td>
+</tr>
+</tbody>
+</table>
+<p>Always use these attributes/methods instead of hard-coding URLs in your views.
+This makes for more flexible code that can be reused in other places. A
+simplistic example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># BAD!</span>
+<span class="k">def</span> <span class="nf">current_url_view_bad</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Welcome to the page at /current/&quot;</span><span class="p">)</span>
+
+<span class="c"># GOOD</span>
+<span class="k">def</span> <span class="nf">current_url_view_good</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Welcome to the page at </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="other-information-about-the-request">
+<h3>Other Information About the Request</h3>
+<p><tt class="docutils literal"><span class="pre">request.META</span></tt> is a Python dictionary containing all available HTTP headers
+for the given request &#8211; including the user&#8217;s IP address and user agent
+(generally the name and version of the Web browser). Note that the full list
+of available headers depends on which headers the user sent and which headers
+your Web server sets. Some commonly available keys in this dictionary are:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">HTTP_REFERER</span></tt> &#8211; The referring URL, if any. (Note the misspelling of
+<tt class="docutils literal"><span class="pre">REFERER</span></tt>.)</li>
+<li><tt class="docutils literal"><span class="pre">HTTP_USER_AGENT</span></tt> &#8211; The user&#8217;s browser&#8217;s user-agent string, if any.
+This looks something like: <tt class="docutils literal"><span class="pre">&quot;Mozilla/5.0</span> <span class="pre">(X11;</span> <span class="pre">U;</span> <span class="pre">Linux</span> <span class="pre">i686;</span> <span class="pre">fr-FR;</span> <span class="pre">rv:1.8.1.17)</span> <span class="pre">Gecko/20080829</span> <span class="pre">Firefox/2.0.0.17&quot;</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">REMOTE_ADDR</span></tt> &#8211; The IP address of the client, e.g., <tt class="docutils literal"><span class="pre">&quot;12.345.67.89&quot;</span></tt>.
+(If the request has passed through any proxies, then this might be a
+comma-separated list of IP addresses, e.g., <tt class="docutils literal"><span class="pre">&quot;12.345.67.89,23.456.78.90&quot;</span></tt>.)</li>
+</ul>
+<p>Note that because <tt class="docutils literal"><span class="pre">request.META</span></tt> is just a basic Python dictionary, you&#8217;ll
+get a <tt class="docutils literal"><span class="pre">KeyError</span></tt> exception if you try to access a key that doesn&#8217;t exist.
+(Because HTTP headers are <em>external</em> data &#8211; that is, they&#8217;re submitted by your
+users&#8217; browsers &#8211; they shouldn&#8217;t be trusted, and you should always design your
+application to fail gracefully if a particular header is empty or doesn&#8217;t
+exist.) You should either use a <tt class="docutils literal"><span class="pre">try</span></tt>/<tt class="docutils literal"><span class="pre">except</span></tt> clause or the <tt class="docutils literal"><span class="pre">get()</span></tt>
+method to handle the case of undefined keys:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># BAD!</span>
+<span class="k">def</span> <span class="nf">ua_display_bad</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">ua</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="p">[</span><span class="s">&#39;HTTP_USER_AGENT&#39;</span><span class="p">]</span>  <span class="c"># Might raise KeyError!</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Your browser is </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ua</span><span class="p">)</span>
+
+<span class="c"># GOOD (VERSION 1)</span>
+<span class="k">def</span> <span class="nf">ua_display_good1</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">ua</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="p">[</span><span class="s">&#39;HTTP_USER_AGENT&#39;</span><span class="p">]</span>
+    <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+        <span class="n">ua</span> <span class="o">=</span> <span class="s">&#39;unknown&#39;</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Your browser is </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ua</span><span class="p">)</span>
+
+<span class="c"># GOOD (VERSION 2)</span>
+<span class="k">def</span> <span class="nf">ua_display_good2</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">ua</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;HTTP_USER_AGENT&#39;</span><span class="p">,</span> <span class="s">&#39;unknown&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Your browser is </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ua</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We encourage you to write a small view that displays all of the
+<tt class="docutils literal"><span class="pre">request.META</span></tt> data so you can get to know what&#8217;s in there. Here&#8217;s what that
+view might look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">display_meta</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="n">values</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+    <span class="n">html</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="n">html</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;&lt;tr&gt;&lt;td&gt;</span><span class="si">%s</span><span class="s">&lt;/td&gt;&lt;td&gt;</span><span class="si">%s</span><span class="s">&lt;/td&gt;&lt;/tr&gt;&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;&lt;table&gt;</span><span class="si">%s</span><span class="s">&lt;/table&gt;&#39;</span> <span class="o">%</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">html</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>As an exercise, see whether you can convert this view to use Django&#8217;s template
+system instead of hard-coding the HTML. Also try adding <tt class="docutils literal"><span class="pre">request.path</span></tt> and
+the other <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> methods from the previous section.</p>
+</div>
+<div class="section" id="information-about-submitted-data">
+<h3>Information About Submitted Data</h3>
+<p>Beyond basic metadata about the request, <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects have two
+attributes that contain information submitted by the user: <tt class="docutils literal"><span class="pre">request.GET</span></tt> and
+<tt class="docutils literal"><span class="pre">request.POST</span></tt>. Both of these are dictionary-like objects that give you
+access to <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt> data.</p>
+<div class="admonition-dictionary-like-objects admonition">
+<p class="first admonition-title">Dictionary-like objects</p>
+<p>When we say <tt class="docutils literal"><span class="pre">request.GET</span></tt> and <tt class="docutils literal"><span class="pre">request.POST</span></tt> are &#8220;dictionary-like&#8221;
+objects, we mean that they behave like standard Python dictionaries but
+aren&#8217;t technically dictionaries under the hood. For example,
+<tt class="docutils literal"><span class="pre">request.GET</span></tt> and <tt class="docutils literal"><span class="pre">request.POST</span></tt> both have <tt class="docutils literal"><span class="pre">get()</span></tt>, <tt class="docutils literal"><span class="pre">keys()</span></tt>
+and <tt class="docutils literal"><span class="pre">values()</span></tt> methods, and you can iterate over the keys by doing
+<tt class="docutils literal"><span class="pre">for</span> <span class="pre">key</span> <span class="pre">in</span> <span class="pre">request.GET</span></tt>.</p>
+<p>So why the distinction? Because both <tt class="docutils literal"><span class="pre">request.GET</span></tt> and <tt class="docutils literal"><span class="pre">request.POST</span></tt>
+have additional methods that normal dictionaries don&#8217;t have. We&#8217;ll get into
+these in a short while.</p>
+<p class="last">You might have encountered the similar term &#8220;file-like objects&#8221; &#8211; Python
+objects that have a few basic methods, like <tt class="docutils literal"><span class="pre">read()</span></tt>, that let them
+act as stand-ins for &#8220;real&#8221; file objects.</p>
+</div>
+<p><tt class="docutils literal"><span class="pre">POST</span></tt> data generally is submitted from an HTML <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt>, while <tt class="docutils literal"><span class="pre">GET</span></tt>
+data can come from a <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> or the query string in the page&#8217;s URL.</p>
+</div>
+</div>
+<div class="section" id="a-simple-form-handling-example">
+<h2>A Simple Form-Handling Example</h2>
+<p>Continuing this book&#8217;s ongoing example of books, authors and publishers, let&#8217;s
+create a simple view that lets users search our book database by title.</p>
+<p>Generally, there are two parts to developing a form: the HTML user interface
+and the backend view code that processes the submitted data. The first part is
+easy; let&#8217;s just set up a view that displays a search form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="k">def</span> <span class="nf">search_form</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;search_form.html&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As we learned in Chapter 3, this view can live anywhere on your Python path.
+For sake of argument, put it in <tt class="docutils literal"><span class="pre">books/views.py</span></tt>.</p>
+<p>The accompanying template, <tt class="docutils literal"><span class="pre">search_form.html</span></tt>, could look like this:</p>
+<div class="highlight-python"><pre>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Search&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;form action="/search/" method="get"&gt;
+        &lt;input type="text" name="q"&gt;
+        &lt;input type="submit" value="Search"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p>The URLpattern in <tt class="docutils literal"><span class="pre">urls.py</span></tt> could look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">mysite.books</span> <span class="kn">import</span> <span class="n">views</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="c"># ...</span>
+    <span class="n">url</span><span class="p">(</span><span class="s">r&#39;^search-form/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">search_form</span><span class="p">),</span>
+    <span class="c"># ...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>(Note that we&#8217;re importing the <tt class="docutils literal"><span class="pre">views</span></tt> module directly, instead of something
+like <tt class="docutils literal"><span class="pre">from</span> <span class="pre">mysite.views</span> <span class="pre">import</span> <span class="pre">search_form</span></tt>, because the former is less
+verbose. We&#8217;ll cover this importing approach in more detail in Chapter 8.)</p>
+<p>Now, if you run the <tt class="docutils literal"><span class="pre">runserver</span></tt> and visit
+<tt class="docutils literal"><span class="pre">http://127.0.0.1:8000/search-form/</span></tt>, you&#8217;ll see the search interface. Simple
+enough.</p>
+<p>Try submitting the form, though, and you&#8217;ll get a Django 404 error. The form
+points to the URL <tt class="docutils literal"><span class="pre">/search/</span></tt>, which hasn&#8217;t yet been implemented. Let&#8217;s fix
+that with a second view function:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># urls.py</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="c"># ...</span>
+    <span class="p">(</span><span class="s">r&#39;^search-form/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">search_form</span><span class="p">),</span>
+    <span class="p">(</span><span class="s">r&#39;^search/$&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">.</span><span class="n">search</span><span class="p">),</span>
+    <span class="c"># ...</span>
+<span class="p">)</span>
+
+<span class="c"># views.py</span>
+
+<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s">&#39;q&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;You searched for: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;q&#39;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;You submitted an empty form.&#39;</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For the moment, this merely displays the user&#8217;s search term, so we can make
+sure the data is being submitted to Django properly, and so you can get a feel
+for how the search term flows through the system. In short:</p>
+<ol class="arabic simple">
+<li>The HTML <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> defines a variable <tt class="docutils literal"><span class="pre">q</span></tt>. When it&#8217;s submitted, the
+value of <tt class="docutils literal"><span class="pre">q</span></tt> is sent via <tt class="docutils literal"><span class="pre">GET</span></tt> (<tt class="docutils literal"><span class="pre">method=&quot;get&quot;</span></tt>) to the URL
+<tt class="docutils literal"><span class="pre">/search/</span></tt>.</li>
+<li>The Django view that handles the URL <tt class="docutils literal"><span class="pre">/search/</span></tt> (<tt class="docutils literal"><span class="pre">search()</span></tt>) has
+access to the <tt class="docutils literal"><span class="pre">q</span></tt> value in <tt class="docutils literal"><span class="pre">request.GET</span></tt>.</li>
+</ol>
+<p>An important thing to point out here is that we explicitly check that <tt class="docutils literal"><span class="pre">'q'</span></tt>
+exists in <tt class="docutils literal"><span class="pre">request.GET</span></tt>. As we pointed out in the <tt class="docutils literal"><span class="pre">request.META</span></tt> section
+above, you shouldn&#8217;t trust anything submitted by users or even assume that
+they&#8217;ve submitted anything in the first place. If we didn&#8217;t add this check, any
+submission of an empty form would raise <tt class="docutils literal"><span class="pre">KeyError</span></tt> in the view:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># BAD!</span>
+<span class="k">def</span> <span class="nf">bad_search</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># The following line will raise KeyError if &#39;q&#39; hasn&#39;t</span>
+    <span class="c"># been submitted!</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;You searched for: </span><span class="si">%r</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;q&#39;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition-query-string-parameters admonition">
+<p class="first admonition-title">Query string parameters</p>
+<p class="last">Because <tt class="docutils literal"><span class="pre">GET</span></tt> data is passed in the query string (e.g.,
+<tt class="docutils literal"><span class="pre">/search/?q=django</span></tt>), you can use <tt class="docutils literal"><span class="pre">request.GET</span></tt> to access query string
+variables. In Chapter 3&#8217;s introduction of Django&#8217;s URLconf system, we
+compared Django&#8217;s pretty URLs to more traditional PHP/Java URLs such as
+<tt class="docutils literal"><span class="pre">/time/plus?hours=3</span></tt> and said we&#8217;d show you how to do the latter in
+Chapter 7. Now you know how to access query string parameters in your
+views (like <tt class="docutils literal"><span class="pre">hours=3</span></tt> in this example) &#8211; use <tt class="docutils literal"><span class="pre">request.GET</span></tt>.</p>
+</div>
+<p><tt class="docutils literal"><span class="pre">POST</span></tt> data works the same way as <tt class="docutils literal"><span class="pre">GET</span></tt> data &#8211; just use <tt class="docutils literal"><span class="pre">request.POST</span></tt>
+instead of <tt class="docutils literal"><span class="pre">request.GET</span></tt>. What&#8217;s the difference between <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt>?
+Use <tt class="docutils literal"><span class="pre">GET</span></tt> when the act of submitting the form is just a request to &#8220;get&#8221;
+data. Use <tt class="docutils literal"><span class="pre">POST</span></tt> whenever the act of submitting the form will have some side
+effect &#8211; <em>changing</em> data, or sending an e-mail, or something else that&#8217;s
+beyond simple <em>display</em> of data. In our book-search example, we&#8217;re using
+<tt class="docutils literal"><span class="pre">GET</span></tt> because the query doesn&#8217;t change any data on our server. (See
+<a class="reference external" href="http://www.w3.org/2001/tag/doc/whenToUseGet.html">http://www.w3.org/2001/tag/doc/whenToUseGet.html</a> if you want to learn more
+about <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt>.)</p>
+<p>Now that we&#8217;ve verified <tt class="docutils literal"><span class="pre">request.GET</span></tt> is being passed in properly, let&#8217;s hook
+the user&#8217;s search query into our book database (again, in <tt class="docutils literal"><span class="pre">views.py</span></tt>):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+<span class="kn">from</span> <span class="nn">mysite.books.models</span> <span class="kn">import</span> <span class="n">Book</span>
+
+<span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="s">&#39;q&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span> <span class="ow">and</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;q&#39;</span><span class="p">]:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;q&#39;</span><span class="p">]</span>
+        <span class="n">books</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__icontains</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;search_results.html&#39;</span><span class="p">,</span>
+            <span class="p">{</span><span class="s">&#39;books&#39;</span><span class="p">:</span> <span class="n">books</span><span class="p">,</span> <span class="s">&#39;query&#39;</span><span class="p">:</span> <span class="n">q</span><span class="p">})</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;Please submit a search term.&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A couple of notes on what we did here:</p>
+<ul>
+<li><p class="first">Aside from checking that <tt class="docutils literal"><span class="pre">'q'</span></tt> exists in <tt class="docutils literal"><span class="pre">request.GET</span></tt>, we also make
+sure that <tt class="docutils literal"><span class="pre">request.GET['q']</span></tt> is a non-empty value before passing it to
+the database query.</p>
+</li>
+<li><p class="first">We&#8217;re using <tt class="docutils literal"><span class="pre">Book.objects.filter(title__icontains=q)</span></tt> to query our
+book table for all books whose title includes the given submission. The
+<tt class="docutils literal"><span class="pre">icontains</span></tt> is a lookup type (as explained in Chapter 5 and Appendix
+B), and the statement can be roughly translated as &#8220;Get the books whose
+title contains <tt class="docutils literal"><span class="pre">q</span></tt>, without being case-sensitive.&#8221;</p>
+<p>This is a very simple way to do a book search. We wouldn&#8217;t recommend
+using a simple <tt class="docutils literal"><span class="pre">icontains</span></tt> query on a large production database, as
+it can be slow. (In the real world, you&#8217;d want to use a custom search
+system of some sort. Search the Web for <em>open-source full-text search</em>
+to get an idea of the possibilities.)</p>
+</li>
+<li><p class="first">We pass <tt class="docutils literal"><span class="pre">books</span></tt>, a list of <tt class="docutils literal"><span class="pre">Book</span></tt> objects, to the template. The
+template code for <tt class="docutils literal"><span class="pre">search_results.html</span></tt> might include something like
+this:</p>
+<div class="highlight-python"><pre>&lt;p&gt;You searched for: &lt;strong&gt;{{ query }}&lt;/strong&gt;&lt;/p&gt;
+
+{% if books %}
+    &lt;p&gt;Found {{ books|length }} book{{ books|pluralize }}.&lt;/p&gt;
+    &lt;ul&gt;
+        {% for book in books %}
+        &lt;li&gt;{{ book.title }}&lt;/li&gt;
+        {% endfor %}
+    &lt;/ul&gt;
+{% else %}
+    &lt;p&gt;No books matched your search criteria.&lt;/p&gt;
+{% endif %}</pre>
+</div>
+<p>Note usage of the <tt class="docutils literal"><span class="pre">pluralize</span></tt> template filter, which outputs an &#8220;s&#8221;
+if appropriate, based on the number of books found.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="improving-our-simple-form-handling-example">
+<h2>Improving Our Simple Form-Handling Example</h2>
+<p>As in previous chapters, we&#8217;ve shown you the simplest thing that could possibly
+work. Now we&#8217;ll point out some problems and show you how to improve it.</p>
+<p>First, our <tt class="docutils literal"><span class="pre">search()</span></tt> view&#8217;s handling of an empty query is poor &#8211; we&#8217;re just
+displaying a <tt class="docutils literal"><span class="pre">&quot;Please</span> <span class="pre">submit</span> <span class="pre">a</span> <span class="pre">search</span> <span class="pre">term.&quot;</span></tt> message, requiring the user to
+hit the browser&#8217;s back button. This is horrid and unprofessional, and if you
+ever actually implement something like this in the wild, your Django privileges
+will be revoked.</p>
+<p>It would be much better to redisplay the form, with an error above it, so that
+the user can try again immediately. The easiest way to do that would be to
+render the template again, like this:</p>
+<pre class="literal-block">
+from django.http import HttpResponse
+from django.shortcuts import render
+from mysite.books.models import Book
+
+def search_form(request):
+    return render(request, 'search_form.html')
+
+def search(request):
+    if 'q' in request.GET and request.GET['q']:
+        q = request.GET['q']
+        books = Book.objects.filter(title__icontains=q)
+        return render(request, 'search_results.html',
+            {'books': books, 'query': q})
+    else:
+        <strong>return render(request, 'search_form.html', {'error': True})</strong>
+</pre>
+<p>(Note that we&#8217;ve included <tt class="docutils literal"><span class="pre">search_form()</span></tt> here so you can see both views in
+one place.)</p>
+<p>Here, we&#8217;ve improved <tt class="docutils literal"><span class="pre">search()</span></tt> to render the <tt class="docutils literal"><span class="pre">search_form.html</span></tt> template
+again, if the query is empty. And because we need to display an error message
+in that template, we pass a template variable. Now we can edit
+<tt class="docutils literal"><span class="pre">search_form.html</span></tt> to check for the <tt class="docutils literal"><span class="pre">error</span></tt> variable:</p>
+<pre class="literal-block">
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Search&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    <strong>{% if error %}</strong>
+        <strong>&lt;p style=&quot;color: red;&quot;&gt;Please submit a search term.&lt;/p&gt;</strong>
+    <strong>{% endif %}</strong>
+    &lt;form action=&quot;/search/&quot; method=&quot;get&quot;&gt;
+        &lt;input type=&quot;text&quot; name=&quot;q&quot;&gt;
+        &lt;input type=&quot;submit&quot; value=&quot;Search&quot;&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p>We can still use this template from our original view, <tt class="docutils literal"><span class="pre">search_form()</span></tt>,
+because <tt class="docutils literal"><span class="pre">search_form()</span></tt> doesn&#8217;t pass <tt class="docutils literal"><span class="pre">error</span></tt> to the template &#8211; so the
+error message won&#8217;t show up in that case.</p>
+<p>With this change in place, it&#8217;s a better application, but it now begs the
+question: is a dedicated <tt class="docutils literal"><span class="pre">search_form()</span></tt> view really necessary? As it stands,
+a request to the URL <tt class="docutils literal"><span class="pre">/search/</span></tt> (without any <tt class="docutils literal"><span class="pre">GET</span></tt> parameters) will display
+the empty form (but with an error). We can remove the <tt class="docutils literal"><span class="pre">search_form()</span></tt> view,
+along with its associated URLpattern, as long as we change <tt class="docutils literal"><span class="pre">search()</span></tt> to
+hide the error message when somebody visits <tt class="docutils literal"><span class="pre">/search/</span></tt> with no <tt class="docutils literal"><span class="pre">GET</span></tt>
+parameters:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">error</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="k">if</span> <span class="s">&#39;q&#39;</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">GET</span><span class="p">[</span><span class="s">&#39;q&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">q</span><span class="p">:</span>
+            <span class="n">error</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">books</span> <span class="o">=</span> <span class="n">Book</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">title__icontains</span><span class="o">=</span><span class="n">q</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;search_results.html&#39;</span><span class="p">,</span>
+                <span class="p">{</span><span class="s">&#39;books&#39;</span><span class="p">:</span> <span class="n">books</span><span class="p">,</span> <span class="s">&#39;query&#39;</span><span class="p">:</span> <span class="n">q</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;search_form.html&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;error&#39;</span><span class="p">:</span> <span class="n">error</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>In this updated view, if a user visits <tt class="docutils literal"><span class="pre">/search/</span></tt> with no <tt class="docutils literal"><span class="pre">GET</span></tt> parameters,
+he&#8217;ll see the search form with no error message. If a user submits the form
+with an empty value for <tt class="docutils literal"><span class="pre">'q'</span></tt>, he&#8217;ll see the search form <em>with</em> an error
+message. And, finally, if a user submits the form with a non-empty value for
+<tt class="docutils literal"><span class="pre">'q'</span></tt>, he&#8217;ll see the search results.</p>
+<p>We can make one final improvement to this application, to remove a bit of
+redundancy. Now that we&#8217;ve rolled the two views and URLs into one and
+<tt class="docutils literal"><span class="pre">/search/</span></tt> handles both search-form display and result display, the HTML
+<tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> in <tt class="docutils literal"><span class="pre">search_form.html</span></tt> doesn&#8217;t have to hard-code a URL. Instead
+of this:</p>
+<div class="highlight-python"><pre>&lt;form action="/search/" method="get"&gt;</pre>
+</div>
+<p>It can be changed to this:</p>
+<div class="highlight-python"><pre>&lt;form action="" method="get"&gt;</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">action=&quot;&quot;</span></tt> means &#8220;Submit the form to the same URL as the current page.&#8221;
+With this change in place, you won&#8217;t have to remember to change the <tt class="docutils literal"><span class="pre">action</span></tt>
+if you ever hook the <tt class="docutils literal"><span class="pre">search()</span></tt> view to another URL.</p>
+</div>
+<div class="section" id="simple-validation">
+<h2>Simple validation</h2>
+<p>Our search example is still reasonably simple, particularly in terms of its
+data validation; we&#8217;re merely checking to make sure the search query isn&#8217;t
+empty. Many HTML forms include a level of validation that&#8217;s more complex than
+making sure the value is non-empty. We&#8217;ve all seen the error messages on Web
+sites:</p>
+<ul class="simple">
+<li>&#8220;Please enter a valid e-mail address. &#8216;foo&#8217; is not an e-mail address.&#8221;</li>
+<li>&#8220;Please enter a valid five-digit U.S. ZIP code. &#8216;123&#8217; is not a ZIP code.&#8221;</li>
+<li>&#8220;Please enter a valid date in the format YYYY-MM-DD.&#8221;</li>
+<li>&#8220;Please enter a password that is at least 8 characters long and contains
+at least one number.&#8221;</li>
+</ul>
+<div class="admonition-a-note-on-javascript-validation admonition">
+<p class="first admonition-title">A note on JavaScript validation</p>
+<p>This is beyond the scope of this book, but you can use JavaScript to
+validate data on the client side, directly in the browser. But be warned:
+even if you do this, you <em>must</em> validate data on the server side, too. Some
+people have JavaScript turned off, and some malicious users might submit
+raw, unvalidated data directly to your form handler to see whether they can
+cause mischief.</p>
+<p class="last">There&#8217;s nothing you can do about this, other than <em>always</em> validate
+user-submitted data server-side (i.e., in your Django views). You should
+think of JavaScript validation as a bonus usability feature, not as your
+only means of validating.</p>
+</div>
+<p>Let&#8217;s tweak our <tt class="docutils literal"><span class="pre">search()</span></tt> view so that it validates that the search term is
+less than or equal to 20 characters long. (For sake of example, let&#8217;s say
+anything longer than that might make the query too slow.) How might we do that?
+The simplest possible thing would be to embed the logic directly in the view,
+like this:</p>
+<pre class="literal-block">
+def search(request):
+    error = False
+    if 'q' in request.GET:
+        q = request.GET['q']
+        if not q:
+            error = True
+        <strong>elif len(q) &gt; 20:</strong>
+            <strong>error = True</strong>
+        else:
+            books = Book.objects.filter(title__icontains=q)
+            return render(request, 'search_results.html',
+                {'books': books, 'query': q})
+    return render(request, 'search_form.html',
+        {'error': error})
+</pre>
+<p>Now, if you try submitting a search query greater than 20 characters long,
+it won&#8217;t let you search; you&#8217;ll get an error message. But that error message
+in <tt class="docutils literal"><span class="pre">search_form.html</span></tt> currently says <tt class="docutils literal"><span class="pre">&quot;Please</span> <span class="pre">submit</span> <span class="pre">a</span> <span class="pre">search</span> <span class="pre">term.&quot;</span></tt> &#8211;
+so we&#8217;ll have to change it to be accurate for both cases:</p>
+<div class="highlight-python"><pre>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Search&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    {% if error %}
+        &lt;p style="color: red;"&gt;Please submit a search term 20 characters or shorter.&lt;/p&gt;
+    {% endif %}
+    &lt;form action="/search/" method="get"&gt;
+        &lt;input type="text" name="q"&gt;
+        &lt;input type="submit" value="Search"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p>There&#8217;s something ugly about this. Our one-size-fits-all error message is
+potentially confusing. Why should the error message for an empty form
+submission mention anything about a 20-character limit? Error messages should
+be specific, unambiguous and not confusing.</p>
+<p>The problem is in the fact that we&#8217;re using a simple boolean value for
+<tt class="docutils literal"><span class="pre">error</span></tt>, whereas we should be using a <em>list</em> of error message strings. Here&#8217;s
+how we might fix that:</p>
+<pre class="literal-block">
+def search(request):
+    <strong>errors = []</strong>
+    if 'q' in request.GET:
+        q = request.GET['q']
+        if not q:
+            <strong>errors.append('Enter a search term.')</strong>
+        elif len(q) &gt; 20:
+            <strong>errors.append('Please enter at most 20 characters.')</strong>
+        else:
+            books = Book.objects.filter(title__icontains=q)
+            return render(request, 'search_results.html',
+                {'books': books, 'query': q})
+    return render(request, 'search_form.html',
+        {<strong>'errors': errors</strong>})
+</pre>
+<p>Then, we need make a small tweak to the <tt class="docutils literal"><span class="pre">search_form.html</span></tt> template to
+reflect that it&#8217;s now passed an <tt class="docutils literal"><span class="pre">errors</span></tt> list instead of an <tt class="docutils literal"><span class="pre">error</span></tt> boolean
+value:</p>
+<pre class="literal-block">
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Search&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    <strong>{% if errors %}</strong>
+        <strong>&lt;ul&gt;</strong>
+            <strong>{% for error in errors %}</strong>
+            <strong>&lt;li&gt;{{ error }}&lt;/li&gt;</strong>
+            <strong>{% endfor %}</strong>
+        <strong>&lt;/ul&gt;</strong>
+    <strong>{% endif %}</strong>
+    &lt;form action=&quot;/search/&quot; method=&quot;get&quot;&gt;
+        &lt;input type=&quot;text&quot; name=&quot;q&quot;&gt;
+        &lt;input type=&quot;submit&quot; value=&quot;Search&quot;&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+</div>
+<div class="section" id="making-a-contact-form">
+<h2>Making a Contact Form</h2>
+<p>Although we iterated over the book search form example several times and
+improved it nicely, it&#8217;s still fundamentally simple: just a single field,
+<tt class="docutils literal"><span class="pre">'q'</span></tt>. Because it&#8217;s so simple, we didn&#8217;t even use Django&#8217;s form library to
+deal with it. But more complex forms call for more complex treatment &#8211; and now
+we&#8217;ll develop something more complex: a site contact form.</p>
+<p>This will be a form that lets site users submit a bit of feedback, along with
+an optional e-mail return address. After the form is submitted and the
+data is validated, we&#8217;ll automatically send the message via e-mail to the site
+staff.</p>
+<p>We&#8217;ll start with our template, <tt class="docutils literal"><span class="pre">contact_form.html</span></tt>.</p>
+<div class="highlight-python"><pre>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Contact us&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Contact us&lt;/h1&gt;
+
+    {% if errors %}
+        &lt;ul&gt;
+            {% for error in errors %}
+            &lt;li&gt;{{ error }}&lt;/li&gt;
+            {% endfor %}
+        &lt;/ul&gt;
+    {% endif %}
+
+    &lt;form action="/contact/" method="post"&gt;
+        &lt;p&gt;Subject: &lt;input type="text" name="subject"&gt;&lt;/p&gt;
+        &lt;p&gt;Your e-mail (optional): &lt;input type="text" name="email"&gt;&lt;/p&gt;
+        &lt;p&gt;Message: &lt;textarea name="message" rows="10" cols="50"&gt;&lt;/textarea&gt;&lt;/p&gt;
+        &lt;input type="submit" value="Submit"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p>We&#8217;ve defined three fields: the subject, e-mail address and message. The second
+is optional, but the other two fields are required. Note we&#8217;re using
+<tt class="docutils literal"><span class="pre">method=&quot;post&quot;</span></tt> here instead of <tt class="docutils literal"><span class="pre">method=&quot;get&quot;</span></tt> because this form submission
+has a side effect &#8211; it sends an e-mail. Also, we copied the error-displaying
+code from our previous template <tt class="docutils literal"><span class="pre">search_form.html</span></tt>.</p>
+<p>If we continue down the road established by our <tt class="docutils literal"><span class="pre">search()</span></tt> view from the
+previous section, a naive version of our <tt class="docutils literal"><span class="pre">contact()</span></tt> view might look like
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponseRedirect</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">render</span>
+
+<span class="k">def</span> <span class="nf">contact</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">errors</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;subject&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;Enter a subject.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;message&#39;</span><span class="p">,</span> <span class="s">&#39;&#39;</span><span class="p">):</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;Enter a message.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;email&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="s">&#39;@&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;email&#39;</span><span class="p">]:</span>
+            <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;Enter a valid e-mail address.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">errors</span><span class="p">:</span>
+            <span class="n">send_mail</span><span class="p">(</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;subject&#39;</span><span class="p">],</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">],</span>
+                <span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;email&#39;</span><span class="p">,</span> <span class="s">&#39;noreply@example.com&#39;</span><span class="p">),</span>
+                <span class="p">[</span><span class="s">&#39;siteowner@example.com&#39;</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">HttpResponseRedirect</span><span class="p">(</span><span class="s">&#39;/contact/thanks/&#39;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;contact_form.html&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;errors&#39;</span><span class="p">:</span> <span class="n">errors</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>(If you&#8217;re following along, you may be wondering whether to put this view in
+the <tt class="docutils literal"><span class="pre">books/views.py</span></tt> file. It doesn&#8217;t have anything to do with the books
+application, so should it live elsewhere? It&#8217;s totally up to you; Django
+doesn&#8217;t care, as long as you&#8217;re able to point to the view from your URLconf.
+Our personal preference would be to create a separate directory, <tt class="docutils literal"><span class="pre">contact</span></tt>,
+at the same level in the directory tree as <tt class="docutils literal"><span class="pre">books</span></tt>. This would contain an
+empty <tt class="docutils literal"><span class="pre">__init__.py</span></tt> and <tt class="docutils literal"><span class="pre">views.py</span></tt>.)</p>
+<p>A couple of new things are happening here:</p>
+<ul>
+<li><p class="first">We&#8217;re checking that <tt class="docutils literal"><span class="pre">request.method</span></tt> is <tt class="docutils literal"><span class="pre">'POST'</span></tt>. This will only be
+true in the case of a form submission; it won&#8217;t be true if somebody is
+merely viewing the contact form. (In the latter case,
+<tt class="docutils literal"><span class="pre">request.method</span> <span class="pre">will</span> <span class="pre">be</span> <span class="pre">set</span> <span class="pre">to</span> <span class="pre">'GET'</span></tt>, because in normal Web browsing,
+browsers use <tt class="docutils literal"><span class="pre">GET</span></tt>, not <tt class="docutils literal"><span class="pre">POST</span></tt>.) This makes it a nice way to isolate
+the &#8220;form display&#8221; case from the &#8220;form processing&#8221; case.</p>
+</li>
+<li><p class="first">Instead of <tt class="docutils literal"><span class="pre">request.GET</span></tt>, we&#8217;re using <tt class="docutils literal"><span class="pre">request.POST</span></tt> to access the
+submitted form data. This is necessary because the HTML <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> in
+<tt class="docutils literal"><span class="pre">contact_form.html</span></tt> uses <tt class="docutils literal"><span class="pre">method=&quot;post&quot;</span></tt>. If this view is accessed
+via <tt class="docutils literal"><span class="pre">POST</span></tt>, then <tt class="docutils literal"><span class="pre">request.GET</span></tt> will be empty.</p>
+</li>
+<li><p class="first">This time, we have <em>two</em> required fields, <tt class="docutils literal"><span class="pre">subject</span></tt> and <tt class="docutils literal"><span class="pre">message</span></tt>, so
+we have to validate both. Note that we&#8217;re using <tt class="docutils literal"><span class="pre">request.POST.get()</span></tt>
+and providing a blank string as the default value; this is a nice, short
+way of handling both the cases of missing keys and missing data.</p>
+</li>
+<li><p class="first">Although the <tt class="docutils literal"><span class="pre">email</span></tt> field is not required, we still validate it if it
+is indeed submitted. Our validation algorithm here is fragile &#8211; we&#8217;re
+just checking that the string contains an <tt class="docutils literal"><span class="pre">&#64;</span></tt> character. In the real
+world, you&#8217;d want more robust validation (and Django provides it, which
+we&#8217;ll show you very shortly).</p>
+</li>
+<li><p class="first">We&#8217;re using the function <tt class="docutils literal"><span class="pre">django.core.mail.send_mail</span></tt> to send an
+e-mail. This function has four required arguments: the e-mail subject,
+the e-mail body, the &#8220;from&#8221; address, and a list of recipient addresses.
+<tt class="docutils literal"><span class="pre">send_mail</span></tt> is a convenient wrapper around Django&#8217;s <tt class="docutils literal"><span class="pre">EmailMessage</span></tt>
+class, which provides advanced features such as attachments, multipart
+e-mails, and full control over e-mail headers.</p>
+<p>Note that in order to send e-mail using <tt class="docutils literal"><span class="pre">send_mail()</span></tt>, your server must
+be configured to send mail, and Django must be told about your outbound
+e-mail server. See <a class="reference external" href="http://docs.djangoproject.com/en/dev/topics/email/">http://docs.djangoproject.com/en/dev/topics/email/</a> for
+the specifics.</p>
+</li>
+<li><p class="first">After the e-mail is sent, we redirect to a &#8220;success&#8221; page by returning an
+<tt class="docutils literal"><span class="pre">HttpResponseRedirect</span></tt> object. We&#8217;ll leave the implementation of that
+&#8220;success&#8221; page up to you (it&#8217;s a simple view/URLconf/template), but we
+should explain why we initiate a redirect instead of, for example, simply
+calling <tt class="docutils literal"><span class="pre">render()</span></tt> with a template right there.</p>
+<p>The reason: if a user hits &#8220;Refresh&#8221; on a page that was loaded via
+<tt class="docutils literal"><span class="pre">POST</span></tt>, that request will be repeated. This can often lead to undesired
+behavior, such as a duplicate record being added to the database &#8211; or,
+in our example, the e-mail being sent twice. If the user is redirected to
+another page after the <tt class="docutils literal"><span class="pre">POST</span></tt>, then there&#8217;s no chance of repeating the
+request.</p>
+<p>You should <em>always</em> issue a redirect for successful <tt class="docutils literal"><span class="pre">POST</span></tt> requests.
+It&#8217;s a Web development best practice.</p>
+</li>
+</ul>
+<p>This view works, but those validation functions are kind of crufty. Imagine
+processing a form with a dozen fields; would you really want to have to write
+all of those <tt class="docutils literal"><span class="pre">if</span></tt> statements?</p>
+<p>Another problem is <em>form redisplay</em>. In the case of validation errors, it&#8217;s
+best practice to redisplay the form <em>with</em> the previously submitted data
+already filled in, so the user can see what he did wrong (and also so the user
+doesn&#8217;t have to reenter data in fields that were submitted correctly). We
+<em>could</em> manually pass the <tt class="docutils literal"><span class="pre">POST</span></tt> data back to the template, but we&#8217;d have to
+edit each HTML field to insert the proper value in the proper place:</p>
+<pre class="literal-block">
+# views.py
+
+def contact(request):
+    errors = []
+    if request.method == 'POST':
+        if not request.POST.get('subject', ''):
+            errors.append('Enter a subject.')
+        if not request.POST.get('message', ''):
+            errors.append('Enter a message.')
+        if request.POST.get('email') and '&#64;' not in request.POST['email']:
+            errors.append('Enter a valid e-mail address.')
+        if not errors:
+            send_mail(
+                request.POST['subject'],
+                request.POST['message'],
+                request.POST.get('email', <a class="reference external" href="mailto:'noreply&#37;&#52;&#48;example&#46;com">'noreply<span>&#64;</span>example<span>&#46;</span>com</a>'),
+                [<a class="reference external" href="mailto:'siteowner&#37;&#52;&#48;example&#46;com">'siteowner<span>&#64;</span>example<span>&#46;</span>com</a>'],
+            )
+            return HttpResponseRedirect('/contact/thanks/')
+    return render(request, 'contact_form.html', {
+        'errors': errors,
+        <strong>'subject': request.POST.get('subject', ''),</strong>
+        <strong>'message': request.POST.get('message', ''),</strong>
+        <strong>'email': request.POST.get('email', ''),</strong>
+    })
+
+# contact_form.html
+
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Contact us&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Contact us&lt;/h1&gt;
+
+    {% if errors %}
+        &lt;ul&gt;
+            {% for error in errors %}
+            &lt;li&gt;{{ error }}&lt;/li&gt;
+            {% endfor %}
+        &lt;/ul&gt;
+    {% endif %}
+
+    &lt;form action=&quot;/contact/&quot; method=&quot;post&quot;&gt;
+        &lt;p&gt;Subject: &lt;input type=&quot;text&quot; name=&quot;subject&quot; <strong>value=&quot;{{ subject }}&quot;</strong>&gt;&lt;/p&gt;
+        &lt;p&gt;Your e-mail (optional): &lt;input type=&quot;text&quot; name=&quot;email&quot; <strong>value=&quot;{{ email }}&quot;</strong>&gt;&lt;/p&gt;
+        &lt;p&gt;Message: &lt;textarea name=&quot;message&quot; rows=&quot;10&quot; cols=&quot;50&quot;&gt;**{{ message }}**&lt;/textarea&gt;&lt;/p&gt;
+        &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;
+</pre>
+<p>This is a lot of cruft, and it introduces a lot of opportunities for human
+error. We hope you&#8217;re starting to see the opportunity for some higher-level
+library that handles form- and validation-related tasks.</p>
+</div>
+<div class="section" id="your-first-form-class">
+<h2>Your First Form Class</h2>
+<p>Django comes with a form library, called <tt class="docutils literal"><span class="pre">django.forms</span></tt>, that handles many of
+the issues we&#8217;ve been exploring this chapter &#8211; from HTML form display to
+validation. Let&#8217;s dive in and rework our contact form application using the
+Django forms framework.</p>
+<div class="admonition-django-s-newforms-library admonition">
+<p class="first admonition-title">Django&#8217;s &#8220;newforms&#8221; library</p>
+<p>Throughout the Django community, you might see chatter about something
+called <tt class="docutils literal"><span class="pre">django.newforms</span></tt>. When people speak of <tt class="docutils literal"><span class="pre">django.newforms</span></tt>,
+they&#8217;re talking about what is now <tt class="docutils literal"><span class="pre">django.forms</span></tt> &#8211; the library covered by
+this chapter.</p>
+<p class="last">The reason for this name change is historic. When Django was first released
+to the public, it had a complicated, confusing forms system,
+<tt class="docutils literal"><span class="pre">django.forms</span></tt>. It was completely rewritten, and the new version was
+called <tt class="docutils literal"><span class="pre">django.newforms</span></tt> so that people could still use the old system.
+When Django 1.0 was released, the old <tt class="docutils literal"><span class="pre">django.forms</span></tt> went away, and
+<tt class="docutils literal"><span class="pre">django.newforms</span></tt> became <tt class="docutils literal"><span class="pre">django.forms</span></tt>.</p>
+</div>
+<p>The primary way to use the forms framework is to define a <tt class="docutils literal"><span class="pre">Form</span></tt> class for
+each HTML <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> you&#8217;re dealing with. In our case, we only have one
+<tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt>, so we&#8217;ll have one <tt class="docutils literal"><span class="pre">Form</span></tt> class. This class can live anywhere you
+want &#8211; including directly in your <tt class="docutils literal"><span class="pre">views.py</span></tt> file &#8211; but community
+convention is to keep <tt class="docutils literal"><span class="pre">Form</span></tt> classes in a separate file called <tt class="docutils literal"><span class="pre">forms.py</span></tt>.
+Create this file in the same directory as your <tt class="docutils literal"><span class="pre">views.py</span></tt>, and enter the
+following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">ContactForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>This is pretty intuitive, and it&#8217;s similar to Django&#8217;s model syntax. Each field
+in the form is represented by a type of <tt class="docutils literal"><span class="pre">Field</span></tt> class &#8211; <tt class="docutils literal"><span class="pre">CharField</span></tt> and
+<tt class="docutils literal"><span class="pre">EmailField</span></tt> are the only types of fields used here &#8211; as attributes of a
+<tt class="docutils literal"><span class="pre">Form</span></tt> class. Each field is required by default, so to make <tt class="docutils literal"><span class="pre">email</span></tt>
+optional, we specify <tt class="docutils literal"><span class="pre">required=False</span></tt>.</p>
+<p>Let&#8217;s hop into the Python interactive interpreter and see what this class can
+do. The first thing it can do is display itself as HTML:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">contact.forms</span> <span class="kn">import</span> <span class="n">ContactForm</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">f</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_subject&quot;&gt;Subject:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;subject&quot; id=&quot;id_subject&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_email&quot;&gt;Email:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;email&quot; id=&quot;id_email&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="go">&lt;tr&gt;&lt;th&gt;&lt;label for=&quot;id_message&quot;&gt;Message:&lt;/label&gt;&lt;/th&gt;&lt;td&gt;&lt;input type=&quot;text&quot; name=&quot;message&quot; id=&quot;id_message&quot; /&gt;&lt;/td&gt;&lt;/tr&gt;</span>
+</pre></div>
+</div>
+<p>Django adds a label to each field, along with <tt class="docutils literal"><span class="pre">&lt;label&gt;</span></tt> tags for
+accessibility. The idea is to make the default behavior as optimal as possible.</p>
+<p>This default output is in the format of an HTML <tt class="docutils literal"><span class="pre">&lt;table&gt;</span></tt>, but there are a
+few other built-in outputs:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">f</span><span class="o">.</span><span class="n">as_ul</span><span class="p">()</span>
+<span class="go">&lt;li&gt;&lt;label for=&quot;id_subject&quot;&gt;Subject:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;subject&quot; id=&quot;id_subject&quot; /&gt;&lt;/li&gt;</span>
+<span class="go">&lt;li&gt;&lt;label for=&quot;id_email&quot;&gt;Email:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;email&quot; id=&quot;id_email&quot; /&gt;&lt;/li&gt;</span>
+<span class="go">&lt;li&gt;&lt;label for=&quot;id_message&quot;&gt;Message:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;message&quot; id=&quot;id_message&quot; /&gt;&lt;/li&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">f</span><span class="o">.</span><span class="n">as_p</span><span class="p">()</span>
+<span class="go">&lt;p&gt;&lt;label for=&quot;id_subject&quot;&gt;Subject:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;subject&quot; id=&quot;id_subject&quot; /&gt;&lt;/p&gt;</span>
+<span class="go">&lt;p&gt;&lt;label for=&quot;id_email&quot;&gt;Email:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;email&quot; id=&quot;id_email&quot; /&gt;&lt;/p&gt;</span>
+<span class="go">&lt;p&gt;&lt;label for=&quot;id_message&quot;&gt;Message:&lt;/label&gt; &lt;input type=&quot;text&quot; name=&quot;message&quot; id=&quot;id_message&quot; /&gt;&lt;/p&gt;</span>
+</pre></div>
+</div>
+<p>Note that the opening and closing <tt class="docutils literal"><span class="pre">&lt;table&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;ul&gt;</span></tt> and <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> tags
+aren&#8217;t included in the output, so that you can add any additional rows and
+customization if necessary.</p>
+<p>These methods are just shortcuts for the common case of &#8220;display the entire
+form.&#8221; You can also display the HTML for a particular field:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;subject&#39;</span><span class="p">]</span>
+<span class="go">&lt;input type=&quot;text&quot; name=&quot;subject&quot; id=&quot;id_subject&quot; /&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">f</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span>
+<span class="go">&lt;input type=&quot;text&quot; name=&quot;message&quot; id=&quot;id_message&quot; /&gt;</span>
+</pre></div>
+</div>
+<p>The second thing <tt class="docutils literal"><span class="pre">Form</span></tt> objects can do is validate data. To validate data,
+create a new <tt class="docutils literal"><span class="pre">Form</span></tt> object and pass it a dictionary of data that maps field
+names to data:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;email&#39;</span><span class="p">:</span> <span class="s">&#39;adrian@example.com&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;Nice site!&#39;</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>Once you&#8217;ve associated data with a <tt class="docutils literal"><span class="pre">Form</span></tt> instance, you&#8217;ve created a &#8220;bound&#8221;
+form:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_bound</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Call the <tt class="docutils literal"><span class="pre">is_valid()</span></tt> method on any bound <tt class="docutils literal"><span class="pre">Form</span></tt> to find out whether its
+data is valid. We&#8217;ve passed a valid value for each field, so the <tt class="docutils literal"><span class="pre">Form</span></tt> in
+its entirety is valid:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>If we don&#8217;t pass the <tt class="docutils literal"><span class="pre">email</span></tt> field, it&#8217;s still valid, because we&#8217;ve specified
+<tt class="docutils literal"><span class="pre">required=False</span></tt> for that field:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;Nice site!&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>But, if we leave off either <tt class="docutils literal"><span class="pre">subject</span></tt> or <tt class="docutils literal"><span class="pre">message</span></tt>, the <tt class="docutils literal"><span class="pre">Form</span></tt> is no
+longer valid:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">False</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">False</span>
+</pre></div>
+</div>
+<p>You can drill down to get field-specific error messages:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">[u&#39;This field is required.&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s">&#39;subject&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="p">[</span><span class="s">&#39;email&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">[]</span>
+</pre></div>
+</div>
+<p>Each bound <tt class="docutils literal"><span class="pre">Form</span></tt> instance has an <tt class="docutils literal"><span class="pre">errors</span></tt> attribute that gives you a
+dictionary mapping field names to error-message lists:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">errors</span>
+<span class="go">{&#39;message&#39;: [u&#39;This field is required.&#39;]}</span>
+</pre></div>
+</div>
+<p>Finally, for <tt class="docutils literal"><span class="pre">Form</span></tt> instances whose data has been found to be valid, a
+<tt class="docutils literal"><span class="pre">cleaned_data</span></tt> attribute is available. This is a dictionary of the
+submitted data, &#8220;cleaned up.&#8221; Django&#8217;s forms framework not only validates
+data, it cleans it up by converting values to the appropriate Python types.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">f</span> <span class="o">=</span> <span class="n">ContactForm</span><span class="p">({</span><span class="s">&#39;subject&#39;</span><span class="p">:</span> <span class="s">&#39;Hello&#39;</span><span class="p">,</span> <span class="s">&#39;email&#39;</span><span class="p">:</span> <span class="s">&#39;adrian@example.com&#39;</span><span class="p">,</span> <span class="s">&#39;message&#39;</span><span class="p">:</span> <span class="s">&#39;Nice site!&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">is_valid</span><span class="p">()</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">f</span><span class="o">.</span><span class="n">cleaned_data</span>
+<span class="go">{&#39;message&#39;: u&#39;Nice site!&#39;, &#39;email&#39;: u&#39;adrian@example.com&#39;, &#39;subject&#39;: u&#39;Hello&#39;}</span>
+</pre></div>
+</div>
+<p>Our contact form only deals with strings, which are &#8220;cleaned&#8221; into Unicode
+objects &#8211; but if we were to use an <tt class="docutils literal"><span class="pre">IntegerField</span></tt> or <tt class="docutils literal"><span class="pre">DateField</span></tt>, the
+forms framework would ensure that <tt class="docutils literal"><span class="pre">cleaned_data</span></tt> used proper Python
+integers or <tt class="docutils literal"><span class="pre">datetime.date</span></tt> objects for the given fields.</p>
+</div>
+<div class="section" id="tying-form-objects-into-views">
+<h2>Tying Form Objects Into Views</h2>
+<p>With some basic knowledge about <tt class="docutils literal"><span class="pre">Form</span></tt> classes, you might see how we can use
+this infrastructure to replace some of the cruft in our <tt class="docutils literal"><span class="pre">contact()</span></tt> view.
+Here&#8217;s how we can rewrite <tt class="docutils literal"><span class="pre">contact()</span></tt> to use the forms framework:</p>
+<div class="highlight-python"><pre># views.py
+
+from django.shortcuts import render
+from mysite.contact.forms import ContactForm
+from django.http import HttpResponseRedirect
+from django.core.mail import send_mail
+
+def contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            send_mail(
+                cd['subject'],
+                cd['message'],
+                cd.get('email', 'noreply@example.com'),
+                ['siteowner@example.com'],
+            )
+            return HttpResponseRedirect('/contact/thanks/')
+    else:
+        form = ContactForm()
+    return render(request, 'contact_form.html', {'form': form})
+
+# contact_form.html
+
+&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Contact us&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Contact us&lt;/h1&gt;
+
+    {% if form.errors %}
+        &lt;p style="color: red;"&gt;
+            Please correct the error{{ form.errors|pluralize }} below.
+        &lt;/p&gt;
+    {% endif %}
+
+    &lt;form action="" method="post"&gt;
+        &lt;table&gt;
+            {{ form.as_table }}
+        &lt;/table&gt;
+        {% csrf_token %}
+        &lt;input type="submit" value="Submit"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p>Look at how much cruft we&#8217;ve been able to remove! Django&#8217;s forms framework
+handles the HTML display, the validation, data cleanup and form
+redisplay-with-errors.</p>
+<p>Since we&#8217;re creating a POST form (which can have the effect of modifying data),
+we need to worry about Cross Site Request Forgeries. Thankfully, you don&#8217;t have
+to worry too hard, because Django comes with a very easy-to-use system for
+protecting against it. In short, all POST forms that are targeted at internal
+URLs should use the <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">csrf_token</span> <span class="pre">%}</span></tt> template tag. More details about
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">csrf_token</span> <span class="pre">%}</span></tt> can be found in <a class="reference internal" href="chapter16.html"><em>Chapter 16: django.contrib</em></a> and <a class="reference internal" href="chapter20.html"><em>Chapter 20: Security</em></a>.</p>
+<p>Try running this locally. Load the form, submit it with none of the fields
+filled out, submit it with an invalid e-mail address, then finally submit it
+with valid data. (Of course, depending on your mail-server configuration, you
+might get an error when <tt class="docutils literal"><span class="pre">send_mail()</span></tt> is called, but that&#8217;s another issue.)</p>
+</div>
+<div class="section" id="changing-how-fields-are-rendered">
+<h2>Changing How Fields Are Rendered</h2>
+<p>Probably the first thing you&#8217;ll notice when you render this form locally is
+that the <tt class="docutils literal"><span class="pre">message</span></tt> field is displayed as an <tt class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">type=&quot;text&quot;&gt;</span></tt>, and it
+ought to be a <tt class="docutils literal"><span class="pre">&lt;textarea&gt;</span></tt>. We can fix that by setting the field&#8217;s <em>widget</em>:</p>
+<pre class="literal-block">
+from django import forms
+
+class ContactForm(forms.Form):
+    subject = forms.CharField()
+    email = forms.EmailField(required=False)
+    message = forms.CharField(<strong>widget=forms.Textarea</strong>)
+</pre>
+<p>The forms framework separates out the presentation logic for each field into a
+set of widgets. Each field type has a default widget, but you can easily
+override the default, or provide a custom widget of your own.</p>
+<p>Think of the <tt class="docutils literal"><span class="pre">Field</span></tt> classes as representing <em>validation logic</em>, while
+widgets represent <em>presentation logic</em>.</p>
+</div>
+<div class="section" id="setting-a-maximum-length">
+<h2>Setting a Maximum Length</h2>
+<p>One of the most common validation needs is to check that a field is of a
+certain size. For good measure, we should improve our <tt class="docutils literal"><span class="pre">ContactForm</span></tt> to limit
+the <tt class="docutils literal"><span class="pre">subject</span></tt> to 100 characters. To do that, just supply a <tt class="docutils literal"><span class="pre">max_length</span></tt> to
+the <tt class="docutils literal"><span class="pre">CharField</span></tt>, like this:</p>
+<pre class="literal-block">
+from django import forms
+
+class ContactForm(forms.Form):
+    subject = forms.CharField(<strong>max_length=100</strong>)
+    email = forms.EmailField(required=False)
+    message = forms.CharField(widget=forms.Textarea)
+</pre>
+<p>An optional <tt class="docutils literal"><span class="pre">min_length</span></tt> argument is also available.</p>
+</div>
+<div class="section" id="setting-initial-values">
+<h2>Setting Initial Values</h2>
+<p>As an improvement to this form, let&#8217;s add an <em>initial value</em> for the
+<tt class="docutils literal"><span class="pre">subject</span></tt> field: <tt class="docutils literal"><span class="pre">&quot;I</span> <span class="pre">love</span> <span class="pre">your</span> <span class="pre">site!&quot;</span></tt> (A little power of suggestion can&#8217;t
+hurt.) To do this, we can use the <tt class="docutils literal"><span class="pre">initial</span></tt> argument when we create a
+<tt class="docutils literal"><span class="pre">Form</span></tt> instance:</p>
+<pre class="literal-block">
+def contact(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            cd = form.cleaned_data
+            send_mail(
+                cd['subject'],
+                cd['message'],
+                cd.get('email', <a class="reference external" href="mailto:'noreply&#37;&#52;&#48;example&#46;com">'noreply<span>&#64;</span>example<span>&#46;</span>com</a>'),
+                [<a class="reference external" href="mailto:'siteowner&#37;&#52;&#48;example&#46;com">'siteowner<span>&#64;</span>example<span>&#46;</span>com</a>'],
+            )
+            return HttpResponseRedirect('/contact/thanks/')
+    else:
+        form = ContactForm(
+            <strong>initial={'subject': 'I love your site!'}</strong>
+        )
+    return render(request, 'contact_form.html', {'form': form})
+</pre>
+<p>Now, the <tt class="docutils literal"><span class="pre">subject</span></tt> field will be displayed prepopulated with that kind
+statement.</p>
+<p>Note that there is a difference between passing <em>initial</em> data and passing
+data that <em>binds</em> the form. The biggest difference is that if you&#8217;re just
+passing <em>initial</em> data, then the form will be <em>unbound</em>, which means it won&#8217;t
+have any error messages.</p>
+</div>
+<div class="section" id="custom-validation-rules">
+<h2>Custom Validation Rules</h2>
+<p>Imagine we&#8217;ve launched our feedback form, and the e-mails have started tumbling
+in. There&#8217;s just one problem: some of the submitted messages are just one or
+two words, which isn&#8217;t long enough for us to make sense of. We decide to adopt
+a new validation policy: four words or more, please.</p>
+<p>There are a number of ways to hook custom validation into a Django form. If our
+rule is something we will reuse again and again, we can create a custom field
+type. Most custom validations are one-off affairs, though, and can be tied
+directly to the <tt class="docutils literal"><span class="pre">Form</span></tt> class.</p>
+<p>We want additional validation on the <tt class="docutils literal"><span class="pre">message</span></tt> field, so we add a
+<tt class="docutils literal"><span class="pre">clean_message()</span></tt> method to our <tt class="docutils literal"><span class="pre">Form</span></tt> class:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django</span> <span class="kn">import</span> <span class="n">forms</span>
+
+<span class="k">class</span> <span class="nc">ContactForm</span><span class="p">(</span><span class="n">forms</span><span class="o">.</span><span class="n">Form</span><span class="p">):</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">EmailField</span><span class="p">(</span><span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">forms</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">widget</span><span class="o">=</span><span class="n">forms</span><span class="o">.</span><span class="n">Textarea</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">clean_message</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">message</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cleaned_data</span><span class="p">[</span><span class="s">&#39;message&#39;</span><span class="p">]</span>
+        <span class="n">num_words</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">message</span><span class="o">.</span><span class="n">split</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">num_words</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">forms</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">(</span><span class="s">&quot;Not enough words!&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">message</span>
+</pre></div>
+</div>
+<p>Django&#8217;s form system automatically looks for any method whose name starts with
+<tt class="docutils literal"><span class="pre">clean_</span></tt> and ends with the name of a field. If any such method exists, it&#8217;s
+called during validation.</p>
+<p>Specifically, the <tt class="docutils literal"><span class="pre">clean_message()</span></tt> method will be called <em>after</em> the default
+validation logic for a given field (in this case, the validation logic for a
+required <tt class="docutils literal"><span class="pre">CharField</span></tt>). Because the field data has already been partially
+processed, we pull it out of <tt class="docutils literal"><span class="pre">self.cleaned_data</span></tt>. Also, we don&#8217;t have to
+worry about checking that the value exists and is non-empty; that&#8217;s done by the
+default validator.</p>
+<p>We naively use a combination of <tt class="docutils literal"><span class="pre">len()</span></tt> and <tt class="docutils literal"><span class="pre">split()</span></tt> to count the number
+of words. If the user has entered too few words, we raise a
+<tt class="docutils literal"><span class="pre">forms.ValidationError</span></tt>. The string attached to this exception will be
+displayed to the user as an item in the error list.</p>
+<p>It&#8217;s important that we explicitly return the cleaned value for the field at the
+end of the method. This allows us to modify the value (or convert it to a
+different Python type) within our custom validation method. If we forget the
+return statement, then <tt class="docutils literal"><span class="pre">None</span></tt> will be returned, and the original value will
+be lost.</p>
+</div>
+<div class="section" id="specifying-labels">
+<h2>Specifying labels</h2>
+<p>By default, the labels on Django&#8217;s auto-generated form HTML are created by
+replacing underscores with spaces and capitalizing the first letter &#8211; so the
+label for the <tt class="docutils literal"><span class="pre">email</span></tt> field is <tt class="docutils literal"><span class="pre">&quot;Email&quot;</span></tt>. (Sound familiar? It&#8217;s the same
+simple algorithm that Django&#8217;s models use to calculate default <tt class="docutils literal"><span class="pre">verbose_name</span></tt>
+values for fields. We covered this in Chapter 5.)</p>
+<p>But, as with Django&#8217;s models, we can customize the label for a given field.
+Just use <tt class="docutils literal"><span class="pre">label</span></tt>, like so:</p>
+<pre class="literal-block">
+class ContactForm(forms.Form):
+    subject = forms.CharField(max_length=100)
+    email = forms.EmailField(required=False, <strong>label='Your e-mail address'</strong>)
+    message = forms.CharField(widget=forms.Textarea)
+</pre>
+</div>
+<div class="section" id="customizing-form-design">
+<h2>Customizing Form Design</h2>
+<p>Our <tt class="docutils literal"><span class="pre">contact_form.html</span></tt> template uses <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.as_table</span> <span class="pre">}}</span></tt> to display the
+form, but we can display the form in other ways to get more granular control
+over display.</p>
+<p>The quickest way to customize forms&#8217; presentation is with CSS. Error lists, in
+particular, could do with some visual enhancement, and the auto-generated error
+lists use <tt class="docutils literal"><span class="pre">&lt;ul</span> <span class="pre">class=&quot;errorlist&quot;&gt;</span></tt> precisely so that you can target them with
+CSS. The following CSS really makes our errors stand out:</p>
+<div class="highlight-python"><pre>&lt;style type="text/css"&gt;
+    ul.errorlist {
+        margin: 0;
+        padding: 0;
+    }
+    .errorlist li {
+        background-color: red;
+        color: white;
+        display: block;
+        font-size: 10px;
+        margin: 0 0 3px;
+        padding: 4px 5px;
+    }
+&lt;/style&gt;</pre>
+</div>
+<p>While it&#8217;s convenient to have our form&#8217;s HTML generated for us, in many
+cases you&#8217;ll want to override the default rendering. <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.as_table</span> <span class="pre">}}</span></tt>
+and friends are useful shortcuts while you develop your application, but
+everything about the way a form is displayed can be overridden, mostly within
+the template itself, and you&#8217;ll probably find yourself doing this.</p>
+<p>Each field&#8217;s widget (<tt class="docutils literal"><span class="pre">&lt;input</span> <span class="pre">type=&quot;text&quot;&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;select&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;textarea&gt;</span></tt>,
+etc.) can be rendered individually by accessing <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.fieldname</span> <span class="pre">}}</span></tt> in the
+template, and any errors associated with a field are available as
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.fieldname.errors</span> <span class="pre">}}</span></tt>. With this in mind, we can construct a custom
+template for our contact form with the following template code:</p>
+<div class="highlight-python"><pre>&lt;html&gt;
+&lt;head&gt;
+    &lt;title&gt;Contact us&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;h1&gt;Contact us&lt;/h1&gt;
+
+    {% if form.errors %}
+        &lt;p style="color: red;"&gt;
+            Please correct the error{{ form.errors|pluralize }} below.
+        &lt;/p&gt;
+    {% endif %}
+
+    &lt;form action="" method="post"&gt;
+        &lt;div class="field"&gt;
+            {{ form.subject.errors }}
+            &lt;label for="id_subject"&gt;Subject:&lt;/label&gt;
+            {{ form.subject }}
+        &lt;/div&gt;
+        &lt;div class="field"&gt;
+            {{ form.email.errors }}
+            &lt;label for="id_email"&gt;Your e-mail address:&lt;/label&gt;
+            {{ form.email }}
+        &lt;/div&gt;
+        &lt;div class="field"&gt;
+            {{ form.message.errors }}
+            &lt;label for="id_message"&gt;Message:&lt;/label&gt;
+            {{ form.message }}
+        &lt;/div&gt;
+        &lt;input type="submit" value="Submit"&gt;
+    &lt;/form&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">{{</span> <span class="pre">form.message.errors</span> <span class="pre">}}</span></tt> displays a <tt class="docutils literal"><span class="pre">&lt;ul</span> <span class="pre">class=&quot;errorlist&quot;&gt;</span></tt> if errors
+are present and a blank string if the field is valid (or the form is unbound).
+We can also treat <tt class="docutils literal"><span class="pre">form.message.errors</span></tt> as a Boolean or even iterate
+over it as a list. For example:</p>
+<div class="highlight-python"><pre>&lt;div class="field{% if form.message.errors %} errors{% endif %}"&gt;
+    {% if form.message.errors %}
+        &lt;ul&gt;
+        {% for error in form.message.errors %}
+            &lt;li&gt;&lt;strong&gt;{{ error }}&lt;/strong&gt;&lt;/li&gt;
+        {% endfor %}
+        &lt;/ul&gt;
+    {% endif %}
+    &lt;label for="id_message"&gt;Message:&lt;/label&gt;
+    {{ form.message }}
+&lt;/div&gt;</pre>
+</div>
+<p>In the case of validation errors, this will add an &#8220;errors&#8221; class to the
+containing <tt class="docutils literal"><span class="pre">&lt;div&gt;</span></tt> and display the list of errors in an unordered list.</p>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>This chapter concludes the introductory material in this book &#8211; the so-called
+&#8220;core curriculum.&#8221; The next section of the book, Chapters 8 to 12, goes into
+more detail about advanced Django usage, including how to deploy a Django
+application (Chapter 12).</p>
+<p>After these first seven chapters, you should know enough to start writing your
+own Django projects. The rest of the material in this book will help fill in the
+missing pieces as you need them.</p>
+<p>We&#8217;ll start in <a class="reference external" href="chapter08.html">Chapter 8</a>, by doubling back and taking a closer look at views
+and URLconfs (introduced first in <cite>chapter03</cite>).</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter06.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter08.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

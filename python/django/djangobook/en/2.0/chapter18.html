@@ -1,0 +1,334 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 18: Integrating with Legacy Databases and Applications</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter17.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter19.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-18-integrating-with-legacy-databases-and-applications">
+<h1>Chapter 18: Integrating with Legacy Databases and Applications</h1>
+<p>Django is best suited for so-called green-field development &#8211; that is, starting
+projects from scratch, as if you were constructing a building on a fresh field
+of green grass. But despite the fact that Django favors from-scratch projects,
+it&#8217;s possible to integrate the framework into legacy databases and
+applications. This chapter explains a few integration strategies.</p>
+<div class="section" id="integrating-with-a-legacy-database">
+<h2>Integrating with a Legacy Database</h2>
+<p>Django&#8217;s database layer generates SQL schemas from Python code &#8211; but with
+a legacy database, you already have the SQL schemas. In such a case,
+you&#8217;ll need to create models for your existing database tables. For this
+purpose, Django comes with a tool that can generate model code by reading your
+database table layouts. This tool is called <tt class="docutils literal"><span class="pre">inspectdb</span></tt>, and you can call it
+by executing the command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">inspectdb</span></tt>.</p>
+<div class="section" id="using-inspectdb">
+<h3>Using <tt class="docutils literal"><span class="pre">inspectdb</span></tt></h3>
+<p>The <tt class="docutils literal"><span class="pre">inspectdb</span></tt> utility introspects the database pointed to by your settings
+file, determines a Django model representation for each of your tables, and
+prints the Python model code to standard output.</p>
+<p>Here&#8217;s a walk-through of a typical legacy database integration process from
+scratch. The only assumptions are that Django is installed and that you have a
+legacy database.</p>
+<ol class="arabic">
+<li><p class="first">Create a Django project by running
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">startproject</span> <span class="pre">mysite</span></tt> (where <tt class="docutils literal"><span class="pre">mysite</span></tt> is your
+project&#8217;s name). We&#8217;ll use <tt class="docutils literal"><span class="pre">mysite</span></tt> as the project name in this
+example.</p>
+</li>
+<li><p class="first">Edit the settings file in that project, <tt class="docutils literal"><span class="pre">mysite/settings.py</span></tt>,
+to tell Django what your database connection parameters are and what
+the name of the database is. Specifically, provide the
+<tt class="docutils literal"><span class="pre">DATABASE_NAME</span></tt>, <tt class="docutils literal"><span class="pre">DATABASE_ENGINE</span></tt>, <tt class="docutils literal"><span class="pre">DATABASE_USER</span></tt>,
+<tt class="docutils literal"><span class="pre">DATABASE_PASSWORD</span></tt>, <tt class="docutils literal"><span class="pre">DATABASE_HOST</span></tt>, and <tt class="docutils literal"><span class="pre">DATABASE_PORT</span></tt> settings.
+(Note that some of these settings are optional. Refer to Chapter 5 for
+more information.)</p>
+</li>
+<li><p class="first">Create a Django application within your project by running
+<tt class="docutils literal"><span class="pre">python</span> <span class="pre">mysite/manage.py</span> <span class="pre">startapp</span> <span class="pre">myapp</span></tt> (where <tt class="docutils literal"><span class="pre">myapp</span></tt> is your
+application&#8217;s name). We&#8217;ll use <tt class="docutils literal"><span class="pre">myapp</span></tt> as the application name here.</p>
+</li>
+<li><p class="first">Run the command <tt class="docutils literal"><span class="pre">python</span> <span class="pre">mysite/manage.py</span> <span class="pre">inspectdb</span></tt>. This will
+examine the tables in the <tt class="docutils literal"><span class="pre">DATABASE_NAME</span></tt> database and print the
+generated model class for each table. Take a look at the output to get
+an idea of what <tt class="docutils literal"><span class="pre">inspectdb</span></tt> can do.</p>
+</li>
+<li><p class="first">Save the output to the <tt class="docutils literal"><span class="pre">models.py</span></tt> file within your application by using
+standard shell output redirection:</p>
+<div class="highlight-python"><pre>python mysite/manage.py inspectdb &gt; mysite/myapp/models.py</pre>
+</div>
+</li>
+<li><p class="first">Edit the <tt class="docutils literal"><span class="pre">mysite/myapp/models.py</span></tt> file to clean up the generated
+models and make any necessary customizations. We&#8217;ll give
+some hints for this in the next section.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="cleaning-up-generated-models">
+<h3>Cleaning Up Generated Models</h3>
+<p>As you might expect, the database introspection isn&#8217;t perfect, and you&#8217;ll need
+to do some light cleanup of the resulting model code. Here are a few pointers
+for dealing with the generated models:</p>
+<ol class="arabic">
+<li><p class="first">Each database table is converted to a model class (i.e., there is a
+one-to-one mapping between database tables and model classes). This means
+that you&#8217;ll need to refactor the models for any many-to-many join tables
+into <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> objects.</p>
+</li>
+<li><p class="first">Each generated model has an attribute for every field, including
+<tt class="docutils literal"><span class="pre">id</span></tt> primary key fields. However, recall that Django automatically
+adds an <tt class="docutils literal"><span class="pre">id</span></tt> primary key field if a model doesn&#8217;t have a primary key.
+Thus, you&#8217;ll want to remove any lines that look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="nb">id</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">primary_key</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Not only are these lines redundant, but also they can cause problems if your
+application will be adding <em>new</em> records to these tables.</p>
+</li>
+<li><p class="first">Each field&#8217;s type (e.g., <tt class="docutils literal"><span class="pre">CharField</span></tt>, <tt class="docutils literal"><span class="pre">DateField</span></tt>) is determined by
+looking at the database column type (e.g., <tt class="docutils literal"><span class="pre">VARCHAR</span></tt>, <tt class="docutils literal"><span class="pre">DATE</span></tt>). If
+<tt class="docutils literal"><span class="pre">inspectdb</span></tt> cannot map a column&#8217;s type to a model field type, it will
+use <tt class="docutils literal"><span class="pre">TextField</span></tt> and will insert the Python comment
+<tt class="docutils literal"><span class="pre">'This</span> <span class="pre">field</span> <span class="pre">type</span> <span class="pre">is</span> <span class="pre">a</span> <span class="pre">guess.'</span></tt> next to the field in the generated
+model. Keep an eye out for that, and change the field type accordingly
+if needed.</p>
+<p>If a field in your database has no good Django equivalent, you can
+safely leave it off. The Django model layer is not required to include
+every field in your table(s).</p>
+</li>
+<li><p class="first">If a database column name is a Python reserved word (such as <tt class="docutils literal"><span class="pre">pass</span></tt>,
+<tt class="docutils literal"><span class="pre">class</span></tt>, or <tt class="docutils literal"><span class="pre">for</span></tt>), <tt class="docutils literal"><span class="pre">inspectdb</span></tt> will append <tt class="docutils literal"><span class="pre">'_field'</span></tt> to the
+attribute name and set the <tt class="docutils literal"><span class="pre">db_column</span></tt> attribute to the real field
+name (e.g., <tt class="docutils literal"><span class="pre">pass</span></tt>, <tt class="docutils literal"><span class="pre">class</span></tt>, or <tt class="docutils literal"><span class="pre">for</span></tt>).</p>
+<p>For example, if a table has an <tt class="docutils literal"><span class="pre">INT</span></tt> column called <tt class="docutils literal"><span class="pre">for</span></tt>, the generated
+model will have a field like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">for_field</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">IntegerField</span><span class="p">(</span><span class="n">db_column</span><span class="o">=</span><span class="s">&#39;for&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">inspectdb</span></tt> will insert the Python comment
+<tt class="docutils literal"><span class="pre">'Field</span> <span class="pre">renamed</span> <span class="pre">because</span> <span class="pre">it</span> <span class="pre">was</span> <span class="pre">a</span> <span class="pre">Python</span> <span class="pre">reserved</span> <span class="pre">word.'</span></tt> next to the
+field.</p>
+</li>
+<li><p class="first">If your database contains tables that refer to other tables (as most
+databases do), you might need to rearrange the order of the generated
+models so that models that refer to other models are ordered properly.
+For example, if model <tt class="docutils literal"><span class="pre">Book</span></tt> has a <tt class="docutils literal"><span class="pre">ForeignKey</span></tt> to model <tt class="docutils literal"><span class="pre">Author</span></tt>,
+model <tt class="docutils literal"><span class="pre">Author</span></tt> should be defined before model <tt class="docutils literal"><span class="pre">Book</span></tt>.  If you need
+to create a relationship on a model that has not yet been defined, you
+can use a string containing the name of the model, rather than the model
+object itself.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">inspectdb</span></tt> detects primary keys for PostgreSQL, MySQL, and SQLite.
+That is, it inserts <tt class="docutils literal"><span class="pre">primary_key=True</span></tt> where appropriate. For other
+databases, you&#8217;ll need to insert <tt class="docutils literal"><span class="pre">primary_key=True</span></tt> for at least one
+field in each model, because Django models are required to have a
+<tt class="docutils literal"><span class="pre">primary_key=True</span></tt> field.</p>
+</li>
+<li><p class="first">Foreign-key detection only works with PostgreSQL and with certain types
+of MySQL tables. In other cases, foreign-key fields will be generated as
+<tt class="docutils literal"><span class="pre">IntegerField``s,</span> <span class="pre">assuming</span> <span class="pre">the</span> <span class="pre">foreign-key</span> <span class="pre">column</span> <span class="pre">was</span> <span class="pre">an</span> <span class="pre">``INT</span></tt>
+column.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="integrating-with-an-authentication-system">
+<h2>Integrating with an Authentication System</h2>
+<p>It&#8217;s possible to integrate Django with an existing authentication system &#8211;
+another source of usernames and passwords or authentication methods.</p>
+<p>For example, your company may already have an LDAP setup that stores a username
+and password for every employee. It would be a hassle for both the network
+administrator and the users themselves if users had separate accounts in LDAP
+and the Django-based applications.</p>
+<p>To handle situations like this, the Django authentication system lets you
+plug in other authentication sources. You can override Django&#8217;s default
+database-based scheme, or you can use the default system in tandem with other
+systems.</p>
+<div class="section" id="specifying-authentication-backends">
+<h3>Specifying Authentication Backends</h3>
+<p>Behind the scenes, Django maintains a list of &#8220;authentication backends&#8221; that it
+checks for authentication. When somebody calls
+<tt class="docutils literal"><span class="pre">django.contrib.auth.authenticate()</span></tt> (as described in Chapter 14), Django
+tries authenticating across all of its authentication backends. If the first
+authentication method fails, Django tries the second one, and so on, until all
+backends have been attempted.</p>
+<p>The list of authentication backends to use is specified in the
+<tt class="docutils literal"><span class="pre">AUTHENTICATION_BACKENDS</span></tt> setting. This should be a tuple of Python path
+names that point to Python classes that know how to authenticate. These classes
+can be anywhere on your Python path.</p>
+<p>By default, <tt class="docutils literal"><span class="pre">AUTHENTICATION_BACKENDS</span></tt> is set to the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">&#39;django.contrib.auth.backends.ModelBackend&#39;</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p>That&#8217;s the basic authentication scheme that checks the Django users database.</p>
+<p>The order of <tt class="docutils literal"><span class="pre">AUTHENTICATION_BACKENDS</span></tt> matters, so if the same username and
+password are valid in multiple backends, Django will stop processing at the
+first positive match.</p>
+</div>
+<div class="section" id="writing-an-authentication-backend">
+<h3>Writing an Authentication Backend</h3>
+<p>An authentication backend is a class that implements two methods:
+<tt class="docutils literal"><span class="pre">get_user(id)</span></tt> and <tt class="docutils literal"><span class="pre">authenticate(**credentials)</span></tt>.</p>
+<p>The <tt class="docutils literal"><span class="pre">get_user</span></tt> method takes an <tt class="docutils literal"><span class="pre">id</span></tt> &#8211; which could be a username, database
+ID, or whatever &#8211; and returns a <tt class="docutils literal"><span class="pre">User</span></tt> object.</p>
+<p>The  <tt class="docutils literal"><span class="pre">authenticate</span></tt> method takes credentials as keyword arguments. Most of
+the time it looks like this:</p>
+<div class="highlight-python"><pre>class MyBackend(object):
+    def authenticate(self, username=None, password=None):
+        # Check the username/password and return a User.</pre>
+</div>
+<p>But it could also authenticate a token, like so:</p>
+<div class="highlight-python"><pre>class MyBackend(object):
+    def authenticate(self, token=None):
+        # Check the token and return a User.</pre>
+</div>
+<p>Either way, <tt class="docutils literal"><span class="pre">authenticate</span></tt> should check the credentials it gets, and it
+should return a <tt class="docutils literal"><span class="pre">User</span></tt> object that matches those credentials, if the
+credentials are valid. If they&#8217;re not valid, it should return <tt class="docutils literal"><span class="pre">None</span></tt>.</p>
+<p>The Django admin system is tightly coupled to Django&#8217;s own database-backed
+<tt class="docutils literal"><span class="pre">User</span></tt> object described in Chapter 14. The best way to deal with this is to
+create a Django <tt class="docutils literal"><span class="pre">User</span></tt> object for each user that exists for your backend
+(e.g., in your LDAP directory, your external SQL database, etc.). Either you can
+write a script to do this in advance or your <tt class="docutils literal"><span class="pre">authenticate</span></tt> method can do it
+the first time a user logs in.</p>
+<p>Here&#8217;s an example backend that authenticates against a username and password
+variable defined in your <tt class="docutils literal"><span class="pre">settings.py</span></tt> file and creates a Django <tt class="docutils literal"><span class="pre">User</span></tt>
+object the first time a user authenticates:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.contrib.auth.models</span> <span class="kn">import</span> <span class="n">User</span><span class="p">,</span> <span class="n">check_password</span>
+
+<span class="k">class</span> <span class="nc">SettingsBackend</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Authenticate against the settings ADMIN_LOGIN and ADMIN_PASSWORD.</span>
+
+<span class="sd">    Use the login name, and a hash of the password. For example:</span>
+
+<span class="sd">    ADMIN_LOGIN = &#39;admin&#39;</span>
+<span class="sd">    ADMIN_PASSWORD = &#39;sha1$4e987$afbcf42e21bd417fb71db8c66b321e9fc33051de&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">authenticate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">username</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">login_valid</span> <span class="o">=</span> <span class="p">(</span><span class="n">settings</span><span class="o">.</span><span class="n">ADMIN_LOGIN</span> <span class="o">==</span> <span class="n">username</span><span class="p">)</span>
+        <span class="n">pwd_valid</span> <span class="o">=</span> <span class="n">check_password</span><span class="p">(</span><span class="n">password</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">ADMIN_PASSWORD</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">login_valid</span> <span class="ow">and</span> <span class="n">pwd_valid</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">User</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="c"># Create a new user. Note that we can set password</span>
+                <span class="c"># to anything, because it won&#39;t be checked; the password</span>
+                <span class="c"># from settings.py will.</span>
+                <span class="n">user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">username</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="s">&#39;get from settings.py&#39;</span><span class="p">)</span>
+                <span class="n">user</span><span class="o">.</span><span class="n">is_staff</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">user</span><span class="o">.</span><span class="n">is_superuser</span> <span class="o">=</span> <span class="bp">True</span>
+                <span class="n">user</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">user</span>
+        <span class="k">return</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">get_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">User</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">user_id</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">User</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+</pre></div>
+</div>
+<p>For more on authentication backends, see the official Django documentation.</p>
+</div>
+</div>
+<div class="section" id="integrating-with-legacy-web-applications">
+<h2>Integrating with Legacy Web Applications</h2>
+<p>It&#8217;s possible to run a Django application on the same Web server as an
+application powered by another technology. The most straightforward way of
+doing this is to use Apache&#8217;s configuration file, <tt class="docutils literal"><span class="pre">httpd.conf</span></tt>, to delegate
+different URL patterns to different technologies. (Note that Chapter 12 covers
+Django deployment on Apache/mod_python, so it might be worth reading that
+chapter first before attempting this integration.)</p>
+<p>The key is that Django will be activated for a particular URL pattern only if
+your <tt class="docutils literal"><span class="pre">httpd.conf</span></tt> file says so. The default deployment explained in Chapter
+12 assumes you want Django to power every page on a particular domain:</p>
+<div class="highlight-python"><pre>&lt;Location "/"&gt;
+    SetHandler python-program
+    PythonHandler django.core.handlers.modpython
+    SetEnv DJANGO_SETTINGS_MODULE mysite.settings
+    PythonDebug On
+&lt;/Location&gt;</pre>
+</div>
+<p>Here, the <tt class="docutils literal"><span class="pre">&lt;Location</span> <span class="pre">&quot;/&quot;&gt;</span></tt> line means &#8220;handle every URL, starting at the
+root,&#8221; with Django.</p>
+<p>It&#8217;s perfectly fine to limit this <tt class="docutils literal"><span class="pre">&lt;Location&gt;</span></tt> directive to a certain
+directory tree. For example, say you have a legacy PHP application that powers
+most pages on a domain and you want to install a Django admin site at
+<tt class="docutils literal"><span class="pre">/admin/</span></tt> without disrupting the PHP code. To do this, just set the
+<tt class="docutils literal"><span class="pre">&lt;Location&gt;</span></tt> directive to <tt class="docutils literal"><span class="pre">/admin/</span></tt>:</p>
+<div class="highlight-python"><pre>&lt;Location "/admin/"&gt;
+    SetHandler python-program
+    PythonHandler django.core.handlers.modpython
+    SetEnv DJANGO_SETTINGS_MODULE mysite.settings
+    PythonDebug On
+&lt;/Location&gt;</pre>
+</div>
+<p>With this in place, only the URLs that start with <tt class="docutils literal"><span class="pre">/admin/</span></tt> will activate
+Django. Any other page will use whatever infrastructure already existed.</p>
+<p>Note that attaching Django to a qualified URL (such as <tt class="docutils literal"><span class="pre">/admin/</span></tt> in this
+section&#8217;s example) does not affect the Django URL parsing. Django works with the
+absolute URL (e.g., <tt class="docutils literal"><span class="pre">/admin/people/person/add/</span></tt>), not a &#8220;stripped&#8221; version of
+the URL (e.g., <tt class="docutils literal"><span class="pre">/people/person/add/</span></tt>). This means that your root URLconf
+should include the leading <tt class="docutils literal"><span class="pre">/admin/</span></tt>.</p>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>If you&#8217;re a native English speaker, you might not have noticed one of the
+coolest features of Django&#8217;s admin site: it&#8217;s available in more than 50
+different languages! This is made possible by Django&#8217;s internationalization
+framework (and the hard work of Django&#8217;s volunteer translators). The
+<a class="reference external" href="chapter19.html">next chapter</a> explains how to use this framework to provide localized Django
+sites.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter17.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter19.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

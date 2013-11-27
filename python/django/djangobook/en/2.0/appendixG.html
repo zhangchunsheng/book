@@ -1,0 +1,651 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Appendix G: Request and Response Objects</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='appendixF.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='license.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="appendix-g-request-and-response-objects">
+<h1>Appendix G: Request and Response Objects</h1>
+<p>Django uses request and response objects to pass state through the system.</p>
+<p>When a page is requested, Django creates an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object that
+contains metadata about the request. Then Django loads the appropriate view,
+passing the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> as the first argument to the view function. Each
+view is responsible for returning an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> object.</p>
+<p>We&#8217;ve used these objects often throughout the book; this appendix explains the
+complete APIs for <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> and <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects.</p>
+<div class="section" id="httprequest">
+<h2>HttpRequest</h2>
+<p><tt class="docutils literal"><span class="pre">HttpRequest</span></tt> represents a single HTTP request from some user-agent.</p>
+<p>Much of the important information about the request is available as attributes
+on the <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> instance (see Table G-1). All attributes except
+<tt class="docutils literal"><span class="pre">session</span></tt> should be considered read-only.</p>
+<table border="1" class="docutils">
+<caption>Table G-1. Attributes of HttpRequest Objects</caption>
+<colgroup>
+<col width="24%" />
+<col width="76%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Attribute</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">path</span></tt></td>
+<td>A string representing the full path to the requested
+page, not including the domain &#8211; for example,
+<tt class="docutils literal"><span class="pre">&quot;/music/bands/the_beatles/&quot;</span></tt>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">method</span></tt></td>
+<td><p class="first">A string representing the HTTP method used in the
+request. This is guaranteed to be uppercase. For
+example:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;GET&#39;</span><span class="p">:</span>
+    <span class="n">do_something</span><span class="p">()</span>
+<span class="k">elif</span> <span class="n">request</span><span class="o">.</span><span class="n">method</span> <span class="o">==</span> <span class="s">&#39;POST&#39;</span><span class="p">:</span>
+    <span class="n">do_something_else</span><span class="p">()</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">encoding</span></tt></td>
+<td><p class="first">A string representing the current encoding used to
+decode form submission data (or <tt class="docutils literal"><span class="pre">None</span></tt>, which means
+the <tt class="docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt> setting is used).</p>
+<p class="last">You can write to this attribute to change the encoding
+used when accessing the form data. Any subsequent
+attribute accesses (such as reading from <tt class="docutils literal"><span class="pre">GET</span></tt> or
+<tt class="docutils literal"><span class="pre">POST</span></tt>) will use the new <tt class="docutils literal"><span class="pre">encoding</span></tt> value.  Useful
+if you know the form data is not in the
+<tt class="docutils literal"><span class="pre">DEFAULT_CHARSET</span></tt> encoding.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">GET</span></tt></td>
+<td>A dictionary-like object containing all given HTTP GET
+parameters. See the upcoming <tt class="docutils literal"><span class="pre">QueryDict</span></tt> documentation.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">POST</span></tt></td>
+<td><p class="first">A dictionary-like object containing all given HTTP POST
+parameters. See the upcoming <tt class="docutils literal"><span class="pre">QueryDict</span></tt> documentation.</p>
+<p>It&#8217;s possible that a request can come in via POST with
+an empty <tt class="docutils literal"><span class="pre">POST</span></tt> dictionary &#8211; if, say, a form is
+requested via the POST HTTP method but does not
+include form data. Therefore, you shouldn&#8217;t use <tt class="docutils literal"><span class="pre">if</span>
+<span class="pre">request.POST</span></tt> to check for use of the POST method;
+instead, use <tt class="docutils literal"><span class="pre">if</span> <span class="pre">request.method</span> <span class="pre">==</span> <span class="pre">&quot;POST&quot;</span></tt> (see
+the <tt class="docutils literal"><span class="pre">method</span></tt> entry in this table).</p>
+<p class="last">Note: <tt class="docutils literal"><span class="pre">POST</span></tt> does <em>not</em> include file-upload
+information. See <tt class="docutils literal"><span class="pre">FILES</span></tt>.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">REQUEST</span></tt></td>
+<td><p class="first">For convenience, a dictionary-like object that searches
+<tt class="docutils literal"><span class="pre">POST</span></tt> first, and then <tt class="docutils literal"><span class="pre">GET</span></tt>. Inspired by PHP&#8217;s
+<tt class="docutils literal"><span class="pre">$_REQUEST</span></tt>.</p>
+<p>For example, if <tt class="docutils literal"><span class="pre">GET</span> <span class="pre">=</span> <span class="pre">{&quot;name&quot;:</span> <span class="pre">&quot;john&quot;}</span></tt> and <tt class="docutils literal"><span class="pre">POST</span>
+<span class="pre">=</span> <span class="pre">{&quot;age&quot;:</span> <span class="pre">'34'}</span></tt>, <tt class="docutils literal"><span class="pre">REQUEST[&quot;name&quot;]</span></tt> would be
+<tt class="docutils literal"><span class="pre">&quot;john&quot;</span></tt>, and <tt class="docutils literal"><span class="pre">REQUEST[&quot;age&quot;]</span></tt> would be <tt class="docutils literal"><span class="pre">&quot;34&quot;</span></tt>.</p>
+<p class="last">It&#8217;s strongly suggested that you use <tt class="docutils literal"><span class="pre">GET</span></tt> and
+<tt class="docutils literal"><span class="pre">POST</span></tt> instead of <tt class="docutils literal"><span class="pre">REQUEST</span></tt>, because the former
+are more explicit.</p>
+</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">COOKIES</span></tt></td>
+<td>A standard Python dictionary containing all cookies.
+Keys and values are strings. See Chapter 14 for more
+on using cookies.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">FILES</span></tt></td>
+<td>A dictionary-like object that maps filenames to
+<tt class="docutils literal"><span class="pre">UploadedFile</span></tt> objects. See the Django
+documentation for more.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">META</span></tt></td>
+<td><p class="first">A standard Python dictionary containing all available
+HTTP headers. Available headers depend on the client
+and server, but here are some examples:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">CONTENT_LENGTH</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">CONTENT_TYPE</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">QUERY_STRING</span></tt>: The raw unparsed query string</li>
+<li><tt class="docutils literal"><span class="pre">REMOTE_ADDR</span></tt>: The IP address of the client</li>
+<li><tt class="docutils literal"><span class="pre">REMOTE_HOST</span></tt>: The hostname of the client</li>
+<li><tt class="docutils literal"><span class="pre">SERVER_NAME</span></tt>: The hostname of the server.</li>
+<li><tt class="docutils literal"><span class="pre">SERVER_PORT</span></tt>: The port of the server</li>
+</ul>
+<p>Any HTTP headers are available in <tt class="docutils literal"><span class="pre">META</span></tt> as keys
+prefixed with <tt class="docutils literal"><span class="pre">HTTP_</span></tt>, converted to uppercase and
+substituting underscores for hyphens. For example:</p>
+<ul class="last simple">
+<li><tt class="docutils literal"><span class="pre">HTTP_ACCEPT_ENCODING</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">HTTP_ACCEPT_LANGUAGE</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">HTTP_HOST</span></tt>: The HTTP <tt class="docutils literal"><span class="pre">Host</span></tt> header sent by
+the client</li>
+<li><tt class="docutils literal"><span class="pre">HTTP_REFERER</span></tt>: The referring page, if any</li>
+<li><tt class="docutils literal"><span class="pre">HTTP_USER_AGENT</span></tt>: The client&#8217;s user-agent string</li>
+<li><tt class="docutils literal"><span class="pre">HTTP_X_BENDER</span></tt>: The value of the <tt class="docutils literal"><span class="pre">X-Bender</span></tt>
+header, if set</li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">user</span></tt></td>
+<td><p class="first">A <tt class="docutils literal"><span class="pre">django.contrib.auth.models.User</span></tt> object
+representing the currently logged-in user. If the user
+isn&#8217;t currently logged in, <tt class="docutils literal"><span class="pre">user</span></tt> will be set to an
+instance of
+<tt class="docutils literal"><span class="pre">django.contrib.auth.models.AnonymousUser</span></tt>. You can
+tell them apart with <tt class="docutils literal"><span class="pre">is_authenticated()</span></tt>, like so:</p>
+<div class="highlight-python"><pre>if request.user.is_authenticated():
+    # Do something for logged-in users.
+else:
+    # Do something for anonymous users.</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">user</span></tt> is available only if your Django installation
+has the <tt class="docutils literal"><span class="pre">AuthenticationMiddleware</span></tt> activated.</p>
+<p class="last">For the complete details of authentication and users,
+see Chapter 14.</p>
+</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">session</span></tt></td>
+<td>A readable and writable, dictionary-like object that
+represents the current session. This is available only
+if your Django installation has session support
+activated. See Chapter 14.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">raw_post_data</span></tt></td>
+<td>The raw HTTP POST data. This is useful for advanced
+processing.</td>
+</tr>
+</tbody>
+</table>
+<p>Request objects also have a few useful methods, as shown in Table G-2.</p>
+<table border="1" class="docutils">
+<caption>Table G-2. HttpRequest Methods</caption>
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Method</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">__getitem__(key)</span></tt></td>
+<td><p class="first">Returns the GET/POST value for the given key,
+checking POST first, and then GET. Raises
+<tt class="docutils literal"><span class="pre">KeyError</span></tt> if the key doesn&#8217;t exist.</p>
+<p>This lets you use dictionary-accessing syntax on
+an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> instance.</p>
+<p class="last">For example, <tt class="docutils literal"><span class="pre">request[&quot;foo&quot;]</span></tt> is the same as
+checking <tt class="docutils literal"><span class="pre">request.POST[&quot;foo&quot;]</span></tt> and then
+<tt class="docutils literal"><span class="pre">request.GET[&quot;foo&quot;]</span></tt>.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">has_key()</span></tt></td>
+<td>Returns <tt class="docutils literal"><span class="pre">True</span></tt> or <tt class="docutils literal"><span class="pre">False</span></tt>, designating whether
+<tt class="docutils literal"><span class="pre">request.GET</span></tt> or <tt class="docutils literal"><span class="pre">request.POST</span></tt> has the given
+key.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">get_host()</span></tt></td>
+<td>Returns the originating host of the request using
+information from the <tt class="docutils literal"><span class="pre">HTTP_X_FORWARDED_HOST</span></tt> and
+<tt class="docutils literal"><span class="pre">HTTP_HOST</span></tt> headers (in that order). If they
+don&#8217;t provide a value, the method uses a
+combination of <tt class="docutils literal"><span class="pre">SERVER_NAME</span></tt> and
+<tt class="docutils literal"><span class="pre">SERVER_PORT</span></tt>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">get_full_path()</span></tt></td>
+<td>Returns the <tt class="docutils literal"><span class="pre">path</span></tt>, plus an appended query
+string, if applicable. For example,
+<tt class="docutils literal"><span class="pre">&quot;/music/bands/the_beatles/?print=true&quot;</span></tt></td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">is_secure()</span></tt></td>
+<td>Returns <tt class="docutils literal"><span class="pre">True</span></tt> if the request is secure; that
+is, if it was made with HTTPS.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="querydict-objects">
+<h3>QueryDict Objects</h3>
+<p>In an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> object, the <tt class="docutils literal"><span class="pre">GET</span></tt> and <tt class="docutils literal"><span class="pre">POST</span></tt> attributes are
+instances of <tt class="docutils literal"><span class="pre">django.http.QueryDict</span></tt>. <tt class="docutils literal"><span class="pre">QueryDict</span></tt> is a dictionary-like
+class customized to deal with multiple values for the same key. This is
+necessary because some HTML form elements, notably <tt class="docutils literal"><span class="pre">&lt;select</span>
+<span class="pre">multiple=&quot;multiple&quot;&gt;</span></tt>, pass multiple values for the same key.</p>
+<p><tt class="docutils literal"><span class="pre">QueryDict</span></tt> instances are immutable, unless you create a <tt class="docutils literal"><span class="pre">copy()</span></tt> of them.
+That means you can&#8217;t change attributes of <tt class="docutils literal"><span class="pre">request.POST</span></tt> and <tt class="docutils literal"><span class="pre">request.GET</span></tt>
+directly.</p>
+<p><tt class="docutils literal"><span class="pre">QueryDict</span></tt> implements the all standard dictionary methods, because it&#8217;s a
+subclass of dictionary. Exceptions are outlined in Table G-3.</p>
+<table border="1" class="docutils">
+<caption>Table G-3. How QueryDicts Differ from Standard Dictionaries.</caption>
+<colgroup>
+<col width="25%" />
+<col width="75%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Method</th>
+<th class="head">Differences from Standard dict Implementation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">__getitem__</span></tt></td>
+<td>Works just like a dictionary. However, if the key
+has more than one value, <tt class="docutils literal"><span class="pre">__getitem__()</span></tt> returns the
+last value.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">__setitem__</span></tt></td>
+<td>Sets the given key to <tt class="docutils literal"><span class="pre">[value]</span></tt> (a Python list whose
+single element is <tt class="docutils literal"><span class="pre">value</span></tt>). Note that this, as other
+dictionary functions that have side effects, can
+be called only on a mutable <tt class="docutils literal"><span class="pre">QueryDict</span></tt> (one that was
+created via <tt class="docutils literal"><span class="pre">copy()</span></tt>).</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">get()</span></tt></td>
+<td>If the key has more than one value, <tt class="docutils literal"><span class="pre">get()</span></tt> returns
+the last value just like <tt class="docutils literal"><span class="pre">__getitem__</span></tt>.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">update()</span></tt></td>
+<td><p class="first">Takes either a <tt class="docutils literal"><span class="pre">QueryDict</span></tt> or standard dictionary.
+Unlike the standard dictionary&#8217;s <tt class="docutils literal"><span class="pre">update</span></tt> method,
+this method <em>appends</em> to the current dictionary items
+rather than replacing them:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">QueryDict</span><span class="p">(</span><span class="s">&#39;a=1&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="c"># to make it mutable</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s">&#39;a&#39;</span><span class="p">:</span> <span class="s">&#39;2&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="s">&#39;a&#39;</span><span class="p">)</span>
+<span class="go">[&#39;1&#39;, &#39;2&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span><span class="p">[</span><span class="s">&#39;a&#39;</span><span class="p">]</span> <span class="c"># returns the last</span>
+<span class="go">[&#39;2&#39;]</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">items()</span></tt></td>
+<td><p class="first">Just like the standard dictionary <tt class="docutils literal"><span class="pre">items()</span></tt> method,
+except this uses the same last-value logic as
+<tt class="docutils literal"><span class="pre">__getitem()__</span></tt>:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">QueryDict</span><span class="p">(</span><span class="s">&#39;a=1&amp;a=2&amp;a=3&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+<span class="go">[(&#39;a&#39;, &#39;3&#39;)]</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">values()</span></tt></td>
+<td>Just like the standard dictionary <tt class="docutils literal"><span class="pre">values()</span></tt> method,
+except this uses the same last-value logic as
+<tt class="docutils literal"><span class="pre">__getitem()__</span></tt>.</td>
+</tr>
+</tbody>
+</table>
+<p>In addition, <tt class="docutils literal"><span class="pre">QueryDict</span></tt> has the methods shown in Table G-4.</p>
+<table border="1" class="docutils">
+<caption>G-4. Extra (Nondictionary) QueryDict Methods</caption>
+<colgroup>
+<col width="36%" />
+<col width="64%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Method</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">copy()</span></tt></td>
+<td>Returns a copy of the object, using
+<tt class="docutils literal"><span class="pre">copy.deepcopy()</span></tt> from the Python standard
+library. The copy will be mutable &#8211; that is,
+you can change its values.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">getlist(key)</span></tt></td>
+<td>Returns the data with the requested key, as a
+Python list. Returns an empty list if the key
+doesn&#8217;t exist. It&#8217;s guaranteed to return a
+list of some sort.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">setlist(key,</span> <span class="pre">list_)</span></tt></td>
+<td>Sets the given key to <tt class="docutils literal"><span class="pre">list_</span></tt> (unlike
+<tt class="docutils literal"><span class="pre">__setitem__()</span></tt>).</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">appendlist(key,</span> <span class="pre">item)</span></tt></td>
+<td>Appends an item to the internal list associated
+with <tt class="docutils literal"><span class="pre">key</span></tt>.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">setlistdefault(key,</span> <span class="pre">a)</span></tt></td>
+<td>Just like <tt class="docutils literal"><span class="pre">setdefault</span></tt>, except it takes a
+list of values instead of a single value.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">lists()</span></tt></td>
+<td><p class="first">Like <tt class="docutils literal"><span class="pre">items()</span></tt>, except it includes all
+values, as a list, for each member of the
+dictionary. For example:</p>
+<div class="last highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">q</span> <span class="o">=</span> <span class="n">QueryDict</span><span class="p">(</span><span class="s">&#39;a=1&amp;a=2&amp;a=3&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">q</span><span class="o">.</span><span class="n">lists</span><span class="p">()</span>
+<span class="go">[(&#39;a&#39;, [&#39;1&#39;, &#39;2&#39;, &#39;3&#39;])]</span>
+</pre></div>
+</div>
+</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">urlencode()</span></tt></td>
+<td>Returns a string of the data in query-string
+format (e.g., <tt class="docutils literal"><span class="pre">&quot;a=2&amp;b=3&amp;b=5&quot;</span></tt>).</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="a-complete-example">
+<h3>A Complete Example</h3>
+<p>For example, given this HTML form:</p>
+<div class="highlight-python"><pre>&lt;form action="/foo/bar/" method="post"&gt;
+&lt;input type="text" name="your_name" /&gt;
+&lt;select multiple="multiple" name="bands"&gt;
+    &lt;option value="beatles"&gt;The Beatles&lt;/option&gt;
+    &lt;option value="who"&gt;The Who&lt;/option&gt;
+    &lt;option value="zombies"&gt;The Zombies&lt;/option&gt;
+&lt;/select&gt;
+&lt;input type="submit" /&gt;
+&lt;/form&gt;</pre>
+</div>
+<p>if the user enters <tt class="docutils literal"><span class="pre">&quot;John</span> <span class="pre">Smith&quot;</span></tt> in the <tt class="docutils literal"><span class="pre">your_name</span></tt> field and selects
+both &#8220;The Beatles&#8221; and &#8220;The Zombies&#8221; in the multiple select box, here&#8217;s what
+Django&#8217;s request object would have:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">GET</span>
+<span class="go">{}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span>
+<span class="go">{&#39;your_name&#39;: [&#39;John Smith&#39;], &#39;bands&#39;: [&#39;beatles&#39;, &#39;zombies&#39;]}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;your_name&#39;</span><span class="p">]</span>
+<span class="go">&#39;John Smith&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="p">[</span><span class="s">&#39;bands&#39;</span><span class="p">]</span>
+<span class="go">&#39;zombies&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">getlist</span><span class="p">(</span><span class="s">&#39;bands&#39;</span><span class="p">)</span>
+<span class="go">[&#39;beatles&#39;, &#39;zombies&#39;]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;your_name&#39;</span><span class="p">,</span> <span class="s">&#39;Adrian&#39;</span><span class="p">)</span>
+<span class="go">&#39;John Smith&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">request</span><span class="o">.</span><span class="n">POST</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;nonexistent_field&#39;</span><span class="p">,</span> <span class="s">&#39;Nowhere Man&#39;</span><span class="p">)</span>
+<span class="go">&#39;Nowhere Man&#39;</span>
+</pre></div>
+</div>
+<div class="admonition-implementation-note admonition">
+<p class="first admonition-title">Implementation Note:</p>
+<p class="last">The <tt class="docutils literal"><span class="pre">GET</span></tt>, <tt class="docutils literal"><span class="pre">POST</span></tt>, <tt class="docutils literal"><span class="pre">COOKIES</span></tt>, <tt class="docutils literal"><span class="pre">FILES</span></tt>, <tt class="docutils literal"><span class="pre">META</span></tt>, <tt class="docutils literal"><span class="pre">REQUEST</span></tt>,
+<tt class="docutils literal"><span class="pre">raw_post_data</span></tt>, and <tt class="docutils literal"><span class="pre">user</span></tt> attributes are all lazily loaded. That means
+Django doesn&#8217;t spend resources calculating the values of those attributes until
+your code requests them.</p>
+</div>
+</div>
+</div>
+<div class="section" id="httpresponse">
+<h2>HttpResponse</h2>
+<p>In contrast to <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> objects, which are created automatically by
+Django, <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects are your responsibility. Each view you write
+is responsible for instantiating, populating, and returning an
+<tt class="docutils literal"><span class="pre">HttpResponse</span></tt>.</p>
+<p>The <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> class lives at <tt class="docutils literal"><span class="pre">django.http.HttpResponse</span></tt>.</p>
+<div class="section" id="construction-httpresponses">
+<h3>Construction HttpResponses</h3>
+<p>Typically, you&#8217;ll construct an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> to pass the contents of the
+page, as a string, to the <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> constructor:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Here&#39;s the text of the Web page.&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;Text only, please.&quot;</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">&quot;text/plain&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>But if you want to add content incrementally, you can use <tt class="docutils literal"><span class="pre">response</span></tt> as a
+filelike object:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;p&gt;Here&#39;s the text of the Web page.&lt;/p&gt;&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;p&gt;Here&#39;s another paragraph.&lt;/p&gt;&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can pass <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> an iterator rather than passing it
+hard-coded strings. If you use this technique, follow these guidelines:</p>
+<ul class="simple">
+<li>The iterator should return strings.</li>
+<li>If an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> has been initialized with an iterator as its
+content, you can&#8217;t use the <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> instance as a filelike
+object. Doing so will raise <tt class="docutils literal"><span class="pre">Exception</span></tt>.</li>
+</ul>
+<p>Finally, note that <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> implements a <tt class="docutils literal"><span class="pre">write()</span></tt> method, which
+makes is suitable for use anywhere that Python expects a filelike object. See
+Chapter 8 for some examples of using this technique.</p>
+</div>
+<div class="section" id="setting-headers">
+<h3>Setting Headers</h3>
+<p>You can add and delete headers using dictionary syntax:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span><span class="p">[</span><span class="s">&#39;X-DJANGO&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&quot;It&#39;s the best.&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">del</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;X-PHP&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">response</span><span class="p">[</span><span class="s">&#39;X-DJANGO&#39;</span><span class="p">]</span>
+<span class="go">&quot;It&#39;s the best.&quot;</span>
+</pre></div>
+</div>
+<p>You can also use <tt class="docutils literal"><span class="pre">has_header(header)</span></tt> to check for the existence of a header.</p>
+<p>Avoid setting <tt class="docutils literal"><span class="pre">Cookie</span></tt> headers by hand; instead, see Chapter 14 for
+instructions on how cookies work in Django.</p>
+</div>
+<div class="section" id="httpresponse-subclasses">
+<h3>HttpResponse Subclasses</h3>
+<p>Django includes a number of <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> subclasses that handle different
+types of HTTP responses (see Table G-5). Like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>, these subclasses live in
+<tt class="docutils literal"><span class="pre">django.http</span></tt>.</p>
+<table border="1" class="docutils">
+<caption>Table G-5. HttpResponse Subclasses</caption>
+<colgroup>
+<col width="46%" />
+<col width="54%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Class</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">HttpResponseRedirect</span></tt></td>
+<td>The constructor takes a single argument:
+the path to redirect to. This can
+be a fully qualified URL (e.g.,
+<tt class="docutils literal"><span class="pre">'http://search.yahoo.com/'</span></tt>) or
+an absolute URL with no domain (e.g.,
+<tt class="docutils literal"><span class="pre">'/search/'</span></tt>). Note that this
+returns an HTTP status code 302.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">HttpResponsePermanentRedirect</span></tt></td>
+<td>Like <tt class="docutils literal"><span class="pre">HttpResponseRedirect</span></tt>, but it
+returns a permanent redirect (HTTP
+status code 301) instead of a &#8220;found&#8221;
+redirect (status code 302).</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">HttpResponseNotModified</span></tt></td>
+<td>The constructor doesn&#8217;t take any
+arguments. Use this to designate that
+a page hasn&#8217;t been modified since the
+user&#8217;s last request.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">HttpResponseBadRequest</span></tt></td>
+<td>Acts just like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> but
+uses a 400 status code.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">HttpResponseNotFound</span></tt></td>
+<td>Acts just like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> but
+uses a 404 status code.</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">HttpResponseForbidden</span></tt></td>
+<td>Acts just like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> but
+uses a 403 status code.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">HttpResponseNotAllowed</span></tt></td>
+<td>Like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>, but uses a 405
+status code. It takes a single, required
+argument: a list of permitted methods
+(e.g., <tt class="docutils literal"><span class="pre">['GET',</span> <span class="pre">'POST']</span></tt>).</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">HttpResponseGone</span></tt></td>
+<td>Acts just like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> but
+uses a 410 status code.</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">HttpResponseServerError</span></tt></td>
+<td>Acts just like <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> but
+uses a 500 status code.</td>
+</tr>
+</tbody>
+</table>
+<p>You can, of course, define your own <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> subclass to support
+different types of responses not supported out of the box.</p>
+</div>
+<div class="section" id="returning-errors">
+<h3>Returning Errors</h3>
+<p>Returning HTTP error codes in Django is easy. We&#8217;ve already mentioned the
+<tt class="docutils literal"><span class="pre">HttpResponseNotFound</span></tt>, <tt class="docutils literal"><span class="pre">HttpResponseForbidden</span></tt>,
+<tt class="docutils literal"><span class="pre">HttpResponseServerError</span></tt>, and other subclasses. Just return an instance of one
+of those subclasses instead of a normal <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> in order to signify
+an error, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># ...</span>
+    <span class="k">if</span> <span class="n">foo</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponseNotFound</span><span class="p">(</span><span class="s">&#39;&lt;h1&gt;Page not found&lt;/h1&gt;&#39;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&#39;&lt;h1&gt;Page was found&lt;/h1&gt;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Because a 404 error is by far the most common HTTP error, there&#8217;s an easier
+way to handle it.</p>
+<p>When you return an error such as <tt class="docutils literal"><span class="pre">HttpResponseNotFound</span></tt>, you&#8217;re responsible
+for defining the HTML of the resulting error page:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">return</span> <span class="n">HttpResponseNotFound</span><span class="p">(</span><span class="s">&#39;&lt;h1&gt;Page not found&lt;/h1&gt;&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For convenience, and because it&#8217;s a good idea to have a consistent 404 error page
+across your site, Django provides an <tt class="docutils literal"><span class="pre">Http404</span></tt> exception. If you raise
+<tt class="docutils literal"><span class="pre">Http404</span></tt> at any point in a view function, Django will catch it and return the
+standard error page for your application, along with an HTTP error code 404.</p>
+<p>Here&#8217;s an example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">Http404</span>
+
+<span class="k">def</span> <span class="nf">detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">poll_id</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">Poll</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">pk</span><span class="o">=</span><span class="n">poll_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">Poll</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">Http404</span>
+    <span class="k">return</span> <span class="n">render</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="s">&#39;polls/detail.html&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;poll&#39;</span><span class="p">:</span> <span class="n">p</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>In order to use the <tt class="docutils literal"><span class="pre">Http404</span></tt> exception to its fullest, you should create a
+template that is displayed when a 404 error is raised. This template should be
+called <tt class="docutils literal"><span class="pre">404.html</span></tt>, and it should be located in the top level of your template tree.</p>
+</div>
+<div class="section" id="customizing-the-404-not-found-view">
+<h3>Customizing the 404 (Not Found) View</h3>
+<p>When you raise an <tt class="docutils literal"><span class="pre">Http404</span></tt> exception, Django loads a special view devoted
+to handling 404 errors. By default, it&#8217;s the view
+<tt class="docutils literal"><span class="pre">django.views.defaults.page_not_found</span></tt>, which loads and renders the template
+<tt class="docutils literal"><span class="pre">404.html</span></tt>.</p>
+<p>This means you need to define a <tt class="docutils literal"><span class="pre">404.html</span></tt> template in your root template
+directory. This template will be used for all 404 errors.</p>
+<p>This <tt class="docutils literal"><span class="pre">page_not_found</span></tt> view should suffice for 99% of Web applications, but
+if you want to override the 404 view, you can specify <tt class="docutils literal"><span class="pre">handler404</span></tt> in your
+URLconf, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+
+<span class="n">handler404</span> <span class="o">=</span> <span class="s">&#39;mysite.views.my_custom_404_view&#39;</span>
+</pre></div>
+</div>
+<p>Behind the scenes, Django determines the 404 view by looking for
+<tt class="docutils literal"><span class="pre">handler404</span></tt>. By default, URLconfs contain the following line:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+</pre></div>
+</div>
+<p>That takes care of setting <tt class="docutils literal"><span class="pre">handler404</span></tt> in the current module. As you can
+see in <tt class="docutils literal"><span class="pre">django/conf/urls/defaults.py</span></tt>, <tt class="docutils literal"><span class="pre">handler404</span></tt> is set to
+<tt class="docutils literal"><span class="pre">'django.views.defaults.page_not_found'</span></tt> by default.</p>
+<p>There are three things to note about 404 views:</p>
+<ul class="simple">
+<li>The 404 view is also called if Django doesn&#8217;t find a match after checking
+every regular expression in the URLconf.</li>
+<li>If you don&#8217;t define your own 404 view &#8211; and simply use the default,
+which is recommended &#8211; you still have one obligation: to create a
+<tt class="docutils literal"><span class="pre">404.html</span></tt> template in the root of your template directory. The default
+404 view will use that template for all 404 errors.</li>
+<li>If <tt class="docutils literal"><span class="pre">DEBUG</span></tt> is set to <tt class="docutils literal"><span class="pre">True</span></tt> (in your settings module), then your 404
+view will never be used, and the traceback will be displayed instead.</li>
+</ul>
+</div>
+<div class="section" id="customizing-the-500-server-error-view">
+<h3>Customizing the 500 (Server Error) View</h3>
+<p>Similarly, Django executes special-case behavior in the case of runtime errors
+in view code. If a view results in an exception, Django will, by default, call
+the view <tt class="docutils literal"><span class="pre">django.views.defaults.server_error</span></tt>, which loads and renders the
+template <tt class="docutils literal"><span class="pre">500.html</span></tt>.</p>
+<p>This means you need to define a <tt class="docutils literal"><span class="pre">500.html</span></tt> template in your root template
+directory. This template will be used for all server errors.</p>
+<p>This <tt class="docutils literal"><span class="pre">server_error</span></tt> view should suffice for 99% of Web applications, but if
+you want to override the view, you can specify <tt class="docutils literal"><span class="pre">handler500</span></tt> in your
+URLconf, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="o">...</span>
+<span class="p">)</span>
+
+<span class="n">handler500</span> <span class="o">=</span> <span class="s">&#39;mysite.views.my_custom_error_view&#39;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='appendixF.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='license.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

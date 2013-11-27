@@ -1,0 +1,378 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 1: Introduction to Django</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='introduction.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter02.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-1-introduction-to-django">
+<h1>Chapter 1: Introduction to Django</h1>
+<p>This book is about Django, a Web development framework that saves you time
+and makes Web development a joy. Using Django, you can build and maintain
+high-quality Web applications with minimal fuss.</p>
+<p>At its best, Web development is an exciting, creative act; at its worst,
+it can be a repetitive, frustrating nuisance. Django lets you focus on the fun
+stuff &#8211; the crux of your Web application &#8211; while easing the pain of the
+repetitive bits. In doing so, it provides high-level abstractions of common
+Web development patterns, shortcuts for frequent programming tasks, and
+clear conventions for how to solve problems. At the same time, Django tries to
+stay out of your way, letting you work outside the scope of the framework as
+needed.</p>
+<p>The goal of this book is to make you a Django expert. The focus is twofold.
+First, we explain, in depth, what Django does and how to build Web
+applications with it. Second, we discuss higher-level concepts where
+appropriate, answering the question &#8220;How can I apply these tools effectively
+in my own projects?&#8221; By reading this book, you&#8217;ll learn the skills needed to
+develop powerful Web sites quickly, with code that is clean and easy to
+maintain.</p>
+<div class="section" id="what-is-a-web-framework">
+<h2>What Is a Web Framework?</h2>
+<p>Django is a prominent member of a new generation of <em>Web frameworks</em> &#8211; but
+what does that term mean, precisely?</p>
+<p>To answer that question, let&#8217;s consider the design of a Web application written
+in Python <em>without</em> a framework. Throughout this book, we&#8217;ll take this approach
+of showing you basic ways of getting work done <em>without</em> shortcuts, in the hope
+that you&#8217;ll recognize why shortcuts are so helpful. (It&#8217;s also valuable to know
+how to get things done without shortcuts because shortcuts aren&#8217;t always
+available. And most importantly, knowing <em>why</em> things work the way they do
+makes you a better Web developer.)</p>
+<p>One of the simplest, most direct ways to build a Python Web app from scratch is
+to use the Common Gateway Interface (CGI) standard, which was a popular
+technique circa 1998. Here&#8217;s a high-level explanation of how it works: just
+create a Python script that outputs HTML, then save the script to a Web server
+with a &#8221;.cgi&#8221; extension and visit the page in your Web browser. That&#8217;s it.</p>
+<p>Here&#8217;s an example Python CGI script that displays the ten most recently
+published books from a database. Don&#8217;t worry about syntax details; just get a
+feel for the basic things it&#8217;s doing:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c">#!/usr/bin/env python</span>
+
+<span class="kn">import</span> <span class="nn">MySQLdb</span>
+
+<span class="k">print</span> <span class="s">&quot;Content-Type: text/html</span><span class="se">\n</span><span class="s">&quot;</span>
+<span class="k">print</span> <span class="s">&quot;&lt;html&gt;&lt;head&gt;&lt;title&gt;Books&lt;/title&gt;&lt;/head&gt;&quot;</span>
+<span class="k">print</span> <span class="s">&quot;&lt;body&gt;&quot;</span>
+<span class="k">print</span> <span class="s">&quot;&lt;h1&gt;Books&lt;/h1&gt;&quot;</span>
+<span class="k">print</span> <span class="s">&quot;&lt;ul&gt;&quot;</span>
+
+<span class="n">connection</span> <span class="o">=</span> <span class="n">MySQLdb</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">user</span><span class="o">=</span><span class="s">&#39;me&#39;</span><span class="p">,</span> <span class="n">passwd</span><span class="o">=</span><span class="s">&#39;letmein&#39;</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="s">&#39;my_db&#39;</span><span class="p">)</span>
+<span class="n">cursor</span> <span class="o">=</span> <span class="n">connection</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+<span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s">&quot;SELECT name FROM books ORDER BY pub_date DESC LIMIT 10&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">():</span>
+    <span class="k">print</span> <span class="s">&quot;&lt;li&gt;</span><span class="si">%s</span><span class="s">&lt;/li&gt;&quot;</span> <span class="o">%</span> <span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="k">print</span> <span class="s">&quot;&lt;/ul&gt;&quot;</span>
+<span class="k">print</span> <span class="s">&quot;&lt;/body&gt;&lt;/html&gt;&quot;</span>
+
+<span class="n">connection</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>First, to fulfill the requirements of CGI, this code prints a &#8220;Content-Type&#8221;
+line, followed by a blank line. It prints some introductory HTML, connects to a
+database and runs a query to retrieve the names of the latest ten books.
+Looping over those books, it generates an HTML list of the titles. Finally, it
+prints the closing HTML and closes the database connection.</p>
+<p>With a one-off page like this one, the write-it-from-scratch approach isn&#8217;t
+necessarily bad. For one thing, this code is simple to comprehend &#8211; even a
+novice developer can read these 16 lines of Python and understand everything it
+does, from start to finish. There&#8217;s nothing else to learn, no other code to
+read. It&#8217;s also simple to deploy: just save this code in a file that ends with
+&#8221;.cgi&#8221;, upload that file to a Web server, and visit that page with a browser.</p>
+<p>But despite its simplicity, this approach has a number of problems and
+annoyances. Ask yourself these questions:</p>
+<ul class="simple">
+<li>What happens when multiple parts of your application need to connect to
+the database? Surely that database-connecting code shouldn&#8217;t need to be
+duplicated in each individual CGI script. The pragmatic thing to do would
+be to refactor it into a shared function.</li>
+<li>Should a developer really have to worry about printing the
+&#8220;Content-Type&#8221; line and remembering to close the database connection?
+This sort of boilerplate reduces programmer productivity and introduces
+opportunities for mistakes. These setup- and teardown-related tasks would
+best be handled by some common infrastructure.</li>
+<li>What happens when this code is reused in multiple environments, each with
+a separate database and password? At this point, some
+environment-specific configuration becomes essential.</li>
+<li>What happens when a Web designer who has no experience coding Python
+wishes to redesign the page? One wrong character could crash the entire
+application. Ideally, the logic of the page &#8211; the retrieval of book
+titles from the database &#8211; would be separate from the HTML display of
+the page, so that a designer could edit the latter without affecting the
+former.</li>
+</ul>
+<p>These problems are precisely what a Web framework intends to solve. A Web
+framework provides a programming infrastructure for your applications, so that
+you can focus on writing clean, maintainable code without having to reinvent
+the wheel. In a nutshell, that&#8217;s what Django does.</p>
+</div>
+<div class="section" id="the-mvc-design-pattern">
+<h2>The MVC Design Pattern</h2>
+<p>Let&#8217;s dive in with a quick example that demonstrates the difference between the
+previous approach and a Web framework&#8217;s approach. Here&#8217;s how you might write
+the previous CGI code using Django. The first thing to note is that that we
+split it over four Python files (<tt class="docutils literal"><span class="pre">models.py</span></tt>, <tt class="docutils literal"><span class="pre">views.py</span></tt>, <tt class="docutils literal"><span class="pre">urls.py</span></tt>) and
+an HTML template (<tt class="docutils literal"><span class="pre">latest_books.html</span></tt>):</p>
+<div class="highlight-python"><pre># models.py (the database tables)
+
+from django.db import models
+
+class Book(models.Model):
+    name = models.CharField(max_length=50)
+    pub_date = models.DateField()
+
+
+# views.py (the business logic)
+
+from django.shortcuts import render
+from models import Book
+
+def latest_books(request):
+    book_list = Book.objects.order_by('-pub_date')[:10]
+    return render(request, 'latest_books.html', {'book_list': book_list})
+
+
+# urls.py (the URL configuration)
+
+from django.conf.urls.defaults import *
+import views
+
+urlpatterns = patterns('',
+    (r'^latest/$', views.latest_books),
+)
+
+
+# latest_books.html (the template)
+
+&lt;html&gt;&lt;head&gt;&lt;title&gt;Books&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+&lt;h1&gt;Books&lt;/h1&gt;
+&lt;ul&gt;
+{% for book in book_list %}
+&lt;li&gt;{{ book.name }}&lt;/li&gt;
+{% endfor %}
+&lt;/ul&gt;
+&lt;/body&gt;&lt;/html&gt;</pre>
+</div>
+<p>Again, don&#8217;t worry about the particulars of syntax; just get a feel for the
+overall design. The main thing to note here is the <em>separation of concerns</em>:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">models.py</span></tt> file contains a description of the database table,
+represented by a Python class. This class is called a <em>model</em>. Using it,
+you can create, retrieve, update and delete records in your database
+using simple Python code rather than writing repetitive SQL statements.</li>
+<li>The <tt class="docutils literal"><span class="pre">views.py</span></tt> file contains the business logic for the page. The
+<tt class="docutils literal"><span class="pre">latest_books()</span></tt> function is called a <em>view</em>.</li>
+<li>The <tt class="docutils literal"><span class="pre">urls.py</span></tt> file specifies which view is called for a given URL
+pattern. In this case, the URL <tt class="docutils literal"><span class="pre">/latest/</span></tt> will be handled by the
+<tt class="docutils literal"><span class="pre">latest_books()</span></tt> function. In other words, if your domain is
+example.com, any visit to the URL <a class="reference external" href="http://example.com/latest/">http://example.com/latest/</a> will call
+the <tt class="docutils literal"><span class="pre">latest_books()</span></tt> function.</li>
+<li>The <tt class="docutils literal"><span class="pre">latest_books.html</span></tt> file is an HTML template that describes the
+design of the page. It uses a template language with basic logic
+statements &#8211; e.g., <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">for</span> <span class="pre">book</span> <span class="pre">in</span> <span class="pre">book_list</span> <span class="pre">%}</span></tt>.</li>
+</ul>
+<p>Taken together, these pieces loosely follow a pattern called
+Model-View-Controller (MVC). Simply put, MVC is way of developing software so
+that the code for defining and accessing data (the model) is separate from
+request-routing logic (the controller), which in turn is separate from the user
+interface (the view). (We&#8217;ll discuss MVC in more depth in Chapter 5.)</p>
+<p>A key advantage of such an approach is that components are <em>loosely coupled</em>.
+Each distinct piece of a Django-powered Web application has a single key
+purpose and can be changed independently without affecting the other pieces.
+For example, a developer can change the URL for a given part of the application
+without affecting the underlying implementation. A designer can change a page&#8217;s
+HTML without having to touch the Python code that renders it. A database
+administrator can rename a database table and specify the change in a single
+place, rather than having to search and replace through a dozen files.</p>
+<p>In this book, each component of MVC gets its own chapter. Chapter 3 covers
+views, Chapter 4 covers templates, and Chapter 5 covers models.</p>
+</div>
+<div class="section" id="django-s-history">
+<h2>Django&#8217;s History</h2>
+<p>Before we dive into more code, we should take a moment to explain Django&#8217;s
+history. We noted above that we&#8217;ll be showing you how to do things <em>without</em>
+shortcuts so that you more fully understand the shortcuts. Similarly, it&#8217;s
+useful to understand <em>why</em> Django was created, because knowledge of the history
+will put into context why Django works the way it does.</p>
+<p>If you&#8217;ve been building Web applications for a while, you&#8217;re probably familiar
+with the problems in the CGI example we presented earlier. The classic Web
+developer&#8217;s path goes something like this:</p>
+<ol class="arabic simple">
+<li>Write a Web application from scratch.</li>
+<li>Write another Web application from scratch.</li>
+<li>Realize the application from step 1 shares much in common with the
+application from step 2.</li>
+<li>Refactor the code so that application 1 shares code with application 2.</li>
+<li>Repeat steps 2-4 several times.</li>
+<li>Realize you&#8217;ve invented a framework.</li>
+</ol>
+<p>This is precisely how Django itself was created!</p>
+<p>Django grew organically from real-world applications written by a Web
+development team in Lawrence, Kansas, USA. It was born in the fall of 2003,
+when the Web programmers at the <em>Lawrence Journal-World</em> newspaper, Adrian
+Holovaty and Simon Willison, began using Python to build applications.</p>
+<p>The World Online team, responsible for the production and maintenance of
+several local news sites, thrived in a development environment dictated by
+journalism deadlines. For the sites &#8211; including LJWorld.com, Lawrence.com and
+KUsports.com &#8211; journalists (and management) demanded that features be added
+and entire applications be built on an intensely fast schedule, often with only
+days&#8217; or hours&#8217; notice. Thus, Simon and Adrian developed a time-saving Web
+development framework out of necessity &#8211; it was the only way they could build
+maintainable applications under the extreme deadlines.</p>
+<p>In summer 2005, after having developed this framework to a point where it was
+efficiently powering most of World Online&#8217;s sites, the team, which now included
+Jacob Kaplan-Moss, decided to release the framework as open source software.
+They released it in July 2005 and named it Django, after the jazz guitarist
+Django Reinhardt.</p>
+<p>Now, several years later, Django is a well-established open source project with
+tens of thousands of users and contributors spread across the planet. Two of
+the original World Online developers (the &#8220;Benevolent Dictators for Life,&#8221;
+Adrian and Jacob) still provide central guidance for the framework&#8217;s growth,
+but it&#8217;s much more of a collaborative team effort.</p>
+<p>This history is relevant because it helps explain two key things. The first is
+Django&#8217;s &#8220;sweet spot.&#8221; Because Django was born in a news environment, it offers
+several features (such as its admin site, covered in Chapter 6) that are
+particularly well suited for &#8220;content&#8221; sites &#8211; sites like Amazon.com,
+craigslist.org, and washingtonpost.com that offer dynamic, database-driven
+information. Don&#8217;t let that turn you off, though &#8211; although Django is
+particularly good for developing those sorts of sites, that doesn&#8217;t preclude it
+from being an effective tool for building any sort of dynamic Web site.
+(There&#8217;s a difference between being <em>particularly effective</em> at something and
+being <em>ineffective</em> at other things.)</p>
+<p>The second matter to note is how Django&#8217;s origins have shaped the culture of
+its open source community. Because Django was extracted from real-world code,
+rather than being an academic exercise or commercial product, it is acutely
+focused on solving Web development problems that Django&#8217;s developers themselves
+have faced &#8211; and continue to face. As a result, Django itself is actively
+improved on an almost daily basis. The framework&#8217;s maintainers have a vested
+interest in making sure Django saves developers time, produces applications
+that are easy to maintain and performs well under load. If nothing else, the
+developers are motivated by their own selfish desires to save themselves time
+and enjoy their jobs. (To put it bluntly, they eat their own dog food.)</p>
+</div>
+<div class="section" id="how-to-read-this-book">
+<h2>How to Read This Book</h2>
+<p>In writing this book, we tried to strike a balance between readability and
+reference, with a bias toward readability. Our goal with this book, as stated
+earlier, is to make you a Django expert, and we believe the best way to teach is
+through prose and plenty of examples, rather than providing an exhaustive
+but bland catalog of Django features. (As the saying goes, you can&#8217;t expect to
+teach somebody how to speak a language merely by teaching them the alphabet.)</p>
+<p>With that in mind, we recommend that you read Chapters 1 through 12 in order.
+They form the foundation of how to use Django; once you&#8217;ve read them, you&#8217;ll be
+able to build and deploy Django-powered Web sites. Specifically, Chapters 1
+through 7 are the &#8220;core curriculum,&#8221; Chapters 8 through 11 cover more advanced
+Django usage, and Chapter 12 covers deployment. The remaining chapters, 13
+through 20, focus on specific Django features and can be read in any order.</p>
+<p>The appendixes are for reference. They, along with the free documentation at
+<a class="reference external" href="http://www.djangoproject.com/">http://www.djangoproject.com/</a>, are probably what you&#8217;ll flip back to occasionally to
+recall syntax or find quick synopses of what certain parts of Django do.</p>
+<div class="section" id="required-programming-knowledge">
+<h3>Required Programming Knowledge</h3>
+<p>Readers of this book should understand the basics of procedural and
+object-oriented programming: control structures (e.g., <tt class="docutils literal"><span class="pre">if</span></tt>, <tt class="docutils literal"><span class="pre">while</span></tt>,
+<tt class="docutils literal"><span class="pre">for</span></tt>), data structures (lists, hashes/dictionaries), variables, classes and
+objects.</p>
+<p>Experience in Web development is, as you may expect, very helpful, but it&#8217;s
+not required to understand this book. Throughout the book, we try to promote
+best practices in Web development for readers who lack this experience.</p>
+</div>
+<div class="section" id="required-python-knowledge">
+<h3>Required Python Knowledge</h3>
+<p>At its core, Django is simply a collection of libraries written in the Python
+programming language. To develop a site using Django, you write Python code
+that uses these libraries. Learning Django, then, is a matter of learning how
+to program in Python and understanding how the Django libraries work.</p>
+<p>If you have experience programming in Python, you should have no trouble diving
+in. By and large, the Django code doesn&#8217;t perform a lot of &#8220;magic&#8221; (i.e.,
+programming trickery whose implementation is difficult to explain or
+understand). For you, learning Django will be a matter of learning Django&#8217;s
+conventions and APIs.</p>
+<p>If you don&#8217;t have experience programming in Python, you&#8217;re in for a treat.
+It&#8217;s easy to learn and a joy to use! Although this book doesn&#8217;t include a full
+Python tutorial, it highlights Python features and functionality where
+appropriate, particularly when code doesn&#8217;t immediately make sense. Still, we
+recommend you read the official Python tutorial, available online at
+<a class="reference external" href="http://docs.python.org/tut/">http://docs.python.org/tut/</a>. We also recommend Mark Pilgrim&#8217;s free book
+<em>Dive Into Python</em>, available at <a class="reference external" href="http://www.diveintopython.net/">http://www.diveintopython.net/</a> and published in
+print by Apress.</p>
+</div>
+<div class="section" id="required-django-version">
+<h3>Required Django Version</h3>
+<p>This book covers Django 1.4.</p>
+<p>Django&#8217;s developers maintain backwards compatibility as much as possible, but
+occasionally introduce some backwards incompatible changes.  The changes in each
+release are always covered in the release notes, which you can find here:
+<a class="reference external" href="https://docs.djangoproject.com/en/dev/releases/1.X">https://docs.djangoproject.com/en/dev/releases/1.X</a></p>
+</div>
+<div class="section" id="getting-help">
+<h3>Getting Help</h3>
+<p>One of the greatest benefits of Django is its kind and helpful user community.
+For help with any aspect of Django &#8211; from installation, to application design,
+to database design, to deployment &#8211; feel free to ask questions online.</p>
+<ul class="simple">
+<li>The django-users mailing list is where thousands of Django users hang out
+to ask and answer questions. Sign up for free at <a class="reference external" href="http://www.djangoproject.com/r/django-users">http://www.djangoproject.com/r/django-users</a>.</li>
+<li>The Django IRC channel is where Django users hang out to chat and help
+each other in real time. Join the fun by logging on to #django on the
+Freenode IRC network.</li>
+</ul>
+</div>
+<div class="section" id="what-s-next">
+<h3>What&#8217;s Next</h3>
+<p>In <a class="reference external" href="chapter02.html">Chapter 2</a>, we&#8217;ll get started with Django, covering installation and
+initial setup.</p>
+</div>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='introduction.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter02.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

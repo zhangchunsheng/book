@@ -1,0 +1,879 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 16: django.contrib</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter15.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter17.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-16-django-contrib">
+<h1>Chapter 16: django.contrib</h1>
+<p>One of the many strengths of Python is its &#8220;batteries included&#8221; philosophy: when
+you install Python, it comes with a large standard library of packages that you
+can start using immediately, without having to download anything else. Django
+aims to follow this philosophy, and it includes its own standard library of
+add-ons useful for common Web development tasks. This chapter covers that
+collection of add-ons.</p>
+<div class="section" id="the-django-standard-library">
+<h2>The Django Standard Library</h2>
+<p>Django&#8217;s standard library lives in the package <tt class="docutils literal"><span class="pre">django.contrib</span></tt>. Within each
+subpackage is a separate piece of add-on functionality. These pieces are not
+necessarily related, but some <tt class="docutils literal"><span class="pre">django.contrib</span></tt> subpackages may require other
+ones.</p>
+<p>There&#8217;s no hard requirement for the types of functionality in
+<tt class="docutils literal"><span class="pre">django.contrib</span></tt>. Some of the packages include models (and hence require you
+to install their database tables into your database), but others consist solely
+of middleware or template tags.</p>
+<p>The single characteristic the <tt class="docutils literal"><span class="pre">django.contrib</span></tt> packages have in common is
+this: if you were to remove the <tt class="docutils literal"><span class="pre">django.contrib</span></tt> package entirely, you could
+still use Django&#8217;s fundamental features with no problems. When the Django
+developers add new functionality to the framework, they use this rule of thumb
+in deciding whether the new functionality should live in <tt class="docutils literal"><span class="pre">django.contrib</span></tt> or
+elsewhere.</p>
+<p><tt class="docutils literal"><span class="pre">django.contrib</span></tt> consists of these packages:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">admin</span></tt>: The Django admin site. See Chapter 6.</li>
+<li><tt class="docutils literal"><span class="pre">admindocs</span></tt>: Auto-documentation for the Django admin site. This book
+doesn&#8217;t cover this feature; check the official Django documentation.</li>
+<li><tt class="docutils literal"><span class="pre">auth</span></tt>: Django&#8217;s authentication framework. See Chapter 14.</li>
+<li><tt class="docutils literal"><span class="pre">comments</span></tt>: A comments application. This book doesn&#8217;t cover this
+feature; check the official Django documentation.</li>
+<li><tt class="docutils literal"><span class="pre">contenttypes</span></tt>: A framework for hooking into &#8220;types&#8221; of content, where
+each installed Django model is a separate content type. This framework is
+used internally by other &#8220;contrib&#8221; applications and is mostly intended for very
+advanced Django developers. Those developers should find out more about
+this application by reading the source code in <tt class="docutils literal"><span class="pre">django/contrib/contenttypes</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">csrf</span></tt>: Protection against Cross-Site Request Forgery (CSRF). See
+the later section titled &#8220;CSRF Protection.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">databrowse</span></tt>: A Django application that lets you browse your data. This
+book doesn&#8217;t cover this feature; check the official Django documentation.</li>
+<li><tt class="docutils literal"><span class="pre">flatpages</span></tt>: A framework for managing simple &#8220;flat&#8221; HTML content in a
+database. See the later section titled &#8220;Flatpages.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">formtools</span></tt>: A number of useful higher-level libraries for dealing with
+common patterns in forms. This book doesn&#8217;t cover this feature; check the
+official Django documentation.</li>
+<li><tt class="docutils literal"><span class="pre">gis</span></tt>: Extensions to Django that provide for GIS (Geographic
+Information Systems) support. These, for example, allow your Django
+models to store geographic data and perform geographic queries. This is
+a large, complex library and isn&#8217;t covered in this book. See
+<a class="reference external" href="http://geodjango.org/">http://geodjango.org/</a> for documentation.</li>
+<li><tt class="docutils literal"><span class="pre">humanize</span></tt>: A set of Django template filters useful for adding a
+&#8220;human touch&#8221; to data. See the later section titled &#8220;Humanizing Data.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">localflavor</span></tt>: Assorted pieces of code that are useful for particular
+countries or cultures. For example, this includes ways to validate U.S.
+ZIP codes or Icelandic identification numbers.</li>
+<li><tt class="docutils literal"><span class="pre">markup</span></tt>: A set of Django template filters that implement a number of
+common markup languages. See the later section titled &#8220;Markup Filters.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">redirects</span></tt>: A framework for managing redirects. See the later section titled
+&#8220;Redirects.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">sessions</span></tt>: Django&#8217;s session framework. See Chapter 14.</li>
+<li><tt class="docutils literal"><span class="pre">sitemaps</span></tt>: A framework for generating sitemap XML files. See Chapter 13.</li>
+<li><tt class="docutils literal"><span class="pre">sites</span></tt>: A framework that lets you operate multiple Web sites from the
+same database and Django installation. See the next section, &#8220;Sites.&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">syndication</span></tt>: A framework for generating syndication feeds in RSS and
+Atom. See Chapter 13.</li>
+<li><tt class="docutils literal"><span class="pre">webdesign</span></tt>: Django add-ons that are particularly useful to Web
+<em>designers</em> (as opposed to developers). As of this writing, this included
+only a single template tag, <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">lorem</span> <span class="pre">%}</span></tt>. Check the Django
+documentation for information.</li>
+</ul>
+<p>The rest of this chapter goes into detail a number of <tt class="docutils literal"><span class="pre">django.contrib</span></tt>
+packages that we haven&#8217;t yet covered in this book.</p>
+</div>
+<div class="section" id="sites">
+<h2>Sites</h2>
+<p>Django&#8217;s sites system is a generic framework that lets you operate multiple
+Web sites from the same database and Django project. This is an abstract
+concept, and it can be tricky to understand, so we&#8217;ll start with a couple of
+scenarios where it would be useful.</p>
+<div class="section" id="scenario-1-reusing-data-on-multiple-sites">
+<h3>Scenario 1: Reusing Data on Multiple Sites</h3>
+<p>As we explained in Chapter 1, the Django-powered sites LJWorld.com and
+Lawrence.com are operated by the same news organization: the <em>Lawrence
+Journal-World</em> newspaper in Lawrence, Kansas. LJWorld.com focuses on news, while
+Lawrence.com focuses on local entertainment. But sometimes editors want to
+publish an article on <em>both</em> sites.</p>
+<p>The brain-dead way of solving the problem would be to use a separate database
+for each site and to require site producers to publish the same story twice:
+once for LJWorld.com and again for Lawrence.com. But that&#8217;s inefficient for
+site producers, and it&#8217;s redundant to store multiple copies of the same story
+in the database.</p>
+<p>The better solution? Both sites use the same article database, and an article
+is associated with one or more sites via a many-to-many relationship. The
+Django sites framework provides the database table to which articles can be
+related. It&#8217;s a hook for associating data with one or more &#8220;sites.&#8221;</p>
+</div>
+<div class="section" id="scenario-2-storing-your-site-name-domain-in-one-place">
+<h3>Scenario 2: Storing Your Site Name/Domain in One Place</h3>
+<p>LJWorld.com and Lawrence.com both have e-mail alert functionality, which lets
+readers sign up to get notifications when news happens. It&#8217;s pretty basic: a
+reader signs up on a Web form, and he immediately gets an e-mail saying,
+&#8220;Thanks for your subscription.&#8221;</p>
+<p>It would be inefficient and redundant to implement this signup-processing code
+twice, so the sites use the same code behind the scenes. But the &#8220;Thank you for
+your subscription&#8221; notice needs to be different for each site. By using <tt class="docutils literal"><span class="pre">Site</span></tt>
+objects, we can abstract the thank-you notice to use the values of the
+current site&#8217;s <tt class="docutils literal"><span class="pre">name</span></tt> (e.g., <tt class="docutils literal"><span class="pre">'LJWorld.com'</span></tt>) and <tt class="docutils literal"><span class="pre">domain</span></tt> (e.g.,
+<tt class="docutils literal"><span class="pre">'www.ljworld.com'</span></tt>).</p>
+<p>The Django sites framework provides a place for you to store the <tt class="docutils literal"><span class="pre">name</span></tt> and
+<tt class="docutils literal"><span class="pre">domain</span></tt> for each site in your Django project, which means you can reuse
+those values in a generic way.</p>
+</div>
+<div class="section" id="how-to-use-the-sites-framework">
+<h3>How to Use the Sites Framework</h3>
+<p>The sites framework is more a series of conventions than a framework. The
+whole thing is based on two simple concepts:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">Site</span></tt> model, found in <tt class="docutils literal"><span class="pre">django.contrib.sites</span></tt>, has <tt class="docutils literal"><span class="pre">domain</span></tt> and
+<tt class="docutils literal"><span class="pre">name</span></tt> fields.</li>
+<li>The <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting specifies the database ID of the <tt class="docutils literal"><span class="pre">Site</span></tt> object
+associated with that particular settings file.</li>
+</ul>
+<p>How you use these two concepts is up to you, but Django uses them in a couple
+of ways automatically via simple conventions.</p>
+<p>To install the sites application, follow these steps:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.sites'</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.</li>
+<li>Run the command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt> to install the <tt class="docutils literal"><span class="pre">django_site</span></tt>
+table into your database. This will also create a default site object,
+with the domain <tt class="docutils literal"><span class="pre">example.com</span></tt>.</li>
+<li>Change the <tt class="docutils literal"><span class="pre">example.com</span></tt> site to your own domain, and add any other
+<tt class="docutils literal"><span class="pre">Site</span></tt> objects, either through the Django admin site or via the Python
+API. Create a <tt class="docutils literal"><span class="pre">Site</span></tt> object for each site/domain that this Django
+project powers.</li>
+<li>Define the <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting in each of your settings files. This
+value should be the database ID of the <tt class="docutils literal"><span class="pre">Site</span></tt> object for the site
+powered by that settings file.</li>
+</ol>
+</div>
+<div class="section" id="the-sites-framework-s-capabilities">
+<h3>The Sites Framework&#8217;s Capabilities</h3>
+<p>The sections that follow describe the various things you can do with the sites
+framework.</p>
+<div class="section" id="reusing-data-on-multiple-sites">
+<h4>Reusing Data on Multiple Sites</h4>
+<p>To reuse data on multiple sites, as explained in the first scenario, just create
+a <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> to <tt class="docutils literal"><span class="pre">Site</span></tt> in your models, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+
+<span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">headline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="c"># ...</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Site</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That&#8217;s the infrastructure you need to associate articles with multiple sites in
+your database. With that in place, you can reuse the same Django view code for
+multiple sites. Continuing the <tt class="docutils literal"><span class="pre">Article</span></tt> model example, here&#8217;s what an
+<tt class="docutils literal"><span class="pre">article_detail</span></tt> view might look like:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">django.shortcuts</span> <span class="kn">import</span> <span class="n">get_object_or_404</span>
+<span class="kn">from</span> <span class="nn">mysite.articles.models</span> <span class="kn">import</span> <span class="n">Article</span>
+
+<span class="k">def</span> <span class="nf">article_detail</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">article_id</span><span class="p">):</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">get_object_or_404</span><span class="p">(</span><span class="n">Article</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">article_id</span><span class="p">,</span> <span class="n">sites__id</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">SITE_ID</span><span class="p">)</span>
+    <span class="c"># ...</span>
+</pre></div>
+</div>
+<p>This view function is reusable because it checks the article&#8217;s site
+dynamically, according to the value of the <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting.</p>
+<p>For example, say LJWorld.com&#8217;s settings file has a <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> set to <tt class="docutils literal"><span class="pre">1</span></tt>, and
+Lawrence.com&#8217;s settings file has a <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> set to <tt class="docutils literal"><span class="pre">2</span></tt>. If this view is
+called when LJWorld.com&#8217;s settings file is active, then it will limit the
+article lookup to articles in which the list of sites includes LJWorld.com.</p>
+</div>
+<div class="section" id="associating-content-with-a-single-site">
+<h4>Associating Content with a Single Site</h4>
+<p>Similarly, you can associate a model to the <tt class="docutils literal"><span class="pre">Site</span></tt> model in a many-to-one
+relationship using <tt class="docutils literal"><span class="pre">ForeignKey</span></tt>.</p>
+<p>For example, if each article is associated with only a single site, you could
+use a model like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+
+<span class="k">class</span> <span class="nc">Article</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">headline</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="c"># ...</span>
+    <span class="n">site</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Site</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This has the same benefits as described in the last section.</p>
+</div>
+<div class="section" id="hooking-into-the-current-site-from-views">
+<h4>Hooking Into the Current Site from Views</h4>
+<p>On a lower level, you can use the sites framework in your Django views to do
+particular things based on the site in which the view is being called,
+for example:</p>
+<div class="highlight-python"><pre>from django.conf import settings
+
+def my_view(request):
+    if settings.SITE_ID == 3:
+        # Do something.
+    else:
+        # Do something else.</pre>
+</div>
+<p>Of course, it&#8217;s ugly to hard-code the site IDs like that. A slightly cleaner way
+of accomplishing the same thing is to check the current site&#8217;s domain:</p>
+<div class="highlight-python"><pre>from django.conf import settings
+from django.contrib.sites.models import Site
+
+def my_view(request):
+    current_site = Site.objects.get(id=settings.SITE_ID)
+    if current_site.domain == 'foo.com':
+        # Do something
+    else:
+        # Do something else.</pre>
+</div>
+<p>The idiom of retrieving the <tt class="docutils literal"><span class="pre">Site</span></tt> object for the value of
+<tt class="docutils literal"><span class="pre">settings.SITE_ID</span></tt> is quite common, so the <tt class="docutils literal"><span class="pre">Site</span></tt> model&#8217;s manager
+(<tt class="docutils literal"><span class="pre">Site.objects</span></tt>) has a <tt class="docutils literal"><span class="pre">get_current()</span></tt> method. This example is equivalent to
+the previous one:</p>
+<div class="highlight-python"><pre>from django.contrib.sites.models import Site
+
+def my_view(request):
+    current_site = Site.objects.get_current()
+    if current_site.domain == 'foo.com':
+        # Do something
+    else:
+        # Do something else.</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this final example, you don&#8217;t have to import <tt class="docutils literal"><span class="pre">django.conf.settings</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="getting-the-current-domain-for-display">
+<h4>Getting the Current Domain for Display</h4>
+<p>For a DRY (Don&#8217;t Repeat Yourself) approach to storing your site&#8217;s name and
+domain name, as explained in
+&#8220;Scenario 2: Storing Your Site Name/Domain in One Place,&#8221; just reference the
+<tt class="docutils literal"><span class="pre">name</span></tt> and <tt class="docutils literal"><span class="pre">domain</span></tt> of the current <tt class="docutils literal"><span class="pre">Site</span></tt> object. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+<span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+
+<span class="k">def</span> <span class="nf">register_for_newsletter</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># Check form values, etc., and subscribe the user.</span>
+    <span class="c"># ...</span>
+    <span class="n">current_site</span> <span class="o">=</span> <span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_current</span><span class="p">()</span>
+    <span class="n">send_mail</span><span class="p">(</span><span class="s">&#39;Thanks for subscribing to </span><span class="si">%s</span><span class="s"> alerts&#39;</span> <span class="o">%</span> <span class="n">current_site</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s">&#39;Thanks for your subscription. We appreciate it.</span><span class="se">\n\n</span><span class="s">-The </span><span class="si">%s</span><span class="s"> team.&#39;</span> <span class="o">%</span> <span class="n">current_site</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+        <span class="s">&#39;editor@</span><span class="si">%s</span><span class="s">&#39;</span> <span class="o">%</span> <span class="n">current_site</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+        <span class="p">[</span><span class="n">user_email</span><span class="p">])</span>
+    <span class="c"># ...</span>
+</pre></div>
+</div>
+<p>Continuing our ongoing example of LJWorld.com and Lawrence.com, on Lawrence.com
+this e-mail has the subject line &#8220;Thanks for subscribing to lawrence.com
+alerts.&#8221; On LJWorld.com, the e-mail has the subject line &#8220;Thanks for subscribing to
+LJWorld.com alerts.&#8221; This same site-specific behavior is applied to the e-mails&#8217;
+message body.</p>
+<p>An even more flexible (but more heavyweight) way of doing this would be to use
+Django&#8217;s template system. Assuming Lawrence.com and LJWorld.com have different
+template directories (<tt class="docutils literal"><span class="pre">TEMPLATE_DIRS</span></tt>), you could simply delegate to the
+template system like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.mail</span> <span class="kn">import</span> <span class="n">send_mail</span>
+<span class="kn">from</span> <span class="nn">django.template</span> <span class="kn">import</span> <span class="n">loader</span><span class="p">,</span> <span class="n">Context</span>
+
+<span class="k">def</span> <span class="nf">register_for_newsletter</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># Check form values, etc., and subscribe the user.</span>
+    <span class="c"># ...</span>
+    <span class="n">subject</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s">&#39;alerts/subject.txt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">Context</span><span class="p">({}))</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_template</span><span class="p">(</span><span class="s">&#39;alerts/message.txt&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">Context</span><span class="p">({}))</span>
+    <span class="n">send_mail</span><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="s">&#39;do-not-reply@example.com&#39;</span><span class="p">,</span> <span class="p">[</span><span class="n">user_email</span><span class="p">])</span>
+    <span class="c"># ...</span>
+</pre></div>
+</div>
+<p>In this case, you have to create <tt class="docutils literal"><span class="pre">subject.txt</span></tt> and <tt class="docutils literal"><span class="pre">message.txt</span></tt>
+templates in both the LJWorld.com and Lawrence.com template directories.
+As mentioned previously, that gives you more flexibility, but it&#8217;s also
+more complex.</p>
+<p>It&#8217;s a good idea to exploit the <tt class="docutils literal"><span class="pre">Site</span></tt> objects as much as possible to remove
+unneeded complexity and redundancy.</p>
+</div>
+</div>
+<div class="section" id="currentsitemanager">
+<h3>CurrentSiteManager</h3>
+<p>If <tt class="docutils literal"><span class="pre">Site</span></tt> objects play a key role in your application, consider using the
+<tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt> in your model(s). It&#8217;s a model manager (see Chapter 10)
+that automatically filters its queries to include only objects associated with
+the current <tt class="docutils literal"><span class="pre">Site</span></tt>.</p>
+<p>Use <tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt> by adding it to your model explicitly. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.managers</span> <span class="kn">import</span> <span class="n">CurrentSiteManager</span>
+
+<span class="k">class</span> <span class="nc">Photo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">photo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="s">&#39;/home/photos&#39;</span><span class="p">)</span>
+    <span class="n">photographer_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">site</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Site</span><span class="p">)</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>
+    <span class="n">on_site</span> <span class="o">=</span> <span class="n">CurrentSiteManager</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>With this model, <tt class="docutils literal"><span class="pre">Photo.objects.all()</span></tt> will return all <tt class="docutils literal"><span class="pre">Photo</span></tt> objects in
+the database, but <tt class="docutils literal"><span class="pre">Photo.on_site.all()</span></tt> will return only the <tt class="docutils literal"><span class="pre">Photo</span></tt>
+objects associated with the current site, according to the <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting.</p>
+<p>In other words, these two statements are equivalent:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">Photo</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">site</span><span class="o">=</span><span class="n">settings</span><span class="o">.</span><span class="n">SITE_ID</span><span class="p">)</span>
+<span class="n">Photo</span><span class="o">.</span><span class="n">on_site</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>How did <tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt> know which field of <tt class="docutils literal"><span class="pre">Photo</span></tt> was the <tt class="docutils literal"><span class="pre">Site</span></tt>?
+It defaults to looking for a field called <tt class="docutils literal"><span class="pre">site</span></tt>. If your model has a
+<tt class="docutils literal"><span class="pre">ForeignKey</span></tt> or <tt class="docutils literal"><span class="pre">ManyToManyField</span></tt> called something <em>other</em> than <tt class="docutils literal"><span class="pre">site</span></tt>,
+you need to explicitly pass that as the parameter to <tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt>.
+The following model, which has a field called <tt class="docutils literal"><span class="pre">publish_on</span></tt>, demonstrates
+this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.managers</span> <span class="kn">import</span> <span class="n">CurrentSiteManager</span>
+
+<span class="k">class</span> <span class="nc">Photo</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">photo</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">FileField</span><span class="p">(</span><span class="n">upload_to</span><span class="o">=</span><span class="s">&#39;/home/photos&#39;</span><span class="p">)</span>
+    <span class="n">photographer_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">pub_date</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">()</span>
+    <span class="n">publish_on</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ForeignKey</span><span class="p">(</span><span class="n">Site</span><span class="p">)</span>
+    <span class="n">objects</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">Manager</span><span class="p">()</span>
+    <span class="n">on_site</span> <span class="o">=</span> <span class="n">CurrentSiteManager</span><span class="p">(</span><span class="s">&#39;publish_on&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you attempt to use <tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt> and pass a field name that doesn&#8217;t
+exist, Django will raise a <tt class="docutils literal"><span class="pre">ValueError</span></tt>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>You&#8217;ll probably want to keep a normal (non-site-specific) <tt class="docutils literal"><span class="pre">Manager</span></tt> on
+your model, even if you use <tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt>. As explained in Appendix
+B, if you define a manager manually, then Django won&#8217;t create the automatic
+<tt class="docutils literal"><span class="pre">objects</span> <span class="pre">=</span> <span class="pre">models.Manager()</span></tt> manager for you.</p>
+<p class="last">Also, certain parts of Django &#8211; namely, the Django admin site and generic
+views &#8211; use whichever manager is defined <em>first</em> in the model, so if you
+want your admin site to have access to all objects (not just site-specific
+ones), put <tt class="docutils literal"><span class="pre">objects</span> <span class="pre">=</span> <span class="pre">models.Manager()</span></tt> in your model, before you define
+<tt class="docutils literal"><span class="pre">CurrentSiteManager</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="how-django-uses-the-sites-framework">
+<h3>How Django Uses the Sites Framework</h3>
+<p>Although it&#8217;s not required that you use the sites framework, it&#8217;s encouraged,
+because Django takes advantage of it in a few places. Even if your
+Django installation is powering only a single site, you should take a few
+seconds to create the site object with your <tt class="docutils literal"><span class="pre">domain</span></tt> and <tt class="docutils literal"><span class="pre">name</span></tt>, and point
+to its ID in your <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting.</p>
+<p>Here&#8217;s how Django uses the sites framework:</p>
+<ul class="simple">
+<li>In the redirects framework (see the later section &#8220;Redirects&#8221;), each
+redirect object is associated with a particular site. When Django searches
+for a redirect, it takes into account the current <tt class="docutils literal"><span class="pre">SITE_ID</span></tt>.</li>
+<li>In the comments framework, each comment is associated with a particular
+site. When a comment is posted, its <tt class="docutils literal"><span class="pre">site</span></tt> is set to the current
+<tt class="docutils literal"><span class="pre">SITE_ID</span></tt>, and when comments are listed via the appropriate template
+tag, only the comments for the current site are displayed.</li>
+<li>In the flatpages framework (see the later section &#8220;Flatpages&#8221;), each
+flatpage is associated with a particular site. When a flatpage is created,
+you specify its <tt class="docutils literal"><span class="pre">site</span></tt>, and the flatpage middleware checks the current
+<tt class="docutils literal"><span class="pre">SITE_ID</span></tt> in retrieving flatpages to display.</li>
+<li>In the syndication framework (see Chapter 13), the templates for
+<tt class="docutils literal"><span class="pre">title</span></tt> and <tt class="docutils literal"><span class="pre">description</span></tt> automatically have access to a variable
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">site</span> <span class="pre">}}</span></tt>, which is the <tt class="docutils literal"><span class="pre">Site</span></tt> object representing the current
+site. Also, the hook for providing item URLs will use the
+<tt class="docutils literal"><span class="pre">domain</span></tt> from the current <tt class="docutils literal"><span class="pre">Site</span></tt> object if you don&#8217;t specify a
+fully qualified domain.</li>
+<li>In the authentication framework (see Chapter 14), the
+<tt class="docutils literal"><span class="pre">django.contrib.auth.views.login</span></tt> view passes the current <tt class="docutils literal"><span class="pre">Site</span></tt> name
+to the template as <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">site_name</span> <span class="pre">}}</span></tt> and the current <tt class="docutils literal"><span class="pre">Site</span></tt> object as
+<tt class="docutils literal"><span class="pre">{{</span> <span class="pre">site</span> <span class="pre">}}</span></tt>.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="flatpages">
+<h2>Flatpages</h2>
+<p>Often you&#8217;ll have a database-driven Web application up and running, but you&#8217;ll
+need to add a couple of one-off static pages, such as an About page or a
+Privacy Policy page. It would be possible to use a standard Web server such as
+Apache to serve these files as flat HTML files, but that introduces an extra
+level of complexity into your application, because then you have to worry about
+configuring Apache, you have to set up access for your team to edit those
+files, and you can&#8217;t take advantage of Django&#8217;s template system to style the
+pages.</p>
+<p>The solution to this problem is Django&#8217;s flatpages application, which lives in the
+package <tt class="docutils literal"><span class="pre">django.contrib.flatpages</span></tt>. This application lets you manage such one-off
+pages via Django&#8217;s admin site, and it lets you specify templates for them using
+Django&#8217;s template system. It uses Django models behind the scenes, which means
+it stores the pages in a database, just like the rest of your data, and you can
+access flatpages with the standard Django database API.</p>
+<p>Flatpages are keyed by their URL and site. When you create a flatpage, you
+specify which URL it&#8217;s associated with, along with which site(s) it&#8217;s on. (For
+more on sites, see the &#8220;Sites&#8221; section.)</p>
+<div class="section" id="using-flatpages">
+<h3>Using Flatpages</h3>
+<p>To install the flatpages application, follow these steps:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.flatpages'</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.
+<tt class="docutils literal"><span class="pre">django.contrib.flatpages</span></tt> depends on <tt class="docutils literal"><span class="pre">django.contrib.sites</span></tt>, so make
+sure the both packages are in <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.</li>
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.flatpages.middleware.FlatpageFallbackMiddleware'</span></tt>
+to your <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting.</li>
+<li>Run the command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt> to install the two required tables
+into your database.</li>
+</ol>
+<p>The flatpages application creates two tables in your database: <tt class="docutils literal"><span class="pre">django_flatpage</span></tt>
+and <tt class="docutils literal"><span class="pre">django_flatpage_sites</span></tt>. <tt class="docutils literal"><span class="pre">django_flatpage</span></tt> simply maps a URL to a title
+and bunch of text content. <tt class="docutils literal"><span class="pre">django_flatpage_sites</span></tt> is a many-to-many table
+that associates a flatpage with one or more sites.</p>
+<p>The application comes with a single <tt class="docutils literal"><span class="pre">FlatPage</span></tt> model, defined in
+<tt class="docutils literal"><span class="pre">django/contrib/flatpages/models.py</span></tt>. It looks something like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.db</span> <span class="kn">import</span> <span class="n">models</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+
+<span class="k">class</span> <span class="nc">FlatPage</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">db_index</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
+    <span class="n">content</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">TextField</span><span class="p">(</span><span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">enable_comments</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">()</span>
+    <span class="n">template_name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">max_length</span><span class="o">=</span><span class="mi">70</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="n">registration_required</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">BooleanField</span><span class="p">()</span>
+    <span class="n">sites</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">ManyToManyField</span><span class="p">(</span><span class="n">Site</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Let&#8217;s examine these fields one at a time:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">url</span></tt>: The URL at which this flatpage lives, excluding the domain
+name but including the leading slash (e.g., <tt class="docutils literal"><span class="pre">/about/contact/</span></tt>).</li>
+<li><tt class="docutils literal"><span class="pre">title</span></tt>: The title of the flatpage. The framework doesn&#8217;t do anything
+special with this. It&#8217;s your responsibility to display it in your
+template.</li>
+<li><tt class="docutils literal"><span class="pre">content</span></tt>: The content of the flatpage (i.e., the HTML of the page).
+The framework doesn&#8217;t do anything special with this. It&#8217;s your
+responsibility to display it in the template.</li>
+<li><tt class="docutils literal"><span class="pre">enable_comments</span></tt>: Whether to enable comments on this flatpage. The
+framework doesn&#8217;t do anything special with this. You can check this value
+in your template and display a comment form if needed.</li>
+<li><tt class="docutils literal"><span class="pre">template_name</span></tt>: The name of the template to use for rendering this
+flatpage. This is optional; if it&#8217;s not given or if this template doesn&#8217;t
+exist, the framework will fall back to the template
+<tt class="docutils literal"><span class="pre">flatpages/default.html</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">registration_required</span></tt>: Whether registration is required for viewing
+this flatpage. This integrates with Django&#8217;s authentication/user
+framework, which is explained further in Chapter 14.</li>
+<li><tt class="docutils literal"><span class="pre">sites</span></tt>: The sites that this flatpage lives on. This integrates with
+Django&#8217;s sites framework, which is explained in the &#8220;Sites&#8221; section of
+this chapter.</li>
+</ul>
+<p>You can create flatpages through either the Django admin interface or the
+Django database API. For more information on this, see the section
+&#8220;Adding, Changing, and Deleting Flatpages.&#8221;</p>
+<p>Once you&#8217;ve created flatpages, <tt class="docutils literal"><span class="pre">FlatpageFallbackMiddleware</span></tt> does all of
+the work. Each time any Django application raises a 404 error, this middleware
+checks the flatpages database for the requested URL as a last resort.
+Specifically, it checks for a flatpage with the given URL with a site ID that
+corresponds to the <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting.</p>
+<p>If it finds a match, it loads the flatpage&#8217;s template or
+<tt class="docutils literal"><span class="pre">flatpages/default.html</span></tt> if the flatpage has not specified a custom template.
+It passes that template a single context variable, <tt class="docutils literal"><span class="pre">flatpage</span></tt>, which is the
+<tt class="docutils literal"><span class="pre">FlatPage</span></tt> object. It uses <tt class="docutils literal"><span class="pre">RequestContext</span></tt> in rendering the template.</p>
+<p>If <tt class="docutils literal"><span class="pre">FlatpageFallbackMiddleware</span></tt> doesn&#8217;t find a match, the request continues
+to be processed as usual.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This middleware only gets activated for 404 (page not found) errors &#8211; not
+for 500 (server error) or other error responses. Also note that the order of
+<tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> matters. Generally, you can put
+<tt class="docutils literal"><span class="pre">FlatpageFallbackMiddleware</span></tt> at or near the end of the list, because it&#8217;s
+a last resort.</p>
+</div>
+</div>
+<div class="section" id="adding-changing-and-deleting-flatpages">
+<h3>Adding, Changing, and Deleting Flatpages</h3>
+<p>You can add, change and delete flatpages in two ways:</p>
+<div class="section" id="via-the-admin-interface">
+<h4>Via the Admin Interface</h4>
+<p>If you&#8217;ve activated the automatic Django admin interface, you should see a
+&#8220;Flatpages&#8221; section on the admin index page. Edit flatpages as you would edit any
+other object in the system.</p>
+</div>
+<div class="section" id="via-the-python-api">
+<h4>Via the Python API</h4>
+<p>As described previously, flatpages are represented by a standard Django model that
+lives in <tt class="docutils literal"><span class="pre">django/contrib/flatpages/models.py</span></tt>. Hence, you can access flatpage
+objects via the Django database API, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.contrib.flatpages.models</span> <span class="kn">import</span> <span class="n">FlatPage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fp</span> <span class="o">=</span> <span class="n">FlatPage</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">url</span><span class="o">=</span><span class="s">&#39;/about/&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">title</span><span class="o">=</span><span class="s">&#39;About&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">content</span><span class="o">=</span><span class="s">&#39;&lt;p&gt;About this site...&lt;/p&gt;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">enable_comments</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">template_name</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">registration_required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">fp</span><span class="o">.</span><span class="n">sites</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">FlatPage</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="s">&#39;/about/&#39;</span><span class="p">)</span>
+<span class="go">&lt;FlatPage: /about/ -- About&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="using-flatpage-templates">
+<h3>Using Flatpage Templates</h3>
+<p>By default, flatpages are rendered via the template <tt class="docutils literal"><span class="pre">flatpages/default.html</span></tt>,
+but you can override that for a particular flatpage with the <tt class="docutils literal"><span class="pre">template_name</span></tt>
+field on the <tt class="docutils literal"><span class="pre">FlatPage</span></tt> object.</p>
+<p>Creating the <tt class="docutils literal"><span class="pre">flatpages/default.html</span></tt> template is your responsibility. In
+your template directory, just create a <tt class="docutils literal"><span class="pre">flatpages</span></tt> directory containing a
+<tt class="docutils literal"><span class="pre">default.html</span></tt> file.</p>
+<p>Flatpage templates are passed a single context variable, <tt class="docutils literal"><span class="pre">flatpage</span></tt>, which is
+the flatpage object.</p>
+<p>Here&#8217;s a sample <tt class="docutils literal"><span class="pre">flatpages/default.html</span></tt> template:</p>
+<div class="highlight-python"><pre>&lt;!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN"
+    "http://www.w3.org/TR/REC-html40/loose.dtd"&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;{{ flatpage.title }}&lt;/title&gt;
+&lt;/head&gt;
+&lt;body&gt;
+{{ flatpage.content|safe }}
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+</div>
+<p>Note that we&#8217;ve used the <tt class="docutils literal"><span class="pre">safe</span></tt> template filter to allow <tt class="docutils literal"><span class="pre">flatpage.content</span></tt>
+to include raw HTML and bypass auto-escaping.</p>
+</div>
+</div>
+<div class="section" id="redirects">
+<h2>Redirects</h2>
+<p>Django&#8217;s redirects framework lets you manage redirects easily by storing them in
+a database and treating them as any other Django model object. For example, you
+can use the redirects framework to tell Django, &#8220;Redirect any request to
+<tt class="docutils literal"><span class="pre">/music/</span></tt> to <tt class="docutils literal"><span class="pre">/sections/arts/music/</span></tt>.&#8221; This comes in handy when you need to
+move things around on your site; Web developers should do whatever is necessary
+to avoid broken links.</p>
+<div class="section" id="using-the-redirects-framework">
+<h3>Using the Redirects Framework</h3>
+<p>To install the redirects application, follow these steps:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.redirects'</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>.</li>
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.redirects.middleware.RedirectFallbackMiddleware'</span></tt>
+to your <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting.</li>
+<li>Run the command <tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt> to install the single required
+table into your database.</li>
+</ol>
+<p><tt class="docutils literal"><span class="pre">manage.py</span> <span class="pre">syncdb</span></tt> creates a <tt class="docutils literal"><span class="pre">django_redirect</span></tt> table in your database. This
+is a simple lookup table with <tt class="docutils literal"><span class="pre">site_id</span></tt>, <tt class="docutils literal"><span class="pre">old_path</span></tt>, and <tt class="docutils literal"><span class="pre">new_path</span></tt> fields.</p>
+<p>You can create redirects through either the Django admin interface or the Django
+database API. For more, see the section &#8220;Adding, Changing, and Deleting
+Redirects.&#8221;</p>
+<p>Once you&#8217;ve created redirects, the <tt class="docutils literal"><span class="pre">RedirectFallbackMiddleware</span></tt> class does all
+of the work. Each time any Django application raises a 404 error, this
+middleware checks the redirects database for the requested URL as a last resort.
+Specifically, it checks for a redirect with the given <tt class="docutils literal"><span class="pre">old_path</span></tt> with a site
+ID that corresponds to the <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting. (See the earlier section &#8220;Sites&#8221;
+for more information on <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> and the sites framework.) Then it follows these steps:</p>
+<ul class="simple">
+<li>If it finds a match, and <tt class="docutils literal"><span class="pre">new_path</span></tt> is not empty, it redirects to
+<tt class="docutils literal"><span class="pre">new_path</span></tt>.</li>
+<li>If it finds a match, and <tt class="docutils literal"><span class="pre">new_path</span></tt> is empty, it sends a 410 (&#8220;Gone&#8221;)
+HTTP header and an empty (contentless) response.</li>
+<li>If it doesn&#8217;t find a match, the request continues to be processed as
+usual.</li>
+</ul>
+<p>The middleware only gets activated for 404 errors &#8211; not for 500 errors or responses of any
+other status code.</p>
+<p>Note that the order of <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> matters. Generally, you can put
+<tt class="docutils literal"><span class="pre">RedirectFallbackMiddleware</span></tt> toward the end of the list, because it&#8217;s a last
+resort.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you&#8217;re using both the redirect and flatpage fallback middleware, consider
+which one (redirect or flatpage) you&#8217;d like checked first. We
+suggest flatpages before redirects (thus putting
+the flatpage middleware before the redirect middleware), but you might feel
+differently.</p>
+</div>
+</div>
+<div class="section" id="adding-changing-and-deleting-redirects">
+<h3>Adding, Changing, and Deleting Redirects</h3>
+<p>You can add, change and delete redirects in two ways:</p>
+<div class="section" id="id1">
+<h4>Via the Admin Interface</h4>
+<p>If you&#8217;ve activated the automatic Django admin interface, you should see a
+&#8220;Redirects&#8221; section on the admin index page. Edit redirects as you would edit any
+other object in the system.</p>
+</div>
+<div class="section" id="id2">
+<h4>Via the Python API</h4>
+<p>Redirects are represented by a standard Django model that lives in
+<tt class="docutils literal"><span class="pre">django/contrib/redirects/models.py</span></tt>. Hence, you can access redirect objects
+via the Django database API, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.contrib.redirects.models</span> <span class="kn">import</span> <span class="n">Redirect</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">django.contrib.sites.models</span> <span class="kn">import</span> <span class="n">Site</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">red</span> <span class="o">=</span> <span class="n">Redirect</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">site</span><span class="o">=</span><span class="n">Site</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+<span class="gp">... </span>    <span class="n">old_path</span><span class="o">=</span><span class="s">&#39;/music/&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">new_path</span><span class="o">=</span><span class="s">&#39;/sections/arts/music/&#39;</span><span class="p">,</span>
+<span class="gp">... </span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Redirect</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">old_path</span><span class="o">=</span><span class="s">&#39;/music/&#39;</span><span class="p">)</span>
+<span class="go">&lt;Redirect: /music/ ---&gt; /sections/arts/music/&gt;</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="csrf-protection">
+<h2>CSRF Protection</h2>
+<p>The <tt class="docutils literal"><span class="pre">django.contrib.csrf</span></tt> package protects against
+Cross-Site Request Forgery (CSRF).</p>
+<p>CSRF, also known as &#8220;session riding,&#8221; is a Web site security exploit. It
+happens when a malicious Web site tricks a user into unknowingly loading a URL
+from a site at which that user is already authenticated, hence taking advantage
+of the user&#8217;s authenticated status. This can be a bit tricky to understand at first,
+so we walk through two examples in this section.</p>
+<div class="section" id="a-simple-csrf-example">
+<h3>A Simple CSRF Example</h3>
+<p>Suppose you&#8217;re logged in to a webmail account at <tt class="docutils literal"><span class="pre">example.com</span></tt>. This webmail
+site has a Log Out button that points to the URL <tt class="docutils literal"><span class="pre">example.com/logout</span></tt> &#8211;
+that is, the only action you need to take in order to log out is to visit the
+page <tt class="docutils literal"><span class="pre">example.com/logout</span></tt>.</p>
+<p>A malicious site can coerce you to visit the URL <tt class="docutils literal"><span class="pre">example.com/logout</span></tt> by
+including that URL as a hidden <tt class="docutils literal"><span class="pre">&lt;iframe&gt;</span></tt> on its own (malicious) page. Thus,
+if you&#8217;re logged in to the <tt class="docutils literal"><span class="pre">example.com</span></tt> webmail account and visit the
+malicious page that has an <tt class="docutils literal"><span class="pre">&lt;iframe&gt;</span></tt> to <tt class="docutils literal"><span class="pre">example.com/logout</span></tt>, the act of
+visiting the malicious page will log you out from <tt class="docutils literal"><span class="pre">example.com</span></tt>.</p>
+<p>Clearly, being logged out of a webmail site against your will is not a
+terrifying breach of security, but this same type of exploit can happen to
+<em>any</em> site that trusts users, such as an online banking site or an e-commerce
+site, where the exploit could be used to initiate an order or payment without
+the user&#8217;s knowledge.</p>
+</div>
+<div class="section" id="a-more-complex-csrf-example">
+<h3>A More Complex CSRF Example</h3>
+<p>In the previous example, <tt class="docutils literal"><span class="pre">example.com</span></tt> was partially at fault because it allowed
+a state change (i.e., logging the user out) to be requested via the HTTP
+<tt class="docutils literal"><span class="pre">GET</span></tt> method. It&#8217;s much better practice to require an HTTP <tt class="docutils literal"><span class="pre">POST</span></tt> for any
+request that changes state on the server. But even Web sites that require
+<tt class="docutils literal"><span class="pre">POST</span></tt> for state-changing actions are vulnerable to CSRF.</p>
+<p>Suppose <tt class="docutils literal"><span class="pre">example.com</span></tt> has upgraded its Log Out functionality so that it&#8217;s a
+<tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> button that is requested via <tt class="docutils literal"><span class="pre">POST</span></tt> to the URL
+<tt class="docutils literal"><span class="pre">example.com/logout</span></tt>. Furthermore, the logout <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> includes this
+hidden field:</p>
+<div class="highlight-python"><pre>&lt;input type="hidden" name="confirm" value="true"&gt;</pre>
+</div>
+<p>This ensures that a simple <tt class="docutils literal"><span class="pre">POST</span></tt> to the URL <tt class="docutils literal"><span class="pre">example.com/logout</span></tt> won&#8217;t
+log a user out; in order for a user to log out, the user must request
+<tt class="docutils literal"><span class="pre">example.com/logout</span></tt> via <tt class="docutils literal"><span class="pre">POST</span></tt> <em>and</em> send the <tt class="docutils literal"><span class="pre">confirm</span></tt> <tt class="docutils literal"><span class="pre">POST</span></tt>
+variable with a value of <tt class="docutils literal"><span class="pre">'true'</span></tt>.</p>
+<p>Well, despite the extra security, this arrangement can still be exploited by
+CSRF &#8211; the malicious page just needs to do a little more work. Attackers can
+create an entire form targeting your site, hide it in an invisible <tt class="docutils literal"><span class="pre">&lt;iframe&gt;</span></tt>,
+and then use JavaScript to submit that form automatically.</p>
+</div>
+<div class="section" id="preventing-csrf">
+<h3>Preventing CSRF</h3>
+<p>How, then, can your site protect itself from this exploit? The first step is
+to make sure all <tt class="docutils literal"><span class="pre">GET</span></tt> requests are free of side effects. That way,
+if a malicious site includes one of your pages as an <tt class="docutils literal"><span class="pre">&lt;iframe&gt;</span></tt>,
+it won&#8217;t have a negative effect.</p>
+<p>That leaves <tt class="docutils literal"><span class="pre">POST</span></tt> requests. The second step is to give each <tt class="docutils literal"><span class="pre">POST</span></tt>
+<tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt> a hidden field whose value is secret and is generated from the
+user&#8217;s session ID. Then, when processing the form on the server side, check for
+that secret field and raise an error if it doesn&#8217;t validate.</p>
+<p>This is exactly what Django&#8217;s CSRF prevention layer does, as explained in the
+sections that follow.</p>
+<div class="section" id="using-the-csrf-middleware">
+<h4>Using the CSRF Middleware</h4>
+<p>The <tt class="docutils literal"><span class="pre">django.contrib.csrf</span></tt> package contains only one module: <tt class="docutils literal"><span class="pre">middleware.py</span></tt>. This
+module contains a Django middleware class, <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt>, which implements
+the CSRF protection.</p>
+<p>To activate this CSRF protection, add <tt class="docutils literal"><span class="pre">'django.contrib.csrf.middleware.CsrfMiddleware'</span></tt>
+to the <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting in your settings file. This middleware
+needs to process the response <em>after</em> <tt class="docutils literal"><span class="pre">SessionMiddleware</span></tt>, so
+<tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> must appear <em>before</em> <tt class="docutils literal"><span class="pre">SessionMiddleware</span></tt> in the list
+(because the response middleware is processed last-to-first). Also, it must
+process the response before the response gets compressed or otherwise mangled,
+so <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> must come after <tt class="docutils literal"><span class="pre">GZipMiddleware</span></tt>. Once you&#8217;ve added
+that to your <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting, you&#8217;re done.  See the section
+&#8220;Order of MIDDLEWARE_CLASSES&#8221; in Chapter 15 for more explanation.</p>
+<p>In case you&#8217;re interested, here&#8217;s how <tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> works. It does these
+two things:</p>
+<ol class="arabic simple">
+<li>It modifies outgoing requests by adding a hidden form field to all
+<tt class="docutils literal"><span class="pre">POST</span></tt> forms, with the name <tt class="docutils literal"><span class="pre">csrfmiddlewaretoken</span></tt> and a value that
+is a hash of the session ID plus a secret key. The middleware does <em>not</em>
+modify the response if there&#8217;s no session ID set, so the performance
+penalty is negligible for requests that don&#8217;t use sessions.</li>
+<li>On all incoming <tt class="docutils literal"><span class="pre">POST</span></tt> requests that have the session cookie set, it
+checks that <tt class="docutils literal"><span class="pre">csrfmiddlewaretoken</span></tt> is present and correct. If it
+isn&#8217;t, the user will get a 403 <tt class="docutils literal"><span class="pre">HTTP</span></tt> error. The content of the 403
+error page is the message &#8220;Cross Site Request Forgery detected. Request
+aborted.&#8221;</li>
+</ol>
+<p>This ensures that only forms originating from your Web site can be used to POST
+data back.</p>
+<p>This middleware deliberately targets only HTTP <tt class="docutils literal"><span class="pre">POST</span></tt> requests (and the
+corresponding POST forms). As we explained, <tt class="docutils literal"><span class="pre">GET</span></tt> requests ought never
+to have side effects; it&#8217;s your own responsibility to ensure this.</p>
+<p><tt class="docutils literal"><span class="pre">POST</span></tt> requests not accompanied by a session cookie are not
+protected, but they don&#8217;t <em>need</em> to be protected, because a malicious Web site
+could make these kind of requests anyway.</p>
+<p>To avoid altering non-HTML requests, the middleware checks the response&#8217;s
+<tt class="docutils literal"><span class="pre">Content-Type</span></tt> header before modifying it. Only pages that are served as
+<tt class="docutils literal"><span class="pre">text/html</span></tt> or <tt class="docutils literal"><span class="pre">application/xml+xhtml</span></tt> are modified.</p>
+</div>
+<div class="section" id="limitations-of-the-csrf-middleware">
+<h4>Limitations of the CSRF Middleware</h4>
+<p><tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> requires Django&#8217;s session framework to work. (See Chapter 14
+for more on sessions.) If you&#8217;re using a custom session or authentication
+framework that manually manages session cookies, this middleware will not help
+you.</p>
+<p>If your application creates HTML pages and forms in some unusual way (e.g., if it
+sends fragments of HTML in JavaScript <tt class="docutils literal"><span class="pre">document.write</span></tt> statements), you
+might bypass the filter that adds the hidden field to the form. In this case,
+the form submission will always fail. (This happens because
+<tt class="docutils literal"><span class="pre">CsrfMiddleware</span></tt> uses a regular expression to add the <tt class="docutils literal"><span class="pre">csrfmiddlewaretoken</span></tt>
+field to your HTML before the page is sent to the client, and the regular
+expression sometimes cannot handle wacky HTML.) If you suspect this might be
+happening, just view the source in your Web browser to see whether
+<tt class="docutils literal"><span class="pre">csrfmiddlewaretoken</span></tt> was inserted into your <tt class="docutils literal"><span class="pre">&lt;form&gt;</span></tt>.</p>
+<p>For more CSRF information and examples, visit <a class="reference external" href="http://en.wikipedia.org/wiki/CSRF">http://en.wikipedia.org/wiki/CSRF</a></p>
+</div>
+</div>
+</div>
+<div class="section" id="humanizing-data">
+<h2>Humanizing Data</h2>
+<p>The package <tt class="docutils literal"><span class="pre">django.contrib.humanize</span></tt> holds a set of Django template filters
+useful for adding a &#8220;human touch&#8221; to data. To activate these filters, add
+<tt class="docutils literal"><span class="pre">'django.contrib.humanize'</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>. Once you&#8217;ve done
+that, use <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">humanize</span> <span class="pre">%}</span></tt> in a template, and you&#8217;ll have access to the
+filters described in the following sections.</p>
+<div class="section" id="apnumber">
+<h3>apnumber</h3>
+<p>For numbers 1 through 9, this filter returns the number spelled out. Otherwise,
+it returns the numeral. This follows Associated Press style.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li>1 becomes &#8220;one&#8221;.</li>
+<li>2 becomes &#8220;two&#8221;.</li>
+<li>10 becomes &#8220;10&#8221;.</li>
+</ul>
+<p>You can pass in either an integer or a string representation of an integer.</p>
+</div>
+<div class="section" id="intcomma">
+<h3>intcomma</h3>
+<p>This filter converts an integer to a string containing commas every three digits.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li>4500 becomes &#8220;4,500&#8221;.</li>
+<li>45000 becomes &#8220;45,000&#8221;.</li>
+<li>450000 becomes &#8220;450,000&#8221;.</li>
+<li>4500000 becomes &#8220;4,500,000&#8221;.</li>
+</ul>
+<p>You can pass in either an integer or a string representation of an integer.</p>
+</div>
+<div class="section" id="intword">
+<h3>intword</h3>
+<p>This filter converts a large integer to a friendly text representation. It works best for
+numbers over 1 million.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li>1000000 becomes &#8220;1.0 million&#8221;.</li>
+<li>1200000 becomes &#8220;1.2 million&#8221;.</li>
+<li>1200000000 becomes &#8220;1.2 billion&#8221;.</li>
+</ul>
+<p>Values up to 1 quadrillion (1,000,000,000,000,000) are supported.</p>
+<p>You can pass in either an integer or a string representation of an integer.</p>
+</div>
+<div class="section" id="ordinal">
+<h3>ordinal</h3>
+<p>This filter converts an integer to its ordinal as a string.</p>
+<p>Examples:</p>
+<ul class="simple">
+<li>1 becomes &#8220;1st&#8221;.</li>
+<li>2 becomes &#8220;2nd&#8221;.</li>
+<li>3 becomes &#8220;3rd&#8221;.</li>
+<li>254 becomes &#8220;254th&#8221;.</li>
+</ul>
+<p>You can pass in either an integer or a string representation of an integer.</p>
+</div>
+</div>
+<div class="section" id="markup-filters">
+<h2>Markup Filters</h2>
+<p>The package <tt class="docutils literal"><span class="pre">django.contrib.markup</span></tt> includes a handful of Django template
+filters, each of which implements a common markup languages:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">textile</span></tt>: Implements Textile
+(<a class="reference external" href="http://en.wikipedia.org/wiki/Textile_%28markup_language%29">http://en.wikipedia.org/wiki/Textile_%28markup_language%29</a>)</li>
+<li><tt class="docutils literal"><span class="pre">markdown</span></tt>: Implements Markdown (<a class="reference external" href="http://en.wikipedia.org/wiki/Markdown">http://en.wikipedia.org/wiki/Markdown</a>)</li>
+<li><tt class="docutils literal"><span class="pre">restructuredtext</span></tt>: Implements ReStructured Text
+(<a class="reference external" href="http://en.wikipedia.org/wiki/ReStructuredText">http://en.wikipedia.org/wiki/ReStructuredText</a>)</li>
+</ul>
+<p>In each case, the filter expects formatted markup as a string and returns a
+string representing the marked-up text. For example, the <tt class="docutils literal"><span class="pre">textile</span></tt> filter converts
+text that is marked up in Textile format to HTML:</p>
+<div class="highlight-python"><pre>{% load markup %}
+{{ object.content|textile }}</pre>
+</div>
+<p>To activate these filters, add <tt class="docutils literal"><span class="pre">'django.contrib.markup'</span></tt> to your
+<tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> setting. Once you&#8217;ve done that, use <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">markup</span> <span class="pre">%}</span></tt> in
+a template, and you&#8217;ll have access to these filters. For more documentation,
+read the source code in <tt class="docutils literal"><span class="pre">django/contrib/markup/templatetags/markup.py.</span></tt></p>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>Many of these contributed frameworks (CSRF, the auth system, etc.) do their
+magic by providing a piece of <em>middleware</em>. Middleware is code that runs before
+and/or after every request and can modify requests and responses at will, to
+extend the framework. In the <a class="reference external" href="chapter17.html">next chapter</a>, we&#8217;ll discuss Django&#8217;s built-in
+middleware and explain how you can write your own.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter15.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter17.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

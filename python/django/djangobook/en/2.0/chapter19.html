@@ -1,0 +1,904 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 19: Internationalization</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter18.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter20.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-19-internationalization">
+<h1>Chapter 19: Internationalization</h1>
+<p>Django was originally developed right in the middle of the United States &#8211;
+quite literally, as Lawrence, Kansas, is less than 40 miles from the
+geographic center of the continental United States. Like most open source
+projects, though, Django&#8217;s community grew to include people from all over the
+globe. As Django&#8217;s community became increasingly diverse,
+<em>internationalization</em> and <em>localization</em> became increasingly important.
+Because many developers have at best a fuzzy understanding of these terms,
+we&#8217;ll define them briefly.</p>
+<p><em>Internationalization</em> refers to the process of designing programs for the
+potential use of any locale. This includes marking text (such as UI elements and
+error messages) for future translation, abstracting the display of dates and
+times so that different local standards may be observed, providing support for
+differing time zones, and generally making sure that the code contains no
+assumptions about the location of its users. You&#8217;ll often see
+&#8220;internationalization&#8221; abbreviated <em>I18N</em>. (The &#8220;18&#8221; refers to the number
+of letters omitted between the initial &#8220;I&#8221; and the terminal &#8220;N.&#8221;)</p>
+<p><em>Localization</em> refers to the process of actually translating an
+internationalized program for use in a particular locale. You&#8217;ll sometimes see
+&#8220;localization&#8221; abbreviated as <em>L10N</em>.</p>
+<p>Django itself is fully internationalized; all strings are marked for
+translation, and settings control the display of locale-dependent values like
+dates and times. Django also ships with more than 50 different localization
+files. If you&#8217;re not a native English speaker, there&#8217;s a good chance that
+Django is already translated into your primary language.</p>
+<p>The same internationalization framework used for these localizations is
+available for you to use in your own code and templates.</p>
+<p>To use this framework, you&#8217;ll need to add a minimal number of hooks to your
+Python code and templates. These hooks are called <em>translation strings</em>. They
+tell Django, &#8220;This text should be translated into the end user&#8217;s language, if a
+translation for this text is available in that language.&#8221;</p>
+<p>Django takes care of using these hooks to translate Web applications, on the
+fly, according to users&#8217; language preferences.</p>
+<p>Essentially, Django does two things:</p>
+<ul class="simple">
+<li>It lets developers and template authors specify which parts of their
+applications should be translatable.</li>
+<li>It uses that information to translate Web applications for particular
+users according to their language preferences.</li>
+</ul>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Django&#8217;s translation machinery uses GNU <tt class="docutils literal"><span class="pre">gettext</span></tt>
+(<a class="reference external" href="http://www.gnu.org/software/gettext/">http://www.gnu.org/software/gettext/</a>) via the standard <tt class="docutils literal"><span class="pre">gettext</span></tt> module
+that comes with Python.</p>
+</div>
+<div class="admonition-if-you-don-t-need-internationalization admonition">
+<p class="first admonition-title">If You Don&#8217;t Need Internationalization:</p>
+<p>Django&#8217;s internationalization hooks are enabled by default, which incurs a
+small bit of overhead. If you don&#8217;t use internationalization, you should
+set <tt class="docutils literal"><span class="pre">USE_I18N</span> <span class="pre">=</span> <span class="pre">False</span></tt> in your settings file. If <tt class="docutils literal"><span class="pre">USE_I18N</span></tt> is set to
+<tt class="docutils literal"><span class="pre">False</span></tt>, then Django will make some optimizations so as not to load the
+internationalization machinery.</p>
+<p class="last">You&#8217;ll probably also want to remove
+<tt class="docutils literal"><span class="pre">'django.core.context_processors.i18n'</span></tt> from your
+<tt class="docutils literal"><span class="pre">TEMPLATE_CONTEXT_PROCESSORS</span></tt> setting.</p>
+</div>
+<p>The three steps for internationalizing your Django application are:</p>
+<ol class="arabic simple">
+<li>Embed translation strings in your Python code and templates.</li>
+<li>Get translations for those strings, in whichever languages you want to
+support.</li>
+<li>Activate the locale middleware in your Django settings.</li>
+</ol>
+<p>We&#8217;ll cover each one of these steps in detail.</p>
+<div class="section" id="how-to-specify-translation-strings">
+<h2>1. How to Specify Translation Strings</h2>
+<p>Translation strings specify &#8220;This text should be translated.&#8221; These strings can
+appear in your Python code and templates. It&#8217;s your responsibility to mark
+translatable strings; the system can only translate strings it knows about.</p>
+<div class="section" id="in-python-code">
+<h3>In Python Code</h3>
+<div class="section" id="standard-translation">
+<h4>Standard Translation</h4>
+<p>Specify a translation string by using the function <tt class="docutils literal"><span class="pre">ugettext()</span></tt>. It&#8217;s
+convention to import this as a shorter alias, <tt class="docutils literal"><span class="pre">_</span></tt>, to save typing.</p>
+<p>In this example, the text <tt class="docutils literal"><span class="pre">&quot;Welcome</span> <span class="pre">to</span> <span class="pre">my</span> <span class="pre">site.&quot;</span></tt> is marked as a translation
+string:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span> <span class="k">as</span> <span class="n">_</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&quot;Welcome to my site.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Obviously, you could code this without using the alias. This example is
+identical to the previous one:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext</span>
+
+<span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">ugettext</span><span class="p">(</span><span class="s">&quot;Welcome to my site.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Translation works on computed values. This example is identical to the previous
+two:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">words</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;Welcome&#39;</span><span class="p">,</span> <span class="s">&#39;to&#39;</span><span class="p">,</span> <span class="s">&#39;my&#39;</span><span class="p">,</span> <span class="s">&#39;site.&#39;</span><span class="p">]</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">words</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Translation works on variables. Again, here&#8217;s an identical example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">sentence</span> <span class="o">=</span> <span class="s">&#39;Welcome to my site.&#39;</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="n">sentence</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>(The caveat with using variables or computed values, as in the previous two
+examples, is that Django&#8217;s translation-string-detecting utility,
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt>, won&#8217;t be able to find these strings. More on
+<tt class="docutils literal"><span class="pre">makemessages</span></tt> later.)</p>
+<p>The strings you pass to <tt class="docutils literal"><span class="pre">_()</span></tt> or <tt class="docutils literal"><span class="pre">ugettext()</span></tt> can take placeholders,
+specified with Python&#8217;s standard named-string interpolation syntax. Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">my_view</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;Today is </span><span class="si">%(month)s</span><span class="s"> </span><span class="si">%(day)s</span><span class="s">.&#39;</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span><span class="s">&#39;month&#39;</span><span class="p">:</span> <span class="n">m</span><span class="p">,</span> <span class="s">&#39;day&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">}</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This technique lets language-specific translations reorder the placeholder
+text. For example, an English translation may be <tt class="docutils literal"><span class="pre">&quot;Today</span> <span class="pre">is</span> <span class="pre">November</span> <span class="pre">26.&quot;</span></tt>,
+while a Spanish translation may be <tt class="docutils literal"><span class="pre">&quot;Hoy</span> <span class="pre">es</span> <span class="pre">26</span> <span class="pre">de</span> <span class="pre">Noviembre.&quot;</span></tt> &#8211; with the
+placeholders (the month and the day) with their positions swapped.</p>
+<p>For this reason, you should use named-string interpolation (e.g., <tt class="docutils literal"><span class="pre">%(day)s</span></tt>)
+instead of positional interpolation (e.g., <tt class="docutils literal"><span class="pre">%s</span></tt> or <tt class="docutils literal"><span class="pre">%d</span></tt>) whenever you
+have more than a single parameter. If you used positional interpolation,
+translations wouldn&#8217;t be able to reorder placeholder text.</p>
+</div>
+<div class="section" id="marking-strings-as-no-op">
+<h4>Marking Strings as No-Op</h4>
+<p>Use the function <tt class="docutils literal"><span class="pre">django.utils.translation.ugettext_noop()</span></tt> to mark a string
+as a translation string without translating it. The string is later translated
+from a variable.</p>
+<p>Use this if you have constant strings that should be stored in the source
+language because they are exchanged over systems or users &#8211; such as strings in
+a database &#8211; but should be translated at the last possible point in time, such
+as when the string is presented to the user.</p>
+</div>
+<div class="section" id="lazy-translation">
+<h4>Lazy Translation</h4>
+<p>Use the function <tt class="docutils literal"><span class="pre">django.utils.translation.ugettext_lazy()</span></tt> to translate
+strings lazily &#8211; when the value is accessed rather than when the
+<tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> function is called.</p>
+<p>For example, to translate a model&#8217;s <tt class="docutils literal"><span class="pre">help_text</span></tt>, do the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span>
+
+<span class="k">class</span> <span class="nc">MyThing</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">&#39;This is the help text&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In this example, <tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> stores a lazy reference to the string &#8211;
+not the actual translation. The translation itself will be done when the string
+is used in a string context, such as template rendering on the Django admin
+site.</p>
+<p>The result of a <tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> call can be used wherever you would use a
+unicode string (an object with type <tt class="docutils literal"><span class="pre">unicode</span></tt>) in Python. If you try to use
+it where a bytestring (a <tt class="docutils literal"><span class="pre">str</span></tt> object) is expected, things will not work as
+expected, since a <tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> object doesn&#8217;t know how to convert
+itself to a bytestring.  You can&#8217;t use a unicode string inside a bytestring,
+either, so this is consistent with normal Python behavior. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># This is fine: putting a unicode proxy into a unicode string.</span>
+<span class="s">u&quot;Hello </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">&quot;people&quot;</span><span class="p">)</span>
+
+<span class="c"># This will not work, since you cannot insert a unicode object</span>
+<span class="c"># into a bytestring (nor can you insert our unicode proxy there)</span>
+<span class="s">&quot;Hello </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">&quot;people&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>If you ever see output that looks like <tt class="docutils literal"><span class="pre">&quot;hello</span>
+<span class="pre">&lt;django.utils.functional...&gt;&quot;</span></tt>, you have tried to insert the result of
+<tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> into a bytestring. That&#8217;s a bug in your code.</p>
+<p>If you don&#8217;t like the verbose name <tt class="docutils literal"><span class="pre">ugettext_lazy</span></tt>, you can just alias it as
+<tt class="docutils literal"><span class="pre">_</span></tt> (underscore), like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+
+<span class="k">class</span> <span class="nc">MyThing</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">help_text</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s">&#39;This is the help text&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Always use lazy translations in Django models. Field names and table names
+should be marked for translation (otherwise, they won&#8217;t be translated in the
+admin interface). This means writing explicit <tt class="docutils literal"><span class="pre">verbose_name</span></tt> and
+<tt class="docutils literal"><span class="pre">verbose_name_plural</span></tt> options in the <tt class="docutils literal"><span class="pre">Meta</span></tt> class, though, rather than
+relying on Django&#8217;s default determination of <tt class="docutils literal"><span class="pre">verbose_name</span></tt> and
+<tt class="docutils literal"><span class="pre">verbose_name_plural</span></tt> by looking at the model&#8217;s class name:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ugettext_lazy</span> <span class="k">as</span> <span class="n">_</span>
+
+<span class="k">class</span> <span class="nc">MyThing</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="n">_</span><span class="p">(</span><span class="s">&#39;name&#39;</span><span class="p">),</span> <span class="n">help_text</span><span class="o">=</span><span class="n">_</span><span class="p">(</span><span class="s">&#39;This is the help text&#39;</span><span class="p">))</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">verbose_name</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;my thing&#39;</span><span class="p">)</span>
+        <span class="n">verbose_name_plural</span> <span class="o">=</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;mythings&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="pluralization">
+<h4>Pluralization</h4>
+<p>Use the function <tt class="docutils literal"><span class="pre">django.utils.translation.ungettext()</span></tt> to specify pluralized
+messages. Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">ungettext</span>
+
+<span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">count</span><span class="p">):</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">ungettext</span><span class="p">(</span><span class="s">&#39;there is </span><span class="si">%(count)d</span><span class="s"> object&#39;</span><span class="p">,</span>
+        <span class="s">&#39;there are </span><span class="si">%(count)d</span><span class="s"> objects&#39;</span><span class="p">,</span> <span class="n">count</span><span class="p">)</span> <span class="o">%</span> <span class="p">{</span>
+            <span class="s">&#39;count&#39;</span><span class="p">:</span> <span class="n">count</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">page</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">ungettext</span></tt> takes three arguments: the singular translation string, the plural
+translation string and the number of objects (which is passed to the
+translation languages as the <tt class="docutils literal"><span class="pre">count</span></tt> variable).</p>
+</div>
+</div>
+<div class="section" id="in-template-code">
+<h3>In Template Code</h3>
+<p>Translation in Django templates uses two template tags and a slightly different
+syntax than in Python code. To give your template access to these tags, put
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">i18n</span> <span class="pre">%}</span></tt> toward the top of your template.</p>
+<p>The <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">trans</span> <span class="pre">%}</span></tt> template tag translates either a constant string
+(enclosed in single or double quotes) or variable content:</p>
+<div class="highlight-python"><pre>&lt;title&gt;{% trans "This is the title." %}&lt;/title&gt;
+&lt;title&gt;{% trans myvar %}&lt;/title&gt;</pre>
+</div>
+<p>If the <tt class="docutils literal"><span class="pre">noop</span></tt> option is present, variable lookup still takes place but the
+translation is skipped. This is useful when &#8220;stubbing out&#8221; content that will
+require translation in the future:</p>
+<div class="highlight-python"><pre>&lt;title&gt;{% trans "myvar" noop %}&lt;/title&gt;</pre>
+</div>
+<p>It&#8217;s not possible to mix a template variable inside a string within <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">trans</span>
+<span class="pre">%}</span></tt>. If your translations require strings with variables (placeholders), use
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">blocktrans</span> <span class="pre">%}</span></tt>:</p>
+<div class="highlight-python"><pre>{% blocktrans %}This string will have {{ value }} inside.{% endblocktrans %}</pre>
+</div>
+<p>To translate a template expression &#8211; say, using template filters &#8211; you need
+to bind the expression to a local variable for use within the translation
+block:</p>
+<div class="highlight-python"><pre>{% blocktrans with value|filter as myvar %}
+This will have {{ myvar }} inside.
+{% endblocktrans %}</pre>
+</div>
+<p>If you need to bind more than one expression inside a <tt class="docutils literal"><span class="pre">blocktrans</span></tt> tag,
+separate the pieces with <tt class="docutils literal"><span class="pre">and</span></tt>:</p>
+<div class="highlight-python"><pre>{% blocktrans with book|title as book_t and author|title as author_t %}
+This is {{ book_t }} by {{ author_t }}
+{% endblocktrans %}</pre>
+</div>
+<p>To pluralize, specify both the singular and plural forms with the
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">plural</span> <span class="pre">%}</span></tt> tag, which appears within <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">blocktrans</span> <span class="pre">%}</span></tt> and
+<tt class="docutils literal"><span class="pre">{%</span> <span class="pre">endblocktrans</span> <span class="pre">%}</span></tt>. Example:</p>
+<div class="highlight-python"><pre>{% blocktrans count list|length as counter %}
+There is only one {{ name }} object.
+{% plural %}
+There are {{ counter }} {{ name }} objects.
+{% endblocktrans %}</pre>
+</div>
+<p>Internally, all block and inline translations use the appropriate
+<tt class="docutils literal"><span class="pre">ugettext</span></tt> / <tt class="docutils literal"><span class="pre">ungettext</span></tt> call.</p>
+<p>Each <tt class="docutils literal"><span class="pre">RequestContext</span></tt> has access to three translation-specific variables:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> is a list of tuples in which the first element is the
+language code and the second is the language name (translated into the
+currently active locale).</li>
+<li><tt class="docutils literal"><span class="pre">LANGUAGE_CODE</span></tt> is the current user&#8217;s preferred language, as a string.
+Example: <tt class="docutils literal"><span class="pre">en-us</span></tt>. (See &#8220;How Django discovers language preference,&#8221;
+below.)</li>
+<li><tt class="docutils literal"><span class="pre">LANGUAGE_BIDI</span></tt> is the current locale&#8217;s direction. If True, it&#8217;s a
+right-to-left language, e.g.: Hebrew, Arabic. If False it&#8217;s a
+left-to-right language, e.g.: English, French, German etc.</li>
+</ul>
+<p>If you don&#8217;t use the <tt class="docutils literal"><span class="pre">RequestContext</span></tt> extension, you can get those values with
+three tags:</p>
+<div class="highlight-python"><pre>{% get_current_language as LANGUAGE_CODE %}
+{% get_available_languages as LANGUAGES %}
+{% get_current_language_bidi as LANGUAGE_BIDI %}</pre>
+</div>
+<p>These tags also require a <tt class="docutils literal"><span class="pre">{%</span> <span class="pre">load</span> <span class="pre">i18n</span> <span class="pre">%}</span></tt>.</p>
+<p>Translation hooks are also available within any template block tag that accepts
+constant strings. In those cases, just use <tt class="docutils literal"><span class="pre">_()</span></tt> syntax to specify a
+translation string:</p>
+<div class="highlight-python"><pre>{% some_special_tag _("Page not found") value|yesno:_("yes,no") %}</pre>
+</div>
+<p>In this case, both the tag and the filter will see the already-translated
+string, so they don&#8217;t need to be aware of translations.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In this example, the translation infrastructure will be passed the string
+<tt class="docutils literal"><span class="pre">&quot;yes,no&quot;</span></tt>, not the individual strings <tt class="docutils literal"><span class="pre">&quot;yes&quot;</span></tt> and <tt class="docutils literal"><span class="pre">&quot;no&quot;</span></tt>. The
+translated string will need to contain the comma so that the filter
+parsing code knows how to split up the arguments. For example, a German
+translator might translate the string <tt class="docutils literal"><span class="pre">&quot;yes,no&quot;</span></tt> as <tt class="docutils literal"><span class="pre">&quot;ja,nein&quot;</span></tt>
+(keeping the comma intact).</p>
+</div>
+</div>
+<div class="section" id="working-with-lazy-translation-objects">
+<h3>Working With Lazy Translation Objects</h3>
+<p>Using <tt class="docutils literal"><span class="pre">ugettext_lazy()</span></tt> and <tt class="docutils literal"><span class="pre">ungettext_lazy()</span></tt> to mark strings in models
+and utility functions is a common operation. When you&#8217;re working with these
+objects elsewhere in your code, you should ensure that you don&#8217;t accidentally
+convert them to strings, because they should be converted as late as possible
+(so that the correct locale is in effect). This necessitates the use of a
+couple of helper functions.</p>
+<div class="section" id="joining-strings-string-concat">
+<h4>Joining Strings: string_concat()</h4>
+<p>Standard Python string joins (<tt class="docutils literal"><span class="pre">''.join([...])</span></tt>) will not work on lists
+containing lazy translation objects. Instead, you can use
+<tt class="docutils literal"><span class="pre">django.utils.translation.string_concat()</span></tt>, which creates a lazy object that
+concatenates its contents <em>and</em> converts them to strings only when the result
+is included in a string. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.translation</span> <span class="kn">import</span> <span class="n">string_concat</span>
+<span class="c"># ...</span>
+<span class="n">name</span> <span class="o">=</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">u&#39;John Lennon&#39;</span><span class="p">)</span>
+<span class="n">instrument</span> <span class="o">=</span> <span class="n">ugettext_lazy</span><span class="p">(</span><span class="s">u&#39;guitar&#39;</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">string_concat</span><span class="p">([</span><span class="n">name</span><span class="p">,</span> <span class="s">&#39;: &#39;</span><span class="p">,</span> <span class="n">instrument</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>In this case, the lazy translations in <tt class="docutils literal"><span class="pre">result</span></tt> will only be converted to
+strings when <tt class="docutils literal"><span class="pre">result</span></tt> itself is used in a string (usually at template
+rendering time).</p>
+</div>
+<div class="section" id="the-allow-lazy-decorator">
+<h4>The allow_lazy() Decorator</h4>
+<p>Django offers many utility functions (particularly in <tt class="docutils literal"><span class="pre">django.utils</span></tt>) that
+take a string as their first argument and do something to that string. These
+functions are used by template filters as well as directly in other code.</p>
+<p>If you write your own similar functions and deal with translations, you&#8217;ll
+face the problem of what to do when the first argument is a lazy translation
+object. You don&#8217;t want to convert it to a string immediately, because you might
+be using this function outside of a view (and hence the current thread&#8217;s locale
+setting will not be correct).</p>
+<p>For cases like this, use the <tt class="docutils literal"><span class="pre">django.utils.functional.allow_lazy()</span></tt>
+decorator. It modifies the function so that <em>if</em> it&#8217;s called with a lazy
+translation as the first argument, the function evaluation is delayed until it
+needs to be converted to a string.</p>
+<p>For example:</p>
+<div class="highlight-python"><pre>from django.utils.functional import allow_lazy
+
+def fancy_utility_function(s, ...):
+    # Do some conversion on string 's'
+    # ...
+fancy_utility_function = allow_lazy(fancy_utility_function, unicode)</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">allow_lazy()</span></tt> decorator takes, in addition to the function to decorate,
+a number of extra arguments (<tt class="docutils literal"><span class="pre">*args</span></tt>) specifying the type(s) that the
+original function can return. Usually, it&#8217;s enough to include <tt class="docutils literal"><span class="pre">unicode</span></tt> here
+and ensure that your function returns only Unicode strings.</p>
+<p>Using this decorator means you can write your function and assume that the
+input is a proper string, then add support for lazy translation objects at the
+end.</p>
+</div>
+</div>
+</div>
+<div class="section" id="how-to-create-language-files">
+<h2>2. How to Create Language Files</h2>
+<p>Once you&#8217;ve tagged your strings for later translation, you need to write (or
+obtain) the language translations themselves. Here&#8217;s how that works.</p>
+<div class="admonition-locale-restrictions admonition">
+<p class="first admonition-title">Locale restrictions</p>
+<p class="last">Django does not support localizing your application into a locale for
+which Django itself has not been translated. In this case, it will ignore
+your translation files. If you were to try this and Django supported it,
+you would inevitably see a mixture of translated strings (from your
+application) and English strings (from Django itself). If you want to
+support a locale for your application that is not already part of
+Django, you&#8217;ll need to make at least a minimal translation of the Django
+core.</p>
+</div>
+<div class="section" id="message-files">
+<h3>Message Files</h3>
+<p>The first step is to create a <em>message file</em> for a new language. A message
+file is a plain-text file, representing a single language, that contains all
+available translation strings and how they should be represented in the given
+language. Message files have a <tt class="docutils literal"><span class="pre">.po</span></tt> file extension.</p>
+<p>Django comes with a tool, <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt>, that automates the
+creation and upkeep of these files. To create or update a message file, run
+this command:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages -l de</pre>
+</div>
+<p>...where <tt class="docutils literal"><span class="pre">de</span></tt> is the language code for the message file you want to create.
+The language code, in this case, is in locale format. For example, it&#8217;s
+<tt class="docutils literal"><span class="pre">pt_BR</span></tt> for Brazilian Portuguese and <tt class="docutils literal"><span class="pre">de_AT</span></tt> for Austrian German.</p>
+<p>The script should be run from one of three places:</p>
+<ul class="simple">
+<li>The root directory of your Django project.</li>
+<li>The root directory of your Django app.</li>
+<li>The root <tt class="docutils literal"><span class="pre">django</span></tt> directory (not a Subversion checkout, but the one
+that is linked-to via <tt class="docutils literal"><span class="pre">$PYTHONPATH</span></tt> or is located somewhere on that
+path). This is only relevant when you are creating a translation for
+Django itself.</li>
+</ul>
+<p>This script runs over your project source tree or your application source tree and
+pulls out all strings marked for translation. It creates (or updates) a message
+file in the directory <tt class="docutils literal"><span class="pre">locale/LANG/LC_MESSAGES</span></tt>. In the <tt class="docutils literal"><span class="pre">de</span></tt> example, the
+file will be <tt class="docutils literal"><span class="pre">locale/de/LC_MESSAGES/django.po</span></tt>.</p>
+<p>By default <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt> examines every file that has the
+<tt class="docutils literal"><span class="pre">.html</span></tt> file extension. In case you want to override that default, use the
+<tt class="docutils literal"><span class="pre">--extension</span></tt> or <tt class="docutils literal"><span class="pre">-e</span></tt> option to specify the file extensions to examine:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages -l de -e txt</pre>
+</div>
+<p>Separate multiple extensions with commas and/or use <tt class="docutils literal"><span class="pre">-e</span></tt> or <tt class="docutils literal"><span class="pre">--extension</span></tt>
+multiple times:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages -l de -e html,txt -e xml</pre>
+</div>
+<p>When creating JavaScript translation catalogs (which we&#8217;ll cover later in this
+chapter,) you need to use the special &#8216;djangojs&#8217; domain, <strong>not</strong> <tt class="docutils literal"><span class="pre">-e</span> <span class="pre">js</span></tt>.</p>
+<div class="admonition-no-gettext admonition">
+<p class="first admonition-title">No gettext?</p>
+<p class="last">If you don&#8217;t have the <tt class="docutils literal"><span class="pre">gettext</span></tt> utilities installed, <tt class="docutils literal"><span class="pre">django-admin.py</span>
+<span class="pre">makemessages</span></tt> will create empty files. If that&#8217;s the case, either install
+the <tt class="docutils literal"><span class="pre">gettext</span></tt> utilities or just copy the English message file
+(<tt class="docutils literal"><span class="pre">locale/en/LC_MESSAGES/django.po</span></tt>) if available and use it as a starting
+point; it&#8217;s just an empty translation file.</p>
+</div>
+<div class="admonition-working-on-windows admonition">
+<p class="first admonition-title">Working on Windows?</p>
+<p class="last">If you&#8217;re using Windows and need to install the GNU gettext utilities so
+<tt class="docutils literal"><span class="pre">django-admin</span> <span class="pre">makemessages</span></tt> works, see the &#8220;gettext on Windows&#8221; section
+below for more information.</p>
+</div>
+<p>The format of <tt class="docutils literal"><span class="pre">.po</span></tt> files is straightforward. Each <tt class="docutils literal"><span class="pre">.po</span></tt> file contains a
+small bit of metadata, such as the translation maintainer&#8217;s contact
+information, but the bulk of the file is a list of <em>messages</em> &#8211; simple
+mappings between translation strings and the actual translated text for the
+particular language.</p>
+<p>For example, if your Django app contained a translation string for the text
+<tt class="docutils literal"><span class="pre">&quot;Welcome</span> <span class="pre">to</span> <span class="pre">my</span> <span class="pre">site.&quot;</span></tt>, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">_</span><span class="p">(</span><span class="s">&quot;Welcome to my site.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>...then <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt> will have created a <tt class="docutils literal"><span class="pre">.po</span></tt> file
+containing the following snippet &#8211; a message:</p>
+<div class="highlight-python"><pre>#: path/to/python/module.py:23
+msgid "Welcome to my site."
+msgstr ""</pre>
+</div>
+<p>A quick explanation:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">msgid</span></tt> is the translation string, which appears in the source. Don&#8217;t
+change it.</li>
+<li><tt class="docutils literal"><span class="pre">msgstr</span></tt> is where you put the language-specific translation. It starts
+out empty, so it&#8217;s your responsibility to change it. Make sure you keep
+the quotes around your translation.</li>
+<li>As a convenience, each message includes, in the form of a comment line
+prefixed with <tt class="docutils literal"><span class="pre">#</span></tt> and located above the <tt class="docutils literal"><span class="pre">msgid</span></tt> line, the filename and
+line number from which the translation string was gleaned.</li>
+</ul>
+<p>Long messages are a special case. There, the first string directly after the
+<tt class="docutils literal"><span class="pre">msgstr</span></tt> (or <tt class="docutils literal"><span class="pre">msgid</span></tt>) is an empty string. Then the content itself will be
+written over the next few lines as one string per line. Those strings are
+directly concatenated. Don&#8217;t forget trailing spaces within the strings;
+otherwise, they&#8217;ll be tacked together without whitespace!</p>
+<p>To reexamine all source code and templates for new translation strings and
+update all message files for <em>all</em> languages, run this:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages -a</pre>
+</div>
+</div>
+<div class="section" id="compiling-message-files">
+<h3>Compiling Message Files</h3>
+<p>After you create your message file &#8211; and each time you make changes to it &#8211;
+you&#8217;ll need to compile it into a more efficient form, for use by <tt class="docutils literal"><span class="pre">gettext</span></tt>.
+Do this with the <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">compilemessages</span></tt> utility.</p>
+<p>This tool runs over all available <tt class="docutils literal"><span class="pre">.po</span></tt> files and creates <tt class="docutils literal"><span class="pre">.mo</span></tt> files, which
+are binary files optimized for use by <tt class="docutils literal"><span class="pre">gettext</span></tt>. In the same directory from
+which you ran <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt>, run <tt class="docutils literal"><span class="pre">django-admin.py</span>
+<span class="pre">compilemessages</span></tt> like this:</p>
+<div class="highlight-python"><pre>django-admin.py compilemessages</pre>
+</div>
+<p>That&#8217;s it. Your translations are ready for use.</p>
+</div>
+</div>
+<div class="section" id="how-django-discovers-language-preference">
+<h2>3. How Django Discovers Language Preference</h2>
+<p>Once you&#8217;ve prepared your translations &#8211; or, if you just want to use the
+translations that come with Django &#8211; you&#8217;ll just need to activate translation
+for your app.</p>
+<p>Behind the scenes, Django has a very flexible model of deciding which language
+should be used &#8211; installation-wide, for a particular user, or both.</p>
+<p>To set an installation-wide language preference, set <tt class="docutils literal"><span class="pre">LANGUAGE_CODE</span></tt>.
+Django uses this language as the default translation &#8211; the final attempt if no
+other translator finds a translation.</p>
+<p>If all you want to do is run Django with your native language, and a language
+file is available for your language, all you need to do is set
+<tt class="docutils literal"><span class="pre">LANGUAGE_CODE</span></tt>.</p>
+<p>If you want to let each individual user specify which language he or she
+prefers, use <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt>. <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt> enables language
+selection based on data from the request. It customizes content for each user.</p>
+<p>To use <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt>, add <tt class="docutils literal"><span class="pre">'django.middleware.locale.LocaleMiddleware'</span></tt>
+to your <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> setting. Because middleware order matters, you
+should follow these guidelines:</p>
+<ul class="simple">
+<li>Make sure it&#8217;s one of the first middlewares installed.</li>
+<li>It should come after <tt class="docutils literal"><span class="pre">SessionMiddleware</span></tt>, because <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt>
+makes use of session data.</li>
+<li>If you use <tt class="docutils literal"><span class="pre">CacheMiddleware</span></tt>, put <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt> after it.</li>
+</ul>
+<p>For example, your <tt class="docutils literal"><span class="pre">MIDDLEWARE_CLASSES</span></tt> might look like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">MIDDLEWARE_CLASSES</span> <span class="o">=</span> <span class="p">(</span>
+   <span class="s">&#39;django.contrib.sessions.middleware.SessionMiddleware&#39;</span><span class="p">,</span>
+   <span class="s">&#39;django.middleware.locale.LocaleMiddleware&#39;</span><span class="p">,</span>
+   <span class="s">&#39;django.middleware.common.CommonMiddleware&#39;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>(For more on middleware, see Chapter 17.)</p>
+<p><tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt> tries to determine the user&#8217;s language preference by
+following this algorithm:</p>
+<ul class="simple">
+<li>First, it looks for a <tt class="docutils literal"><span class="pre">django_language</span></tt> key in the current user&#8217;s
+session.</li>
+<li>Failing that, it looks for a cookie.</li>
+<li>Failing that, it looks at the <tt class="docutils literal"><span class="pre">Accept-Language</span></tt> HTTP header. This
+header is sent by your browser and tells the server which language(s) you
+prefer, in order by priority. Django tries each language in the header
+until it finds one with available translations.</li>
+<li>Failing that, it uses the global <tt class="docutils literal"><span class="pre">LANGUAGE_CODE</span></tt> setting.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li><p class="first">In each of these places, the language preference is expected to be in the
+standard language format, as a string. For example, Brazilian Portuguese
+is <tt class="docutils literal"><span class="pre">pt-br</span></tt>.</p>
+</li>
+<li><p class="first">If a base language is available but the sublanguage specified is not,
+Django uses the base language. For example, if a user specifies <tt class="docutils literal"><span class="pre">de-at</span></tt>
+(Austrian German) but Django only has <tt class="docutils literal"><span class="pre">de</span></tt> available, Django uses
+<tt class="docutils literal"><span class="pre">de</span></tt>.</p>
+</li>
+<li><p class="first">Only languages listed in the <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> setting can be selected.
+If you want to restrict the language selection to a subset of provided
+languages (because your application doesn&#8217;t provide all those languages),
+set <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> to a list of languages. For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">LANGUAGES</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="p">(</span><span class="s">&#39;de&#39;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;German&#39;</span><span class="p">)),</span>
+  <span class="p">(</span><span class="s">&#39;en&#39;</span><span class="p">,</span> <span class="n">_</span><span class="p">(</span><span class="s">&#39;English&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This example restricts languages that are available for automatic
+selection to German and English (and any sublanguage, like <tt class="docutils literal"><span class="pre">de-ch</span></tt> or
+<tt class="docutils literal"><span class="pre">en-us</span></tt>).</p>
+</li>
+<li><p class="first">If you define a custom <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> setting, as explained in the
+previous bullet, it&#8217;s OK to mark the languages as translation strings
+&#8211; but use a &#8220;dummy&#8221; <tt class="docutils literal"><span class="pre">ugettext()</span></tt> function, not the one in
+<tt class="docutils literal"><span class="pre">django.utils.translation</span></tt>. You should <em>never</em> import
+<tt class="docutils literal"><span class="pre">django.utils.translation</span></tt> from within your settings file, because that
+module in itself depends on the settings, and that would cause a circular
+import.</p>
+<p>The solution is to use a &#8220;dummy&#8221; <tt class="docutils literal"><span class="pre">ugettext()</span></tt> function. Here&#8217;s a sample
+settings file:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ugettext</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span>
+
+<span class="n">LANGUAGES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">(</span><span class="s">&#39;de&#39;</span><span class="p">,</span> <span class="n">ugettext</span><span class="p">(</span><span class="s">&#39;German&#39;</span><span class="p">)),</span>
+    <span class="p">(</span><span class="s">&#39;en&#39;</span><span class="p">,</span> <span class="n">ugettext</span><span class="p">(</span><span class="s">&#39;English&#39;</span><span class="p">)),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With this arrangement, <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt> will still find
+and mark these strings for translation, but the translation won&#8217;t happen
+at runtime &#8211; so you&#8217;ll have to remember to wrap the languages in the
+<em>real</em> <tt class="docutils literal"><span class="pre">ugettext()</span></tt> in any code that uses <tt class="docutils literal"><span class="pre">LANGUAGES</span></tt> at runtime.</p>
+</li>
+<li><p class="first">The <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt> can only select languages for which there is a
+Django-provided base translation. If you want to provide translations
+for your application that aren&#8217;t already in the set of translations
+in Django&#8217;s source tree, you&#8217;ll want to provide at least basic
+translations for that language. For example, Django uses technical
+message IDs to translate date formats and time formats &#8211; so you will
+need at least those translations for the system to work correctly.</p>
+<p>A good starting point is to copy the English <tt class="docutils literal"><span class="pre">.po</span></tt> file and to
+translate at least the technical messages &#8211; maybe the validation
+messages, too.</p>
+<p>Technical message IDs are easily recognized; they&#8217;re all upper case. You
+don&#8217;t translate the message ID as with other messages, you provide the
+correct local variant on the provided English value. For example, with
+<tt class="docutils literal"><span class="pre">DATETIME_FORMAT</span></tt> (or <tt class="docutils literal"><span class="pre">DATE_FORMAT</span></tt> or <tt class="docutils literal"><span class="pre">TIME_FORMAT</span></tt>), this would
+be the format string that you want to use in your language. The format
+is identical to the format strings used by the <tt class="docutils literal"><span class="pre">now</span></tt> template tag.</p>
+</li>
+</ul>
+<p>Once <tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt> determines the user&#8217;s preference, it makes this
+preference available as <tt class="docutils literal"><span class="pre">request.LANGUAGE_CODE</span></tt> for each
+<tt class="docutils literal"><span class="pre">HttpRequest</span></tt>. Feel free to read this value in your view
+code. Here&#8217;s a simple example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">hello_world</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">request</span><span class="o">.</span><span class="n">LANGUAGE_CODE</span> <span class="o">==</span> <span class="s">&#39;de-at&#39;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;You prefer to read Austrian German.&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="s">&quot;You prefer to read another language.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that, with static (middleware-less) translation, the language is in
+<tt class="docutils literal"><span class="pre">settings.LANGUAGE_CODE</span></tt>, while with dynamic (middleware) translation, it&#8217;s
+in <tt class="docutils literal"><span class="pre">request.LANGUAGE_CODE</span></tt>.</p>
+</div>
+<div class="section" id="using-translations-in-your-own-projects">
+<h2>Using Translations in Your Own Projects</h2>
+<p>Django looks for translations by following this algorithm:</p>
+<ul class="simple">
+<li>First, it looks for a <tt class="docutils literal"><span class="pre">locale</span></tt> directory in the application directory
+of the view that&#8217;s being called. If it finds a translation for the
+selected language, the translation will be installed.</li>
+<li>Next, it looks for a <tt class="docutils literal"><span class="pre">locale</span></tt> directory in the project directory. If it
+finds a translation, the translation will be installed.</li>
+<li>Finally, it checks the Django-provided base translation in
+<tt class="docutils literal"><span class="pre">django/conf/locale</span></tt>.</li>
+</ul>
+<p>This way, you can write applications that include their own translations, and
+you can override base translations in your project path. Or, you can just build
+a big project out of several apps and put all translations into one big project
+message file. The choice is yours.</p>
+<p>All message file repositories are structured the same way. They are:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">$APPPATH/locale/&lt;language&gt;/LC_MESSAGES/django.(po|mo)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">$PROJECTPATH/locale/&lt;language&gt;/LC_MESSAGES/django.(po|mo)</span></tt></li>
+<li>All paths listed in <tt class="docutils literal"><span class="pre">LOCALE_PATHS</span></tt> in your settings file are
+searched in that order for <tt class="docutils literal"><span class="pre">&lt;language&gt;/LC_MESSAGES/django.(po|mo)</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">$PYTHONPATH/django/conf/locale/&lt;language&gt;/LC_MESSAGES/django.(po|mo)</span></tt></li>
+</ul>
+<p>To create message files, you use the same <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt>
+tool as with the Django message files. You only need to be in the right place
+&#8211; in the directory where either the <tt class="docutils literal"><span class="pre">conf/locale</span></tt> (in case of the source
+tree) or the <tt class="docutils literal"><span class="pre">locale/</span></tt> (in case of app messages or project messages)
+directory are located. And you use the same <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">compilemessages</span></tt>
+to produce the binary <tt class="docutils literal"><span class="pre">django.mo</span></tt> files that are used by <tt class="docutils literal"><span class="pre">gettext</span></tt>.</p>
+<p>You can also run <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">compilemessages</span> <span class="pre">--settings=path.to.settings</span></tt>
+to make the compiler process all the directories in your <tt class="docutils literal"><span class="pre">LOCALE_PATHS</span></tt>
+setting.</p>
+<p>Application message files are a bit complicated to discover &#8211; they need the
+<tt class="docutils literal"><span class="pre">LocaleMiddleware</span></tt>. If you don&#8217;t use the middleware, only the Django message
+files and project message files will be processed.</p>
+<p>Finally, you should give some thought to the structure of your translation
+files. If your applications need to be delivered to other users and will
+be used in other projects, you might want to use app-specific translations.
+But using app-specific translations and project translations could produce
+weird problems with <tt class="docutils literal"><span class="pre">makemessages</span></tt>: <tt class="docutils literal"><span class="pre">makemessages</span></tt> will traverse all
+directories below the current path and so might put message IDs into the
+project message file that are already in application message files.</p>
+<p>The easiest way out is to store applications that are not part of the project
+(and so carry their own translations) outside the project tree. That way,
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">makemessages</span></tt> on the project level will only translate
+strings that are connected to your explicit project and not strings that are
+distributed independently.</p>
+</div>
+<div class="section" id="the-set-language-redirect-view">
+<h2>The <tt class="docutils literal"><span class="pre">set_language</span></tt> Redirect View</h2>
+<p>As a convenience, Django comes with a view, <tt class="docutils literal"><span class="pre">django.views.i18n.set_language</span></tt>,
+that sets a user&#8217;s language preference and redirects back to the previous page.</p>
+<p>Activate this view by adding the following line to your URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^i18n/&#39;</span><span class="p">,</span> <span class="n">include</span><span class="p">(</span><span class="s">&#39;django.conf.urls.i18n&#39;</span><span class="p">)),</span>
+</pre></div>
+</div>
+<p>(Note that this example makes the view available at <tt class="docutils literal"><span class="pre">/i18n/setlang/</span></tt>.)</p>
+<p>The view expects to be called via the <tt class="docutils literal"><span class="pre">POST</span></tt> method, with a <tt class="docutils literal"><span class="pre">language</span></tt>
+parameter set in request. If session support is enabled, the view
+saves the language choice in the user&#8217;s session. Otherwise, it saves the
+language choice in a cookie that is by default named <tt class="docutils literal"><span class="pre">django_language</span></tt>.
+(The name can be changed through the <tt class="docutils literal"><span class="pre">LANGUAGE_COOKIE_NAME</span></tt> setting.)</p>
+<p>After setting the language choice, Django redirects the user, following this
+algorithm:</p>
+<ul class="simple">
+<li>Django looks for a <tt class="docutils literal"><span class="pre">next</span></tt> parameter in the <tt class="docutils literal"><span class="pre">POST</span></tt> data.</li>
+<li>If that doesn&#8217;t exist, or is empty, Django tries the URL in the
+<tt class="docutils literal"><span class="pre">Referrer</span></tt> header.</li>
+<li>If that&#8217;s empty &#8211; say, if a user&#8217;s browser suppresses that header &#8211;
+then the user will be redirected to <tt class="docutils literal"><span class="pre">/</span></tt> (the site root) as a fallback.</li>
+</ul>
+<p>Here&#8217;s example HTML template code:</p>
+<div class="highlight-python"><pre>&lt;form action="/i18n/setlang/" method="post"&gt;
+&lt;input name="next" type="hidden" value="/next/page/" /&gt;
+&lt;select name="language"&gt;
+    {% for lang in LANGUAGES %}
+    &lt;option value="{{ lang.0 }}"&gt;{{ lang.1 }}&lt;/option&gt;
+    {% endfor %}
+&lt;/select&gt;
+&lt;input type="submit" value="Go" /&gt;
+&lt;/form&gt;</pre>
+</div>
+</div>
+<div class="section" id="translations-and-javascript">
+<h2>Translations and JavaScript</h2>
+<p>Adding translations to JavaScript poses some problems:</p>
+<ul class="simple">
+<li>JavaScript code doesn&#8217;t have access to a <tt class="docutils literal"><span class="pre">gettext</span></tt> implementation.</li>
+<li>JavaScript code doesn&#8217;t have access to .po or .mo files; they need to be
+delivered by the server.</li>
+<li>The translation catalogs for JavaScript should be kept as small as
+possible.</li>
+</ul>
+<p>Django provides an integrated solution for these problems: It passes the
+translations into JavaScript, so you can call <tt class="docutils literal"><span class="pre">gettext</span></tt>, etc., from within
+JavaScript.</p>
+<div class="section" id="the-javascript-catalog-view">
+<h3>The <tt class="docutils literal"><span class="pre">javascript_catalog</span></tt> View</h3>
+<p>The main solution to these problems is the <tt class="docutils literal"><span class="pre">javascript_catalog</span></tt> view, which
+sends out a JavaScript code library with functions that mimic the <tt class="docutils literal"><span class="pre">gettext</span></tt>
+interface, plus an array of translation strings. Those translation strings are
+taken from the application, project or Django core, according to what you
+specify in either the info_dict or the URL.</p>
+<p>You hook it up like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">js_info_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;packages&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s">&#39;your.app.package&#39;</span><span class="p">,),</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^jsi18n/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.i18n.javascript_catalog&#39;</span><span class="p">,</span> <span class="n">js_info_dict</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Each string in <tt class="docutils literal"><span class="pre">packages</span></tt> should be in Python dotted-package syntax (the
+same format as the strings in <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>) and should refer to a package
+that contains a <tt class="docutils literal"><span class="pre">locale</span></tt> directory. If you specify multiple packages, all
+those catalogs are merged into one catalog. This is useful if you have
+JavaScript that uses strings from different applications.</p>
+<p>You can make the view dynamic by putting the packages into the URL pattern:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="p">(</span><span class="s">r&#39;^jsi18n/(?P&lt;packages&gt;\S+)/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.views.i18n.javascript_catalog&#39;</span><span class="p">),</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>With this, you specify the packages as a list of package names delimited by &#8216;+&#8217;
+signs in the URL. This is especially useful if your pages use code from
+different apps and this changes often and you don&#8217;t want to pull in one big
+catalog file. As a security measure, these values can only be either
+<tt class="docutils literal"><span class="pre">django.conf</span></tt> or any package from the <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> setting.</p>
+</div>
+<div class="section" id="using-the-javascript-translation-catalog">
+<h3>Using the JavaScript Translation Catalog</h3>
+<p>To use the catalog, just pull in the dynamically generated script like this:</p>
+<div class="highlight-python"><pre>&lt;script type="text/javascript" src="/path/to/jsi18n/"&gt;&lt;/script&gt;</pre>
+</div>
+<p>This is how the admin fetches the translation catalog from the server. When the
+catalog is loaded, your JavaScript code can use the standard <tt class="docutils literal"><span class="pre">gettext</span></tt>
+interface to access it:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">document</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">gettext</span><span class="p">(</span><span class="s">&#39;this is to be translated&#39;</span><span class="p">));</span>
+</pre></div>
+</div>
+<p>There is also an <tt class="docutils literal"><span class="pre">ngettext</span></tt> interface:</p>
+<div class="highlight-python"><pre>var object_cnt = 1 // or 0, or 2, or 3, ...
+s = ngettext('literal for the singular case',
+        'literal for the plural case', object_cnt);</pre>
+</div>
+<p>and even a string interpolation function:</p>
+<div class="highlight-python"><pre>function interpolate(fmt, obj, named);</pre>
+</div>
+<p>The interpolation syntax is borrowed from Python, so the <tt class="docutils literal"><span class="pre">interpolate</span></tt>
+function supports both positional and named interpolation:</p>
+<ul>
+<li><p class="first">Positional interpolation: <tt class="docutils literal"><span class="pre">obj</span></tt> contains a JavaScript Array object
+whose elements values are then sequentially interpolated in their
+corresponding <tt class="docutils literal"><span class="pre">fmt</span></tt> placeholders in the same order they appear.
+For example:</p>
+<div class="highlight-python"><pre>fmts = ngettext('There is %s object. Remaining: %s',
+        'There are %s objects. Remaining: %s', 11);
+s = interpolate(fmts, [11, 20]);
+// s is 'There are 11 objects. Remaining: 20'</pre>
+</div>
+</li>
+<li><p class="first">Named interpolation: This mode is selected by passing the optional
+boolean <tt class="docutils literal"><span class="pre">named</span></tt> parameter as true. <tt class="docutils literal"><span class="pre">obj</span></tt> contains a JavaScript
+object or associative array. For example:</p>
+<div class="highlight-python"><pre>d = {
+    count: 10
+    total: 50
+};
+
+fmts = ngettext('Total: %(total)s, there is %(count)s object',
+'there are %(count)s of a total of %(total)s objects', d.count);
+s = interpolate(fmts, d, true);</pre>
+</div>
+</li>
+</ul>
+<p>You shouldn&#8217;t go over the top with string interpolation, though: this is still
+JavaScript, so the code has to make repeated regular-expression substitutions.
+This isn&#8217;t as fast as string interpolation in Python, so keep it to those
+cases where you really need it (for example, in conjunction with <tt class="docutils literal"><span class="pre">ngettext</span></tt>
+to produce proper pluralizations).</p>
+</div>
+<div class="section" id="creating-javascript-translation-catalogs">
+<h3>Creating JavaScript Translation Catalogs</h3>
+<p>You create and update the translation catalogs the same way as the other</p>
+<p>Django translation catalogs &#8211; with the django-admin.py makemessages tool. The
+only difference is you need to provide a <tt class="docutils literal"><span class="pre">-d</span> <span class="pre">djangojs</span></tt> parameter, like this:</p>
+<div class="highlight-python"><pre>django-admin.py makemessages -d djangojs -l de</pre>
+</div>
+<p>This would create or update the translation catalog for JavaScript for German.
+After updating translation catalogs, just run <tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">compilemessages</span></tt>
+the same way as you do with normal Django translation catalogs.</p>
+</div>
+</div>
+<div class="section" id="notes-for-users-familiar-with-gettext">
+<h2>Notes for Users Familiar with <tt class="docutils literal"><span class="pre">gettext</span></tt></h2>
+<p>If you know <tt class="docutils literal"><span class="pre">gettext</span></tt>, you might note these specialties in the way Django
+does translation:</p>
+<ul class="simple">
+<li>The string domain is <tt class="docutils literal"><span class="pre">django</span></tt> or <tt class="docutils literal"><span class="pre">djangojs</span></tt>. This string domain is
+used to differentiate between different programs that store their data
+in a common message-file library (usually <tt class="docutils literal"><span class="pre">/usr/share/locale/</span></tt>). The
+<tt class="docutils literal"><span class="pre">django</span></tt> domain is used for python and template translation strings
+and is loaded into the global translation catalogs. The <tt class="docutils literal"><span class="pre">djangojs</span></tt>
+domain is only used for JavaScript translation catalogs to make sure
+that those are as small as possible.</li>
+<li>Django doesn&#8217;t use <tt class="docutils literal"><span class="pre">xgettext</span></tt> alone. It uses Python wrappers around
+<tt class="docutils literal"><span class="pre">xgettext</span></tt> and <tt class="docutils literal"><span class="pre">msgfmt</span></tt>. This is mostly for convenience.</li>
+</ul>
+</div>
+<div class="section" id="gettext-on-windows">
+<h2><tt class="docutils literal"><span class="pre">gettext</span></tt> on Windows</h2>
+<p>This is only needed for people who either want to extract message IDs or compile
+message files (<tt class="docutils literal"><span class="pre">.po</span></tt>). Translation work itself just involves editing existing
+files of this type, but if you want to create your own message files, or want to
+test or compile a changed message file, you will need the <tt class="docutils literal"><span class="pre">gettext</span></tt> utilities:</p>
+<ul class="simple">
+<li>Download the following zip files from
+<a class="reference external" href="http://sourceforge.net/projects/gettext">http://sourceforge.net/projects/gettext</a><ul>
+<li><tt class="docutils literal"><span class="pre">gettext-runtime-X.bin.woe32.zip</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">gettext-tools-X.bin.woe32.zip</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">libiconv-X.bin.woe32.zip</span></tt></li>
+</ul>
+</li>
+<li>Extract the 3 files in the same folder (i.e. <tt class="docutils literal"><span class="pre">C:\Program</span>
+<span class="pre">Files\gettext-utils</span></tt>)</li>
+<li>Update the system PATH:<ul>
+<li><tt class="docutils literal"><span class="pre">Control</span> <span class="pre">Panel</span> <span class="pre">&gt;</span> <span class="pre">System</span> <span class="pre">&gt;</span> <span class="pre">Advanced</span> <span class="pre">&gt;</span> <span class="pre">Environment</span> <span class="pre">Variables</span></tt></li>
+<li>In the <tt class="docutils literal"><span class="pre">System</span> <span class="pre">variables</span></tt> list, click <tt class="docutils literal"><span class="pre">Path</span></tt>, click <tt class="docutils literal"><span class="pre">Edit</span></tt></li>
+<li>Add <tt class="docutils literal"><span class="pre">;C:\Program</span> <span class="pre">Files\gettext-utils\bin</span></tt> at the end of the
+<tt class="docutils literal"><span class="pre">Variable</span> <span class="pre">value</span></tt> field</li>
+</ul>
+</li>
+</ul>
+<p>You may also use <tt class="docutils literal"><span class="pre">gettext</span></tt> binaries you have obtained elsewhere, so long as
+the <tt class="docutils literal"><span class="pre">xgettext</span> <span class="pre">--version</span></tt> command works properly. Some version 0.14.4 binaries
+have been found to not support this command. Do not attempt to use Django
+translation utilities with a <tt class="docutils literal"><span class="pre">gettext</span></tt> package if the command <tt class="docutils literal"><span class="pre">xgettext</span>
+<span class="pre">--version</span></tt> entered at a Windows command prompt causes a popup window saying
+&#8220;xgettext.exe has generated errors and will be closed by Windows&#8221;.</p>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>The <a class="reference external" href="chapter20.html">final chapter</a> focuses on security &#8211; how you can help secure your sites and
+your users from malicious attackers.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter18.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter20.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

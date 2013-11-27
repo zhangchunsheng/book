@@ -1,0 +1,495 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 2: Getting Started</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter01.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter03.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-2-getting-started">
+<h1>Chapter 2: Getting Started</h1>
+<p>Installing Django is a multi-step process, due to the multiple moving parts in
+modern Web development environments. In this chapter, we&#8217;ll walk you through
+how to install the framework and its few dependencies.</p>
+<p>Because Django is &#8220;just&#8221; Python code, it runs anywhere Python does &#8211; including
+on some cell phones! But this chapter just covers the common scenarios for
+Django installations. We&#8217;ll assume you&#8217;re installing it either on a
+desktop/laptop machine or a server.</p>
+<p>Later, in Chapter 12, we&#8217;ll cover how to deploy Django to a production site.</p>
+<div class="section" id="installing-python">
+<h2>Installing Python</h2>
+<p>Django itself is written purely in Python, so the first step in installing the
+framework is to make sure you have Python installed.</p>
+<div class="section" id="python-versions">
+<h3>Python Versions</h3>
+<p>The core Django framework (version 1.4+) works with any Python version from 2.5
+to 2.7, inclusive. Django&#8217;s optional GIS (Geographic Information Systems)
+support requires Python 2.5 to 2.7.</p>
+<p>If you&#8217;re not sure which version of Python to install and you have complete
+freedom over the decision, pick the latest one in the 2.x series: version 2.7.
+Although Django works equally well with any version from 2.5 to 2.7, the later
+versions of Python have performance improvements and additional language
+features you might like to use in your applications. Plus, certain third-party
+Django add-ons that you might want to use might require a version newer than
+Python 2.5, so using a later version of Python keeps your options open.</p>
+<div class="admonition-django-and-python-3-x admonition">
+<p class="first admonition-title">Django and Python 3.x</p>
+<p>At the time of writing, Python 3.3 has been released, but Django
+only supports it experimentally. This is because the Python 3.x series
+introduces a substantial number of backwards-incompatible changes to the
+language itself, and, as a result, many major Python libraries and
+frameworks, including Django (as of version 1.4), have not yet caught up.</p>
+<p class="last">Django 1.5 is slated to support Python 2.6, 2.7, and 3.2.  However,
+support for Python 3.2 is considered a &#8220;preview&#8221;, which means the
+Django developers are not yet confident enough to promise
+stability in production.  For that, they suggest you wait until
+Django 1.6.</p>
+</div>
+</div>
+<div class="section" id="installation">
+<h3>Installation</h3>
+<p>If you&#8217;re on Linux or Mac OS X, you probably have Python already installed.
+Type <tt class="docutils literal"><span class="pre">python</span></tt> at a command prompt (or in Applications/Utilities/Terminal, in
+OS X). If you see something like this, then Python is installed:</p>
+<div class="highlight-python"><pre>Python 2.7.3rc2 (default, Apr 22 2012, 22:30:17)
+[GCC 4.6.3] on linux2
+Type "help", "copyright", "credits" or "license" for more information.
+&gt;&gt;&gt;</pre>
+</div>
+<p>Otherwise, you&#8217;ll need to download and install Python. It&#8217;s fast and easy, and
+detailed instructions are available at <a class="reference external" href="http://www.python.org/download/">http://www.python.org/download/</a></p>
+</div>
+</div>
+<div class="section" id="installing-django">
+<h2>Installing Django</h2>
+<p>At any given time, two distinct versions of Django are available to you: the
+latest official release and the bleeding-edge development version. The version you
+decide to install depends on your priorities. Do you want a stable and tested
+version of Django, or do you want a version containing the latest features,
+perhaps so you can contribute to Django itself, at the expense of stability?</p>
+<p>We&#8217;d recommend sticking with an official release, but it&#8217;s important to know
+that the development version exists, because you&#8217;ll find it mentioned
+in the documentation and by members of the community.</p>
+<div class="section" id="installing-an-official-release">
+<h3>Installing an Official Release</h3>
+<p>Official releases have a version number, such as 1.4.2, 1.4.1 or 1.4, and the latest
+one is always available at <a class="reference external" href="http://www.djangoproject.com/download/">http://www.djangoproject.com/download/</a>.</p>
+<p>If you&#8217;re on a Linux distribution that includes a package of Django, it&#8217;s a
+good idea to use the distributor&#8217;s version. That way, you&#8217;ll get security
+updates along with the rest of your system packages.</p>
+<p>If you don&#8217;t have access to a prepackaged version, you can download and install
+the framework manually. To do so, first download the tarball, which will be
+named something like <tt class="docutils literal"><span class="pre">Django-1.4.2.tar.gz</span></tt>. (It doesn&#8217;t matter which
+local directory you download this file into; the installation process will put
+Django&#8217;s files in the right place.) Then, unzip it and run <tt class="docutils literal"><span class="pre">setup.py</span> <span class="pre">install</span></tt>,
+as you do with most Python libraries.</p>
+<p>Here&#8217;s how that process looks on Unix systems:</p>
+<ol class="arabic simple">
+<li><tt class="docutils literal"><span class="pre">tar</span> <span class="pre">xzvf</span> <span class="pre">Django-1.4.2.tar.gz</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">cd</span> <span class="pre">Django-*</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt></li>
+</ol>
+<p>On Windows, we recommend using 7-Zip (<a class="reference external" href="http://www.djangoproject.com/r/7zip/">http://www.djangoproject.com/r/7zip/</a>)
+to unzip <tt class="docutils literal"><span class="pre">.tar.gz</span></tt> files. Once you&#8217;ve unzipped the file, start up a DOS
+shell (the &#8220;Command Prompt&#8221;) with administrator privileges and run the
+following command from within the directory whose name starts with <tt class="docutils literal"><span class="pre">Django-</span></tt>:</p>
+<div class="highlight-python"><pre>python setup.py install</pre>
+</div>
+<p>In case you&#8217;re curious: Django&#8217;s files will be installed into your Python
+installation&#8217;s <tt class="docutils literal"><span class="pre">site-packages</span></tt> directory &#8211; a directory where Python looks
+for third-party libraries. Usually it&#8217;s in a place like
+<tt class="docutils literal"><span class="pre">/usr/lib/python2.7/site-packages</span></tt>.</p>
+</div>
+<div class="section" id="installing-the-development-version">
+<h3>Installing the &#8220;Development&#8221; Version</h3>
+<p>Django uses Git (<a class="reference external" href="http://git-scm.com">http://git-scm.com</a>) for its source control. The latest and
+greatest Django development version available from Django&#8217;s official Git
+repository (<a class="reference external" href="https://github.com/django/django">https://github.com/django/django</a>). You should consider installing
+this version if you want to work on the bleeding edge, or if you want to
+contribute code to Django itself.</p>
+<p>Git is a free, open source distributed revision-control system, and the Django
+team uses it to manage changes to the Django codebase. You can download and
+install Git from <a class="reference external" href="http://git-scm.com/download">http://git-scm.com/download</a> but it is easier to install with
+your operating system&#8217;s package manager. You can use Git to grab the very latest
+Django source code and, at any given time, you can update your local version of
+the Django code to get the latest changes and improvements made by Django
+developers.</p>
+<p>When using the development version, keep in mind there&#8217;s no guarantee things
+won&#8217;t be broken at any given moment. With that said, though, some members of the
+Django team run production sites on the development version, so they have an
+incentive to keep it stable.</p>
+<p>To grab the latest Django, follow these steps:</p>
+<ol class="arabic">
+<li><p class="first">Make sure you have Git installed. You can get the
+software free from <a class="reference external" href="http://git-scm.com/">http://git-scm.com/</a>, and you can find
+excellent documentation at <a class="reference external" href="http://git-scm.com/documentation">http://git-scm.com/documentation</a>.</p>
+</li>
+<li><p class="first">Clone the repository using the command <tt class="docutils literal"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/django/django</span> <span class="pre">djmaster</span></tt></p>
+</li>
+<li><p class="first">Locate your Python installation&#8217;s <tt class="docutils literal"><span class="pre">site-packages</span></tt> directory. Usually
+it&#8217;s in a place like <tt class="docutils literal"><span class="pre">/usr/lib/python2.7/site-packages</span></tt>. If you have
+no idea, type this command from a command prompt:</p>
+<div class="highlight-python"><pre>python -c 'import sys, pprint; pprint.pprint(sys.path)'</pre>
+</div>
+<p>The resulting output should include your <tt class="docutils literal"><span class="pre">site-packages</span></tt> directory.</p>
+</li>
+<li><p class="first">Within the <tt class="docutils literal"><span class="pre">site-packages</span></tt> directory, create a file called
+<tt class="docutils literal"><span class="pre">djmaster.pth</span></tt> and edit it to contain the full path to your <tt class="docutils literal"><span class="pre">djmaster</span></tt>
+directory to it. For example, the file could just contain this line:</p>
+<div class="highlight-python"><pre>/path/to/djmaster</pre>
+</div>
+</li>
+<li><p class="first">Place <tt class="docutils literal"><span class="pre">djmaster/django/bin</span></tt> on your system PATH. This directory
+includes management utilities such as <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>.</p>
+</li>
+</ol>
+<div class="admonition-tip admonition">
+<p class="first admonition-title">Tip:</p>
+<p class="last">If <tt class="docutils literal"><span class="pre">.pth</span></tt> files are new to you, you can learn more about them at
+<a class="reference external" href="http://www.djangoproject.com/r/python/site-module/">http://www.djangoproject.com/r/python/site-module/</a>.</p>
+</div>
+<p>After downloading from Git and following the preceding steps, there&#8217;s no
+need to run <tt class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></tt>&#8211; you&#8217;ve just done the work by hand!</p>
+<p>Because the Django code changes often with bug fixes and feature additions,
+you&#8217;ll probably want to update it every once in a while. To update the code,
+just run the command <tt class="docutils literal"><span class="pre">git</span> <span class="pre">pull</span> <span class="pre">origin</span> <span class="pre">master</span></tt> from within the <tt class="docutils literal"><span class="pre">djmaster</span></tt>
+directory. When you run that command, Git will contact
+<a class="reference external" href="https://github.com/django/django">https://github.com/django/django</a>, determine whether any of Django&#8217;s code has
+changed, and update your local version of the code with any changes that have
+been made since you last updated. It&#8217;s quite slick.</p>
+<p>Finally, if you use Django development version, you should know how to figure
+out which version of Django you&#8217;re running. Knowing your version number is
+important if you ever need to reach out to the community for help, or if you
+submit improvements to the framework. In these cases, you should tell people the
+revision, also known as a &#8220;commit,&#8221; that you&#8217;re using. To find out your current
+commit, type &#8220;git log -1&#8221; from within the <tt class="docutils literal"><span class="pre">django</span></tt> directory, and look for the
+identifier after &#8220;commit&#8221;. This number changes each time Django is changed,
+whether through a bug fix, feature addition, documentation improvement or
+anything else.</p>
+</div>
+</div>
+<div class="section" id="testing-the-django-installation">
+<h2>Testing the Django installation</h2>
+<p>For some post-installation positive feedback, take a moment to test whether the
+installation worked. In a command shell, change into another directory (e.g.,
+<em>not</em> the directory that contains the <tt class="docutils literal"><span class="pre">django</span></tt> directory) and start the
+Python interactive interpreter by typing <tt class="docutils literal"><span class="pre">python</span></tt>. If the installation was
+successful, you should be able to import the module <tt class="docutils literal"><span class="pre">django</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">django</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">django</span><span class="o">.</span><span class="n">VERSION</span>
+<span class="go">(1, 4, 2, &#39;final&#39;, 0)</span>
+</pre></div>
+</div>
+<div class="admonition-interactive-interpreter-examples admonition">
+<p class="first admonition-title">Interactive Interpreter Examples</p>
+<p>The Python interactive interpreter is a command-line program that lets you
+write a Python program interactively. To start it, run the command
+<tt class="docutils literal"><span class="pre">python</span></tt> at the command line.</p>
+<p>Throughout this book, we feature example Python interactive interpreter
+sessions. You can recognize these examples by the triple
+greater-than signs (<tt class="docutils literal"><span class="pre">&gt;&gt;&gt;</span></tt>), which designate the interpreter&#8217;s prompt. If
+you&#8217;re copying examples from this book, don&#8217;t copy those greater-than signs.</p>
+<p>Multiline statements in the interactive interpreter are padded with three
+dots (<tt class="docutils literal"><span class="pre">...</span></tt>). For example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="s">&quot;&quot;&quot;This is a</span>
+<span class="gp">... </span><span class="s">string that spans</span>
+<span class="gp">... </span><span class="s">three lines.&quot;&quot;&quot;</span>
+<span class="go">This is a</span>
+<span class="go">string that spans</span>
+<span class="go">three lines.</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">my_function</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">print</span> <span class="n">value</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">my_function</span><span class="p">(</span><span class="s">&#39;hello&#39;</span><span class="p">)</span>
+<span class="go">hello</span>
+</pre></div>
+</div>
+<p class="last">Those three dots at the start of the additional lines are inserted by the
+Python shell &#8211; they&#8217;re not part of our input. We include them here to be
+faithful to the actual output of the interpreter. If you copy our examples
+to follow along, don&#8217;t copy those dots.</p>
+</div>
+</div>
+<div class="section" id="setting-up-a-database">
+<h2>Setting Up a Database</h2>
+<p>At this point, you could very well begin writing a Web application with Django,
+because Django&#8217;s only hard-and-fast prerequisite is a working Python
+installation. However, odds are you&#8217;ll be developing a <em>database-driven</em> Web
+site, in which case you&#8217;ll need to configure a database server.</p>
+<p>If you just want to start playing with Django, skip ahead to the
+&#8220;Starting a Project&#8221; section &#8211; but keep in mind that all the examples in this
+book assume you have a working database set up.</p>
+<p>Django supports four database engines:</p>
+<ul class="simple">
+<li>PostgreSQL (<a class="reference external" href="http://www.postgresql.org/">http://www.postgresql.org/</a>)</li>
+<li>SQLite 3 (<a class="reference external" href="http://www.sqlite.org/">http://www.sqlite.org/</a>)</li>
+<li>MySQL (<a class="reference external" href="http://www.mysql.com/">http://www.mysql.com/</a>)</li>
+<li>Oracle (<a class="reference external" href="http://www.oracle.com/">http://www.oracle.com/</a>)</li>
+</ul>
+<p>For the most part, all the engines here work equally well with the core Django
+framework. (A notable exception is Django&#8217;s optional GIS support, which is much
+more powerful with PostgreSQL than with other databases.) If you&#8217;re not tied to
+any legacy system and have the freedom to choose a database backend, we
+recommend PostgreSQL, which achieves a fine balance between cost, features,
+speed and stability.</p>
+<p>Setting up the database is a two-step process:</p>
+<ul class="simple">
+<li>First, you&#8217;ll need to install and configure the database server itself.
+This process is beyond the scope of this book, but each of the four
+database backends has rich documentation on its Web site. (If you&#8217;re on
+a shared hosting provider, odds are that they&#8217;ve set this up for you
+already.)</li>
+<li>Second, you&#8217;ll need to install the Python library for your particular
+database backend. This is a third-party bit of code that allows Python to
+interface with the database. We outline the specific, per-database
+requirements in the following sections.</li>
+</ul>
+<p>If you&#8217;re just playing around with Django and don&#8217;t want to install a database
+server, consider using SQLite. SQLite is unique in the list of supported
+databases in that it doesn&#8217;t require either of the above steps. It merely reads
+and writes its data to a single file on your filesystem, and Python versions 2.5
+and higher include built-in support for it.</p>
+<p>On Windows, obtaining database driver binaries can be frustrating. If you&#8217;re
+eager to jump in, we recommend using Python 2.7 and its built-in support for
+SQLite.</p>
+<div class="section" id="using-django-with-postgresql">
+<h3>Using Django with PostgreSQL</h3>
+<p>If you&#8217;re using PostgreSQL, you&#8217;ll need to install either the <tt class="docutils literal"><span class="pre">psycopg</span></tt> or
+<tt class="docutils literal"><span class="pre">psycopg2</span></tt> package from <a class="reference external" href="http://www.djangoproject.com/r/python-pgsql/">http://www.djangoproject.com/r/python-pgsql/</a>. We
+recommend <tt class="docutils literal"><span class="pre">psycopg2</span></tt>, as it&#8217;s newer, more actively developed and can be
+easier to install. Either way, take note of whether you&#8217;re using version 1 or
+2; you&#8217;ll need this information later.</p>
+<p>If you&#8217;re using PostgreSQL on Windows, you can find precompiled binaries of
+<tt class="docutils literal"><span class="pre">psycopg</span></tt> at <a class="reference external" href="http://www.djangoproject.com/r/python-pgsql/windows/">http://www.djangoproject.com/r/python-pgsql/windows/</a>.</p>
+<p>If you&#8217;re on Linux, check whether your distribution&#8217;s package-management
+system offers a package called &#8220;python-psycopg2&#8221;, &#8220;psycopg2-python&#8221;,
+&#8220;python-postgresql&#8221; or something similar.</p>
+</div>
+<div class="section" id="using-django-with-sqlite-3">
+<h3>Using Django with SQLite 3</h3>
+<p>You&#8217;re in luck: no database-specific installation is required, because Python
+ships with SQLite support. Skip ahead to the next section.</p>
+</div>
+<div class="section" id="using-django-with-mysql">
+<h3>Using Django with MySQL</h3>
+<p>Django requires MySQL 4.0 or above. The 3.x versions don&#8217;t support nested
+subqueries and some other fairly standard SQL statements.</p>
+<p>You&#8217;ll also need to install the <tt class="docutils literal"><span class="pre">MySQLdb</span></tt> package from
+<a class="reference external" href="http://www.djangoproject.com/r/python-mysql/">http://www.djangoproject.com/r/python-mysql/</a>.</p>
+<p>If you&#8217;re on Linux, check whether your distribution&#8217;s package-management system
+offers a package called &#8220;python-mysql&#8221;, &#8220;python-mysqldb&#8221;, &#8220;mysql-python&#8221; or
+something similar.</p>
+</div>
+<div class="section" id="using-django-with-oracle">
+<h3>Using Django with Oracle</h3>
+<p>Django works with Oracle Database Server versions 9i and higher.</p>
+<p>If you&#8217;re using Oracle, you&#8217;ll need to install the <tt class="docutils literal"><span class="pre">cx_Oracle</span></tt> library,
+available at <a class="reference external" href="http://cx-oracle.sourceforge.net/">http://cx-oracle.sourceforge.net/</a>. Use version 4.3.1 or higher, but
+avoid version 5.0 due to a bug in that version of the driver.  Version 5.0.1
+resolved the bug, however, so you can choose a higher version as well.</p>
+</div>
+<div class="section" id="using-django-without-a-database">
+<h3>Using Django Without a Database</h3>
+<p>As mentioned earlier, Django doesn&#8217;t actually require a database. If you just
+want to use it to serve dynamic pages that don&#8217;t hit a database, that&#8217;s
+perfectly fine.</p>
+<p>With that said, bear in mind that some of the extra tools bundled with Django
+<em>do</em> require a database, so if you choose not to use a database, you&#8217;ll miss
+out on those features. (We highlight these features throughout this book.)</p>
+</div>
+</div>
+<div class="section" id="starting-a-project">
+<h2>Starting a Project</h2>
+<p>Once you&#8217;ve installed Python, Django and (optionally) your database
+server/library, you can take the first step in developing a Django application
+by creating a <em>project</em>.</p>
+<p>A project is a collection of settings for an instance of Django, including
+database configuration, Django-specific options and application-specific
+settings.</p>
+<p>If this is your first time using Django, you&#8217;ll have to take care of some
+initial setup. Create a new directory to start working in, perhaps something
+like <tt class="docutils literal"><span class="pre">/home/username/djcode/</span></tt>.</p>
+<div class="admonition-where-should-this-directory-live admonition">
+<p class="first admonition-title">Where Should This Directory Live?</p>
+<p>If your background is in PHP, you&#8217;re probably used to putting code under the
+Web server&#8217;s document root (in a place such as <tt class="docutils literal"><span class="pre">/var/www</span></tt>). With Django,
+you don&#8217;t do that. It&#8217;s not a good idea to put any of this Python code
+within your Web server&#8217;s document root, because in doing so you risk the
+possibility that people will be able to view your raw source code over the
+Web. That&#8217;s not good.</p>
+<p class="last">Put your code in some directory <strong>outside</strong> of the document root.</p>
+</div>
+<p>Change into the directory you created, and run the command
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">startproject</span> <span class="pre">mysite</span></tt>. This will create a <tt class="docutils literal"><span class="pre">mysite</span></tt>
+directory in your current directory.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><tt class="docutils literal"><span class="pre">django-admin.py</span></tt> should be on your system path if you installed Django
+via its <tt class="docutils literal"><span class="pre">setup.py</span></tt> utility.</p>
+<p>If you&#8217;re using the development version, you&#8217;ll find <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> in
+<tt class="docutils literal"><span class="pre">djmaster/django/bin</span></tt>. Because you&#8217;ll be using <tt class="docutils literal"><span class="pre">django-admin.py</span></tt>
+often, consider adding it to your system path. On Unix, you can do so by
+symlinking from <tt class="docutils literal"><span class="pre">/usr/local/bin</span></tt>, using a command such as <tt class="docutils literal"><span class="pre">sudo</span> <span class="pre">ln</span> <span class="pre">-s</span>
+<span class="pre">/path/to/django/bin/django-admin.py</span> <span class="pre">/usr/local/bin/django-admin.py</span></tt>. On
+Windows, you&#8217;ll need to update your <tt class="docutils literal"><span class="pre">PATH</span></tt> environment variable.</p>
+<p class="last">If you installed Django from a packaged version for your Linux
+distribution, <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> might be called <tt class="docutils literal"><span class="pre">django-admin</span></tt> instead.</p>
+</div>
+<p>If you see a &#8220;permission denied&#8221; message when running
+<tt class="docutils literal"><span class="pre">django-admin.py</span> <span class="pre">startproject</span></tt>, you&#8217;ll need to change the file&#8217;s permissions.
+To do this, navigate to the directory where <tt class="docutils literal"><span class="pre">django-admin.py</span></tt> is installed
+(e.g., <tt class="docutils literal"><span class="pre">cd</span> <span class="pre">/usr/local/bin</span></tt>) and run the command <tt class="docutils literal"><span class="pre">chmod</span> <span class="pre">+x</span> <span class="pre">django-admin.py</span></tt>.</p>
+<p>The <tt class="docutils literal"><span class="pre">startproject</span></tt> command creates a directory containing five files:</p>
+<div class="highlight-python"><pre>mysite/
+    manage.py
+    mysite/
+        __init__.py
+        settings.py
+        urls.py
+        wsgi.py</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Doesn&#8217;t match what you see?</p>
+<p>The default project layout recently changed. If you&#8217;re seeing a
+&#8220;flat&#8221; layout (with no inner <tt class="docutils literal"><span class="pre">mysite/</span></tt> directory), you&#8217;re probably using
+a version of Django that doesn&#8217;t match this tutorial version. This book covers
+Django 1.4 and above, so if you&#8217;re using an older version you probably want to
+consult Django&#8217;s official documentation.</p>
+<p class="last">The documentation for Django 1.X version is available at <a class="reference external" href="https://docs.djangoproject.com/en/1.X/">https://docs.djangoproject.com/en/1.X/</a>.</p>
+</div>
+<p>These files are as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">mysite/</span></tt>: The outer <tt class="docutils literal"><span class="pre">mysite/</span></tt> directory is just a container for your project.
+Its name doesn&#8217;t matter to Django; you can rename it to anything you like.</li>
+<li><tt class="docutils literal"><span class="pre">manage.py</span></tt>: A command-line utility that lets you interact with this
+Django project in various ways. Type <tt class="docutils literal"><span class="pre">python</span> <span class="pre">manage.py</span> <span class="pre">help</span></tt> to get a
+feel for what it can do. You should never have to edit this file; it&#8217;s
+created in this directory purely for convenience.</li>
+<li><tt class="docutils literal"><span class="pre">mysite/mysite/</span></tt>: The inner <tt class="docutils literal"><span class="pre">mysite/</span></tt> directory is the actual Python package
+for your project. Its name is the Python package name you&#8217;ll need to use to
+import anything inside it (e.g. <tt class="docutils literal"><span class="pre">import</span> <span class="pre">mysite.settings</span></tt>).</li>
+<li><tt class="docutils literal"><span class="pre">__init__.py</span></tt>: A file required for Python to treat the <tt class="docutils literal"><span class="pre">mysite</span></tt>
+directory as a package (i.e., a group of Python modules). It&#8217;s an empty
+file, and generally you won&#8217;t add anything to it.</li>
+<li><tt class="docutils literal"><span class="pre">settings.py</span></tt>: Settings/configuration for this Django project. Take a
+look at it to get an idea of the types of settings available, along with
+their default values.</li>
+<li><tt class="docutils literal"><span class="pre">urls.py</span></tt>: The URLs for this Django project. Think of this as the
+&#8220;table of contents&#8221; of your Django-powered site.</li>
+<li><tt class="docutils literal"><span class="pre">wsgi.py</span></tt>: An entry-point for WSGI-compatible webservers to serve your project.
+See How to deploy with WSGI (<a class="reference external" href="https://docs.djangoproject.com/en/1.4/howto/deployment/wsgi/">https://docs.djangoproject.com/en/1.4/howto/deployment/wsgi/</a>) for more details.</li>
+</ul>
+<p>Despite their small size, these files already constitute a working Django
+application.</p>
+<div class="section" id="running-the-development-server">
+<h3>Running the Development Server</h3>
+<p>For some more post-installation positive feedback, let&#8217;s run the Django
+development server to see our barebones application in action.</p>
+<p>The Django development server (also called the &#8220;runserver&#8221; after the command
+that launches it) is a built-in, lightweight Web server you can use while
+developing your site. It&#8217;s included with Django so you can develop your site
+rapidly, without having to deal with configuring your production server (e.g.,
+Apache) until you&#8217;re ready for production. The development server watches your
+code and automatically reloads it, making it easy for you to change your code
+without needing to restart anything.</p>
+<p>To start the server, change into your project container directory (<tt class="docutils literal"><span class="pre">cd</span> <span class="pre">mysite</span></tt>),
+if you haven&#8217;t already, and run this command:</p>
+<div class="highlight-python"><pre>python manage.py runserver</pre>
+</div>
+<p>You&#8217;ll see something like this:</p>
+<div class="highlight-python"><pre>Validating models...
+0 errors found.
+
+Django version 1.4.2, using settings 'mysite.settings'
+Development server is running at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.</pre>
+</div>
+<p>This launches the server locally, on port 8000, accessible only to connections
+from your own computer. Now that it&#8217;s running, visit <a class="reference external" href="http://127.0.0.1:8000/">http://127.0.0.1:8000/</a>
+with your Web browser. You might see a different Django version depending on
+which version of Django you have installed. You&#8217;ll see a &#8220;Welcome to Django&#8221; page shaded in a
+pleasant pastel blue. It worked!</p>
+<p>One final, important note about the development server is worth mentioning
+before proceeding. Although this server is convenient for development, resist
+the temptation to use it in anything resembling a production environment. The
+development server can handle only a single request at a time reliably, and it
+has not gone through a security audit of any sort. When the time comes to
+launch your site, see Chapter 12 for information on how to deploy Django.</p>
+<div class="admonition-changing-the-development-server-s-host-or-port admonition">
+<p class="first admonition-title">Changing the Development Server&#8217;s Host or Port</p>
+<p>By default, the <tt class="docutils literal"><span class="pre">runserver</span></tt> command starts the development server on port
+8000, listening only for local connections. If you want to change the
+server&#8217;s port, pass it as a command-line argument:</p>
+<div class="highlight-python"><pre>python manage.py runserver 8080</pre>
+</div>
+<p>By specifying an IP address, you can tell the server to allow non-local
+connections. This is especially helpful if you&#8217;d like to share a
+development site with other members of your team. The IP address
+<tt class="docutils literal"><span class="pre">0.0.0.0</span></tt> tells the server to listen on any network interface:</p>
+<div class="highlight-python"><pre>python manage.py runserver 0.0.0.0:8000</pre>
+</div>
+<p class="last">When you&#8217;ve done this, other computers on your local network will be able
+to view your Django site by visiting your IP address in their Web browsers,
+e.g., <a class="reference external" href="http://192.168.1.103:8000/">http://192.168.1.103:8000/</a> . (Note that you&#8217;ll have to consult your
+network settings to determine your IP address on the local network. Unix
+users, try running &#8220;ifconfig&#8221; in a command prompt to get this information.
+Windows users, try &#8220;ipconfig&#8221;.)</p>
+</div>
+</div>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>Now that you have everything installed and the development server running,
+you&#8217;re ready to :doc: learn the basics <a class="reference external" href="chapter03.html">Chapter 3</a>, of serving Web pages with Django.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter01.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter03.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>

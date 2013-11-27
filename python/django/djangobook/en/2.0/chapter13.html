@@ -1,0 +1,953 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+  <head>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <title>Chapter 13: Generating Non-HTML Content</title>
+    <link rel="stylesheet" href="_static/reset-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/grids-min.css" type="text/css">
+    <link rel="stylesheet" href="_static/djangobook.css" type="text/css">
+    
+  </head>
+  <body>
+    <div id="doc" class="yui-t7">
+      <div id="hd">
+        <h1><a href="index.html">The Django Book</a></h1>
+        <div id="global-nav">
+            <a class="about" href="frontmatter.html">About</a>
+        </div>
+        
+<div class="nav">
+    
+        <a href='chapter12.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter14.html'>next &raquo;</a>
+    
+</div>
+
+      </div>
+      <div id="bd">
+        <div id="yui-main">
+          <div class="yui-b">
+            
+  <div id="chapter-body"><div class="section" id="chapter-13-generating-non-html-content">
+<h1>Chapter 13: Generating Non-HTML Content</h1>
+<p>Usually when we talk about developing Web sites, we&#8217;re talking about producing
+HTML. Of course, there&#8217;s a lot more to the Web than HTML; we use the Web
+to distribute data in all sorts of formats: RSS, PDFs, images, and so forth.</p>
+<p>So far, we&#8217;ve focused on the common case of HTML production, but in this chapter
+we&#8217;ll take a detour and look at using Django to produce other types of content.</p>
+<p>Django has convenient built-in tools that you can use to produce some common
+non-HTML content:</p>
+<ul class="simple">
+<li>RSS/Atom syndication feeds</li>
+<li>Sitemaps (an XML format originally developed by Google that gives hints to
+search engines)</li>
+</ul>
+<p>We&#8217;ll examine each of those tools a little later, but first we&#8217;ll cover the
+basic principles.</p>
+<div class="section" id="the-basics-views-and-mime-types">
+<h2>The basics: views and MIME-types</h2>
+<p>Recall from Chapter 3 that a view function is simply a Python function that
+takes a Web request and returns a Web response. This response can be the HTML
+contents of a Web page, or a redirect, or a 404 error, or an XML document,
+or an image...or anything, really.</p>
+<p>More formally, a Django view function <em>must</em></p>
+<ul class="simple">
+<li>Accept an <tt class="docutils literal"><span class="pre">HttpRequest</span></tt> instance as its first argument</li>
+<li>Return an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> instance</li>
+</ul>
+<p>The key to returning non-HTML content from a view lies in the <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>
+class, specifically the <tt class="docutils literal"><span class="pre">mimetype</span></tt> argument. By tweaking the MIME type, we
+can indicate to the browser that we&#8217;ve returned a response of a different
+format.</p>
+<p>For example, let&#8217;s look at a view that returns a PNG image. To
+keep things simple, we&#8217;ll just read the file off the disk:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">my_image</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="n">image_data</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s">&quot;/path/to/my/image.png&quot;</span><span class="p">,</span> <span class="s">&quot;rb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">image_data</span><span class="p">,</span> <span class="n">mimetype</span><span class="o">=</span><span class="s">&quot;image/png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>That&#8217;s it! If you replace the image path in the <tt class="docutils literal"><span class="pre">open()</span></tt> call with a path to
+a real image, you can use this very simple view to serve an image, and the
+browser will display it correctly.</p>
+<p>The other important thing to keep in mind is that <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects
+implement Python&#8217;s standard &#8220;file-like object&#8221; API. This means that you can use
+an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> instance in any place Python (or a third-party library)
+expects a file.</p>
+<p>For an example of how that works, let&#8217;s take a look at producing CSV with
+Django.</p>
+</div>
+<div class="section" id="producing-csv">
+<h2>Producing CSV</h2>
+<p>CSV is a simple data format usually used by spreadsheet software. It&#8217;s basically
+a series of table rows, with each cell in the row separated by a comma (CSV
+stands for <em>comma-separated values</em>). For example, here&#8217;s some data on &#8220;unruly&#8221;
+airline passengers in CSV format:</p>
+<div class="highlight-python"><pre>Year,Unruly Airline Passengers
+1995,146
+1996,184
+1997,235
+1998,200
+1999,226
+2000,251
+2001,299
+2002,273
+2003,281
+2004,304
+2005,203
+2006,134
+2007,147</pre>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The preceding listing contains real numbers! They come from the U.S.
+Federal Aviation Administration.</p>
+</div>
+<p>Though CSV looks simple, its formatting details haven&#8217;t been universally agreed
+upon. Different pieces of software produce and consume different variants of
+CSV, making it a bit tricky to use. Luckily, Python comes with a standard CSV
+library, <tt class="docutils literal"><span class="pre">csv</span></tt>, that is pretty much bulletproof.</p>
+<p>Because the <tt class="docutils literal"><span class="pre">csv</span></tt> module operates on file-like objects, it&#8217;s a snap to use
+an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> instead:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="c"># Number of unruly passengers each year 1995 - 2005. In a real application</span>
+<span class="c"># this would likely come from a database or some other back-end data store.</span>
+<span class="n">UNRULY_PASSENGERS</span> <span class="o">=</span> <span class="p">[</span><span class="mi">146</span><span class="p">,</span><span class="mi">184</span><span class="p">,</span><span class="mi">235</span><span class="p">,</span><span class="mi">200</span><span class="p">,</span><span class="mi">226</span><span class="p">,</span><span class="mi">251</span><span class="p">,</span><span class="mi">299</span><span class="p">,</span><span class="mi">273</span><span class="p">,</span><span class="mi">281</span><span class="p">,</span><span class="mi">304</span><span class="p">,</span><span class="mi">203</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">unruly_passengers_csv</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># Create the HttpResponse object with the appropriate CSV header.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">mimetype</span><span class="o">=</span><span class="s">&#39;text/csv&#39;</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s">&#39;Content-Disposition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;attachment; filename=unruly.csv&#39;</span>
+
+    <span class="c"># Create the CSV writer using the HttpResponse as the &quot;file.&quot;</span>
+    <span class="n">writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+    <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="s">&#39;Year&#39;</span><span class="p">,</span> <span class="s">&#39;Unruly Airline Passengers&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">num</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1995</span><span class="p">,</span> <span class="mi">2006</span><span class="p">),</span> <span class="n">UNRULY_PASSENGERS</span><span class="p">):</span>
+        <span class="n">writer</span><span class="o">.</span><span class="n">writerow</span><span class="p">([</span><span class="n">year</span><span class="p">,</span> <span class="n">num</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>The code and comments should be pretty clear, but a few things deserve special
+mention:</p>
+<ul>
+<li><p class="first">The response is given the <tt class="docutils literal"><span class="pre">text/csv</span></tt> MIME type (instead of the default
+<tt class="docutils literal"><span class="pre">text/html</span></tt>). This tells browsers that the document is a CSV file.</p>
+</li>
+<li><p class="first">The response gets an additional <tt class="docutils literal"><span class="pre">Content-Disposition</span></tt> header, which
+contains the name of the CSV file. This header (well, the &#8220;attachment&#8221;
+part) will instruct the browser to prompt for a location to save the
+file instead of just displaying it. This file name is arbitrary; call
+it whatever you want. It will be used by browsers in the &#8220;Save As&#8221;
+dialog.</p>
+<p>To assign a header on an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt>, just treat the
+<tt class="docutils literal"><span class="pre">HttpResponse</span></tt> as a dictionary and set a key/value.</p>
+</li>
+<li><p class="first">Hooking into the CSV-generation API is easy: just pass <tt class="docutils literal"><span class="pre">response</span></tt> as
+the first argument to <tt class="docutils literal"><span class="pre">csv.writer</span></tt>. The <tt class="docutils literal"><span class="pre">csv.writer</span></tt> function
+expects a file-like object, and <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects fit the bill.</p>
+</li>
+<li><p class="first">For each row in your CSV file, call <tt class="docutils literal"><span class="pre">writer.writerow</span></tt>, passing it an
+iterable object such as a list or tuple.</p>
+</li>
+<li><p class="first">The CSV module takes care of quoting for you, so you don&#8217;t have to worry
+about escaping strings with quotes or commas in them. Just pass
+information to <tt class="docutils literal"><span class="pre">writerow()</span></tt>, and it will do the right thing.</p>
+</li>
+</ul>
+<p>This is the general pattern you&#8217;ll use any time you need to return non-HTML
+content: create an <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> response object (with a special MIME type),
+pass it to something expecting a file, and then return the response.</p>
+<p>Let&#8217;s look at a few more examples.</p>
+</div>
+<div class="section" id="generating-pdfs">
+<h2>Generating PDFs</h2>
+<p>Portable Document Format (PDF) is a format developed by Adobe that&#8217;s used to
+represent printable documents, complete with pixel-perfect formatting,
+embedded fonts, and 2D vector graphics. You can think of a PDF document as the
+digital equivalent of a printed document; indeed, PDFs are often used in
+distributing documents for the purpose of printing them.</p>
+<p>You can easily generate PDFs with Python and Django thanks to the excellent
+open source ReportLab library (<a class="reference external" href="http://www.reportlab.org/rl_toolkit.html">http://www.reportlab.org/rl_toolkit.html</a>).
+The advantage of generating PDF files dynamically is that you can create
+customized PDFs for different purposes &#8211; say, for different users or
+different pieces of content.</p>
+<p>For example, your humble authors used Django and ReportLab at KUSports.com to
+generate customized, printer-ready NCAA tournament brackets.</p>
+<div class="section" id="installing-reportlab">
+<h3>Installing ReportLab</h3>
+<p>Before you do any PDF generation, however, you&#8217;ll need to install ReportLab.
+It&#8217;s usually simple: just download and install the library from
+<a class="reference external" href="http://www.reportlab.org/downloads.html">http://www.reportlab.org/downloads.html</a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>If you&#8217;re using a modern Linux distribution, you might want to check your
+package management utility before installing ReportLab. Most
+package repositories have added ReportLab.</p>
+<p class="last">For example, if you&#8217;re using Ubuntu, a simple
+<tt class="docutils literal"><span class="pre">apt-get</span> <span class="pre">install</span> <span class="pre">python-reportlab</span></tt> will do the trick nicely.</p>
+</div>
+<p>The user guide (naturally available only as a PDF file) at
+<a class="reference external" href="http://www.reportlab.org/rsrc/userguide.pdf">http://www.reportlab.org/rsrc/userguide.pdf</a> has additional installation
+instructions.</p>
+<p>Test your installation by importing it in the Python interactive interpreter:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">reportlab</span>
+</pre></div>
+</div>
+<p>If that command doesn&#8217;t raise any errors, the installation worked.</p>
+</div>
+<div class="section" id="writing-your-view">
+<h3>Writing Your View</h3>
+<p>Like CSV, generating PDFs dynamically with Django is easy because the ReportLab
+API acts on file-like objects.</p>
+<p>Here&#8217;s a &#8220;Hello World&#8221; example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">reportlab.pdfgen</span> <span class="kn">import</span> <span class="n">canvas</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">hello_pdf</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># Create the HttpResponse object with the appropriate PDF headers.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">mimetype</span><span class="o">=</span><span class="s">&#39;application/pdf&#39;</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s">&#39;Content-Disposition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;attachment; filename=hello.pdf&#39;</span>
+
+    <span class="c"># Create the PDF object, using the response object as its &quot;file.&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Canvas</span><span class="p">(</span><span class="n">response</span><span class="p">)</span>
+
+    <span class="c"># Draw things on the PDF. Here&#39;s where the PDF generation happens.</span>
+    <span class="c"># See the ReportLab documentation for the full list of functionality.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">drawString</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s">&quot;Hello world.&quot;</span><span class="p">)</span>
+
+    <span class="c"># Close the PDF object cleanly, and we&#39;re done.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">showPage</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+<p>A few notes are in order:</p>
+<ul class="simple">
+<li>Here we use the <tt class="docutils literal"><span class="pre">application/pdf</span></tt> MIME type. This tells browsers that
+the document is a PDF file, rather than an HTML file. If you leave off
+this information, browsers will probably interpret the response as HTML,
+which will result in scary gobbledygook in the browser window.</li>
+<li>Hooking into the ReportLab API is easy: just pass <tt class="docutils literal"><span class="pre">response</span></tt> as the
+first argument to <tt class="docutils literal"><span class="pre">canvas.Canvas</span></tt>. The <tt class="docutils literal"><span class="pre">Canvas</span></tt> class expects a
+file-like object, and <tt class="docutils literal"><span class="pre">HttpResponse</span></tt> objects fit the bill.</li>
+<li>All subsequent PDF-generation methods are called on the PDF
+object (in this case, <tt class="docutils literal"><span class="pre">p</span></tt>), not on <tt class="docutils literal"><span class="pre">response</span></tt>.</li>
+<li>Finally, it&#8217;s important to call <tt class="docutils literal"><span class="pre">showPage()</span></tt> and <tt class="docutils literal"><span class="pre">save()</span></tt> on the PDF
+file &#8211; or else, you&#8217;ll end up with a corrupted PDF file.</li>
+</ul>
+</div>
+<div class="section" id="complex-pdfs">
+<h3>Complex PDFs</h3>
+<p>If you&#8217;re creating a complex PDF document (or any large data blob), consider
+using the <tt class="docutils literal"><span class="pre">cStringIO</span></tt> library as a temporary holding place for your PDF
+file. The <tt class="docutils literal"><span class="pre">cStringIO</span></tt> library provides a file-like object interface that is
+written in C for maximum efficiency.</p>
+<p>Here&#8217;s the previous &#8220;Hello World&#8221; example rewritten to use <tt class="docutils literal"><span class="pre">cStringIO</span></tt>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">cStringIO</span> <span class="kn">import</span> <span class="n">StringIO</span>
+<span class="kn">from</span> <span class="nn">reportlab.pdfgen</span> <span class="kn">import</span> <span class="n">canvas</span>
+<span class="kn">from</span> <span class="nn">django.http</span> <span class="kn">import</span> <span class="n">HttpResponse</span>
+
+<span class="k">def</span> <span class="nf">hello_pdf</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="c"># Create the HttpResponse object with the appropriate PDF headers.</span>
+    <span class="n">response</span> <span class="o">=</span> <span class="n">HttpResponse</span><span class="p">(</span><span class="n">mimetype</span><span class="o">=</span><span class="s">&#39;application/pdf&#39;</span><span class="p">)</span>
+    <span class="n">response</span><span class="p">[</span><span class="s">&#39;Content-Disposition&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;attachment; filename=hello.pdf&#39;</span>
+
+    <span class="n">temp</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">()</span>
+
+    <span class="c"># Create the PDF object, using the StringIO object as its &quot;file.&quot;</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">canvas</span><span class="o">.</span><span class="n">Canvas</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+
+    <span class="c"># Draw things on the PDF. Here&#39;s where the PDF generation happens.</span>
+    <span class="c"># See the ReportLab documentation for the full list of functionality.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">drawString</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="s">&quot;Hello world.&quot;</span><span class="p">)</span>
+
+    <span class="c"># Close the PDF object cleanly.</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">showPage</span><span class="p">()</span>
+    <span class="n">p</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="c"># Get the value of the StringIO buffer and write it to the response.</span>
+    <span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">temp</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
+    <span class="k">return</span> <span class="n">response</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="other-possibilities">
+<h2>Other Possibilities</h2>
+<p>There&#8217;s a whole host of other types of content you can generate in Python.
+Here are a few more ideas and some pointers to libraries you could use to
+implement them:</p>
+<ul class="simple">
+<li><em>ZIP files</em>: Python&#8217;s standard library ships with the
+<tt class="docutils literal"><span class="pre">zipfile</span></tt> module, which can both read and write compressed ZIP files.
+You could use it to provide on-demand archives of a bunch of files, or
+perhaps compress large documents when requested. You could similarly
+produce TAR files using the standard library&#8217;s <tt class="docutils literal"><span class="pre">tarfile</span></tt> module.</li>
+<li><em>Dynamic images</em>: The Python Imaging Library
+(PIL; <a class="reference external" href="http://www.pythonware.com/products/pil/">http://www.pythonware.com/products/pil/</a>) is a fantastic toolkit for
+producing images (PNG, JPEG, GIF, and a whole lot more). You could use
+it to automatically scale down images into thumbnails, composite
+multiple images into a single frame, or even do Web-based image
+processing.</li>
+<li><em>Plots and charts</em>: There are a number of powerful Python plotting and
+charting libraries you could use to produce on-demand maps, charts,
+plots, and graphs. We can&#8217;t possibly list them all, so here are
+a couple of the highlights:</li>
+<li><tt class="docutils literal"><span class="pre">matplotlib</span></tt> (<a class="reference external" href="http://matplotlib.sourceforge.net/">http://matplotlib.sourceforge.net/</a>) can be
+used to produce the type of high-quality plots usually generated
+with MatLab or Mathematica.</li>
+<li><tt class="docutils literal"><span class="pre">pygraphviz</span></tt> (<a class="reference external" href="http://networkx.lanl.gov/pygraphviz/">http://networkx.lanl.gov/pygraphviz/</a>), an
+interface to the Graphviz graph layout toolkit
+(<a class="reference external" href="http://graphviz.org/">http://graphviz.org/</a>), can be used for generating structured diagrams of
+graphs and networks.</li>
+</ul>
+<p>In general, any Python library capable of writing to a file can be hooked into
+Django. The possibilities are immense.</p>
+<p>Now that we&#8217;ve looked at the basics of generating non-HTML content, let&#8217;s step
+up a level of abstraction. Django ships with some pretty nifty built-in tools
+for generating some common types of non-HTML content.</p>
+</div>
+<div class="section" id="the-syndication-feed-framework">
+<h2>The Syndication Feed Framework</h2>
+<p>Django comes with a high-level syndication-feed-generating framework that
+makes creating RSS and Atom feeds easy.</p>
+<div class="admonition-what-s-rss-what-s-atom admonition">
+<p class="first admonition-title">What&#8217;s RSS? What&#8217;s Atom?</p>
+<p class="last">RSS and Atom are both XML-based formats you can use to provide
+automatically updating &#8220;feeds&#8221; of your site&#8217;s content. Read more about RSS
+at <a class="reference external" href="http://www.whatisrss.com/">http://www.whatisrss.com/</a>, and get information on Atom at
+<a class="reference external" href="http://www.atomenabled.org/">http://www.atomenabled.org/</a>.</p>
+</div>
+<p>To create any syndication feed, all you have to do is write a short Python
+class. You can create as many feeds as you want.</p>
+<p>The high-level feed-generating framework is a view that&#8217;s hooked to <tt class="docutils literal"><span class="pre">/feeds/</span></tt>
+by convention. Django uses the remainder of the URL (everything after
+<tt class="docutils literal"><span class="pre">/feeds/</span></tt>) to determine which feed to return.</p>
+<p>To create a feed, you&#8217;ll write a <tt class="docutils literal"><span class="pre">Feed</span></tt> class and point to it in your
+URLconf.</p>
+<div class="section" id="initialization">
+<h3>Initialization</h3>
+<p>To activate syndication feeds on your Django site, add this URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^feeds/(?P&lt;url&gt;.*)/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.contrib.syndication.views.feed&#39;</span><span class="p">,</span>
+    <span class="p">{</span><span class="s">&#39;feed_dict&#39;</span><span class="p">:</span> <span class="n">feeds</span><span class="p">}</span>
+<span class="p">),</span>
+</pre></div>
+</div>
+<p>This line tells Django to use the RSS framework to handle all URLs starting with
+<tt class="docutils literal"><span class="pre">&quot;feeds/&quot;</span></tt>. (You can change that <tt class="docutils literal"><span class="pre">&quot;feeds/&quot;</span></tt> prefix to fit your own needs.)</p>
+<p>This URLconf line has an extra argument: <tt class="docutils literal"><span class="pre">{'feed_dict':</span> <span class="pre">feeds}</span></tt>. Use this
+extra argument to pass the syndication framework the feeds that should be
+published under that URL.</p>
+<p>Specifically, <tt class="docutils literal"><span class="pre">feed_dict</span></tt> should be a dictionary that maps a feed&#8217;s slug
+(short URL label) to its <tt class="docutils literal"><span class="pre">Feed</span></tt> class. You can define the <tt class="docutils literal"><span class="pre">feed_dict</span></tt>
+in the URLconf itself. Here&#8217;s a full example URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">mysite.feeds</span> <span class="kn">import</span> <span class="n">LatestEntries</span><span class="p">,</span> <span class="n">LatestEntriesByCategory</span>
+
+<span class="n">feeds</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;latest&#39;</span><span class="p">:</span> <span class="n">LatestEntries</span><span class="p">,</span>
+    <span class="s">&#39;categories&#39;</span><span class="p">:</span> <span class="n">LatestEntriesByCategory</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="c"># ...</span>
+    <span class="p">(</span><span class="s">r&#39;^feeds/(?P&lt;url&gt;.*)/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.contrib.syndication.views.feed&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;feed_dict&#39;</span><span class="p">:</span> <span class="n">feeds</span><span class="p">}),</span>
+    <span class="c"># ...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The preceding example registers two feeds:</p>
+<ul class="simple">
+<li>The feed represented by <tt class="docutils literal"><span class="pre">LatestEntries</span></tt> will live at
+<tt class="docutils literal"><span class="pre">feeds/latest/</span></tt>.</li>
+<li>The feed represented by <tt class="docutils literal"><span class="pre">LatestEntriesByCategory</span></tt> will live at
+<tt class="docutils literal"><span class="pre">feeds/categories/</span></tt>.</li>
+</ul>
+<p>Once that&#8217;s set up, you&#8217;ll need to define the <tt class="docutils literal"><span class="pre">Feed</span></tt> classes themselves.</p>
+<p>A <tt class="docutils literal"><span class="pre">Feed</span></tt> class is a simple Python class that represents a syndication feed.
+A feed can be simple (e.g., a &#8220;site news&#8221; feed, or a basic feed displaying the
+latest entries of a blog) or more complex (e.g., a feed displaying all the
+blog entries in a particular category, where the category is variable).</p>
+<p><tt class="docutils literal"><span class="pre">Feed</span></tt> classes must subclass <tt class="docutils literal"><span class="pre">django.contrib.syndication.feeds.Feed</span></tt>. They
+can live anywhere in your code tree.</p>
+</div>
+<div class="section" id="a-simple-feed">
+<h3>A Simple Feed</h3>
+<p>This simple example describes a feed of the latest five blog entries for a
+given blog:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.syndication.feeds</span> <span class="kn">import</span> <span class="n">Feed</span>
+<span class="kn">from</span> <span class="nn">mysite.blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="k">class</span> <span class="nc">LatestEntries</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s">&quot;My Blog&quot;</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="s">&quot;/archive/&quot;</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s">&quot;The latest news about stuff.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;-pub_date&#39;</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>The important things to notice here are as follows:</p>
+<ul class="simple">
+<li>The class subclasses <tt class="docutils literal"><span class="pre">django.contrib.syndication.feeds.Feed</span></tt>.</li>
+<li><tt class="docutils literal"><span class="pre">title</span></tt>, <tt class="docutils literal"><span class="pre">link</span></tt>, and <tt class="docutils literal"><span class="pre">description</span></tt> correspond to the standard RSS
+<tt class="docutils literal"><span class="pre">&lt;title&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt>, and <tt class="docutils literal"><span class="pre">&lt;description&gt;</span></tt> elements, respectively.</li>
+<li><tt class="docutils literal"><span class="pre">items()</span></tt> is simply a method that returns a list of objects that
+should be included in the feed as <tt class="docutils literal"><span class="pre">&lt;item&gt;</span></tt> elements. Although this
+example returns <tt class="docutils literal"><span class="pre">Entry</span></tt> objects using Django&#8217;s database API,
+<tt class="docutils literal"><span class="pre">items()</span></tt> doesn&#8217;t have to return model instances.</li>
+</ul>
+<p>There&#8217;s just one more step. In an RSS feed, each <tt class="docutils literal"><span class="pre">&lt;item&gt;</span></tt> has a <tt class="docutils literal"><span class="pre">&lt;title&gt;</span></tt>,
+<tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt>, and <tt class="docutils literal"><span class="pre">&lt;description&gt;</span></tt>. We need to tell the framework what data to
+put into those elements.</p>
+<ul>
+<li><p class="first">To specify the contents of <tt class="docutils literal"><span class="pre">&lt;title&gt;</span></tt> and <tt class="docutils literal"><span class="pre">&lt;description&gt;</span></tt>, create
+Django templates called <tt class="docutils literal"><span class="pre">feeds/latest_title.html</span></tt> and
+<tt class="docutils literal"><span class="pre">feeds/latest_description.html</span></tt>, where <tt class="docutils literal"><span class="pre">latest</span></tt> is the <tt class="docutils literal"><span class="pre">slug</span></tt>
+specified in the URLconf for the given feed. Note that the <tt class="docutils literal"><span class="pre">.html</span></tt>
+extension is required.</p>
+<p>The RSS system renders that template for each item, passing it two
+template context variables:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">obj</span></tt>: The current object (one of whichever objects you
+returned in <tt class="docutils literal"><span class="pre">items()</span></tt>).</li>
+<li><tt class="docutils literal"><span class="pre">site</span></tt>: A <tt class="docutils literal"><span class="pre">django.models.core.sites.Site</span></tt> object representing the
+current site. This is useful for <tt class="docutils literal"><span class="pre">{{</span> <span class="pre">site.domain</span> <span class="pre">}}</span></tt> or <tt class="docutils literal"><span class="pre">{{</span>
+<span class="pre">site.name</span> <span class="pre">}}</span></tt>.</li>
+</ul>
+<p>If you don&#8217;t create a template for either the title or description, the
+framework will use the template <tt class="docutils literal"><span class="pre">&quot;{{</span> <span class="pre">obj</span> <span class="pre">}}&quot;</span></tt> by default &#8211; that is,
+the normal string representation of the object. (For model objects, this
+will be the <tt class="docutils literal"><span class="pre">__unicode__()</span></tt> method.</p>
+<p>You can also change the names of these two templates by specifying
+<tt class="docutils literal"><span class="pre">title_template</span></tt> and <tt class="docutils literal"><span class="pre">description_template</span></tt> as attributes of your
+<tt class="docutils literal"><span class="pre">Feed</span></tt> class.</p>
+</li>
+<li><p class="first">To specify the contents of <tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt>, you have two options. For each
+item in <tt class="docutils literal"><span class="pre">items()</span></tt>, Django first tries executing a
+<tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt> method on that object. If that method doesn&#8217;t
+exist, it tries calling a method <tt class="docutils literal"><span class="pre">item_link()</span></tt> in the <tt class="docutils literal"><span class="pre">Feed</span></tt> class,
+passing it a single parameter, <tt class="docutils literal"><span class="pre">item</span></tt>, which is the object itself.</p>
+<p>Both <tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt> and <tt class="docutils literal"><span class="pre">item_link()</span></tt> should return the item&#8217;s
+URL as a normal Python string.</p>
+</li>
+<li><p class="first">For the previous <tt class="docutils literal"><span class="pre">LatestEntries</span></tt> example, we could have very simple feed
+templates. <tt class="docutils literal"><span class="pre">latest_title.html</span></tt> contains:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">obj</span><span class="o">.</span><span class="n">title</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>and <tt class="docutils literal"><span class="pre">latest_description.html</span></tt> contains:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">{{</span> <span class="n">obj</span><span class="o">.</span><span class="n">description</span> <span class="p">}}</span>
+</pre></div>
+</div>
+<p>It&#8217;s almost <em>too</em> easy...</p>
+</li>
+</ul>
+</div>
+<div class="section" id="a-more-complex-feed">
+<h3>A More Complex Feed</h3>
+<p>The framework also supports more complex feeds, via parameters.</p>
+<p>For example, say your blog offers an RSS feed for every distinct &#8220;tag&#8221; you&#8217;ve
+used to categorize your entries. It would be silly to create a separate
+<tt class="docutils literal"><span class="pre">Feed</span></tt> class for each tag; that would violate the Don&#8217;t Repeat Yourself
+(DRY) principle and would couple data to programming logic.</p>
+<p>Instead, the syndication framework lets you make generic
+feeds that return items based on information in the feed&#8217;s URL.</p>
+<p>Your tag-specific feeds could use URLs like this:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">http://example.com/feeds/tags/python/</span></tt>:
+Returns recent entries tagged with &#8220;python&#8221;</li>
+<li><tt class="docutils literal"><span class="pre">http://example.com/feeds/tags/cats/</span></tt>:
+Returns recent entries tagged with &#8220;cats&#8221;</li>
+</ul>
+<p>The slug here is <tt class="docutils literal"><span class="pre">&quot;tags&quot;</span></tt>. The syndication framework sees the extra URL
+bits after the slug &#8211; <tt class="docutils literal"><span class="pre">'python'</span></tt> and <tt class="docutils literal"><span class="pre">'cats'</span></tt> &#8211; and gives you a hook
+to tell it what those URL bits mean and how they should influence which items
+get published in the feed.</p>
+<p>An example makes this clear. Here&#8217;s the code for these tag-specific feeds:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.core.exceptions</span> <span class="kn">import</span> <span class="n">ObjectDoesNotExist</span>
+<span class="kn">from</span> <span class="nn">mysite.blog.models</span> <span class="kn">import</span> <span class="n">Entry</span><span class="p">,</span> <span class="n">Tag</span>
+
+<span class="k">class</span> <span class="nc">TagFeed</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">get_object</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bits</span><span class="p">):</span>
+        <span class="c"># In case of &quot;/feeds/tags/cats/dogs/mice/&quot;, or other such</span>
+        <span class="c"># clutter, check that bits has only one member.</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ObjectDoesNotExist</span>
+        <span class="k">return</span> <span class="n">Tag</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="n">bits</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">title</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;My Blog: Entries tagged with </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">tag</span>
+
+    <span class="k">def</span> <span class="nf">link</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">get_absolute_url</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s">&quot;Entries tagged with </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">obj</span><span class="o">.</span><span class="n">tag</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="n">entries</span> <span class="o">=</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">tags__id__exact</span><span class="o">=</span><span class="n">obj</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">entries</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;-pub_date&#39;</span><span class="p">)[:</span><span class="mi">30</span><span class="p">]</span>
+</pre></div>
+</div>
+<p>Here&#8217;s the basic algorithm of the RSS framework, given this class and a
+request to the URL <tt class="docutils literal"><span class="pre">/feeds/tags/python/</span></tt>:</p>
+<ol class="arabic">
+<li><p class="first">The framework gets the URL <tt class="docutils literal"><span class="pre">/feeds/tags/python/</span></tt> and notices there&#8217;s an
+extra bit of URL after the slug. It splits that remaining string by the
+slash character (<tt class="docutils literal"><span class="pre">&quot;/&quot;</span></tt>) and calls the <tt class="docutils literal"><span class="pre">Feed</span></tt> class&#8217;s
+<tt class="docutils literal"><span class="pre">get_object()</span></tt> method, passing it the bits.</p>
+<p>In this case, bits is <tt class="docutils literal"><span class="pre">['python']</span></tt>. For a request to
+<tt class="docutils literal"><span class="pre">/feeds/tags/python/django/</span></tt>, bits would be <tt class="docutils literal"><span class="pre">['python',</span> <span class="pre">'django']</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">get_object()</span></tt> is responsible for retrieving the given <tt class="docutils literal"><span class="pre">Tag</span></tt> object,
+from the given <tt class="docutils literal"><span class="pre">bits</span></tt>.</p>
+<p>In this case, it uses the Django database API to
+retrieve the <tt class="docutils literal"><span class="pre">Tag</span></tt>. Note that <tt class="docutils literal"><span class="pre">get_object()</span></tt> should raise
+<tt class="docutils literal"><span class="pre">django.core.exceptions.ObjectDoesNotExist</span></tt> if given invalid
+parameters. There&#8217;s no <tt class="docutils literal"><span class="pre">try</span></tt>/<tt class="docutils literal"><span class="pre">except</span></tt> around the
+<tt class="docutils literal"><span class="pre">Tag.objects.get()</span></tt> call, because it&#8217;s not necessary. That function
+raises <tt class="docutils literal"><span class="pre">Tag.DoesNotExist</span></tt> on failure, and <tt class="docutils literal"><span class="pre">Tag.DoesNotExist</span></tt> is a
+subclass of <tt class="docutils literal"><span class="pre">ObjectDoesNotExist</span></tt>. Raising <tt class="docutils literal"><span class="pre">ObjectDoesNotExist</span></tt> in
+<tt class="docutils literal"><span class="pre">get_object()</span></tt> tells Django to produce a 404 error for that request.</p>
+</li>
+<li><p class="first">To generate the feed&#8217;s <tt class="docutils literal"><span class="pre">&lt;title&gt;</span></tt>, <tt class="docutils literal"><span class="pre">&lt;link&gt;</span></tt>, and <tt class="docutils literal"><span class="pre">&lt;description&gt;</span></tt>,
+Django uses the <tt class="docutils literal"><span class="pre">title()</span></tt>, <tt class="docutils literal"><span class="pre">link()</span></tt>, and <tt class="docutils literal"><span class="pre">description()</span></tt> methods.
+In the previous example, they were simple string class attributes, but
+this example illustrates that they can be either strings <em>or</em> methods.
+For each of <tt class="docutils literal"><span class="pre">title</span></tt>, <tt class="docutils literal"><span class="pre">link</span></tt>, and <tt class="docutils literal"><span class="pre">description</span></tt>, Django follows
+this algorithm:</p>
+<ol class="arabic simple">
+<li>It tries to call a method, passing the <tt class="docutils literal"><span class="pre">obj</span></tt> argument,
+where <tt class="docutils literal"><span class="pre">obj</span></tt> is the object returned by <tt class="docutils literal"><span class="pre">get_object()</span></tt>.</li>
+<li>Failing that, it tries to call a method with no arguments.</li>
+<li>Failing that, it uses the class attribute.</li>
+</ol>
+</li>
+<li><p class="first">Finally, note that <tt class="docutils literal"><span class="pre">items()</span></tt> in this example also takes the <tt class="docutils literal"><span class="pre">obj</span></tt>
+argument. The algorithm for <tt class="docutils literal"><span class="pre">items</span></tt> is the same as described in the
+previous step &#8211; first, it tries <tt class="docutils literal"><span class="pre">items(obj)</span></tt>, then <tt class="docutils literal"><span class="pre">items()</span></tt>, and then
+finally an <tt class="docutils literal"><span class="pre">items</span></tt> class attribute (which should be a list).</p>
+</li>
+</ol>
+<p>Full documentation of all the methods and attributes of the <tt class="docutils literal"><span class="pre">Feed</span></tt> classes is
+always available from the official Django documentation
+(<a class="reference external" href="http://docs.djangoproject.com/en/dev/ref/contrib/syndication/">http://docs.djangoproject.com/en/dev/ref/contrib/syndication/</a>).</p>
+</div>
+<div class="section" id="specifying-the-type-of-feed">
+<h3>Specifying the Type of Feed</h3>
+<p>By default, the syndication framework produces RSS 2.0. To change that,
+add a <tt class="docutils literal"><span class="pre">feed_type</span></tt> attribute to your <tt class="docutils literal"><span class="pre">Feed</span></tt> class:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.utils.feedgenerator</span> <span class="kn">import</span> <span class="n">Atom1Feed</span>
+
+<span class="k">class</span> <span class="nc">MyFeed</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">feed_type</span> <span class="o">=</span> <span class="n">Atom1Feed</span>
+</pre></div>
+</div>
+<p>Note that you set <tt class="docutils literal"><span class="pre">feed_type</span></tt> to a class object, not an instance. Currently
+available feed types are shown in Table 11-1.</p>
+<table border="1" class="docutils">
+<caption>Table 11-1. Feed Types</caption>
+<colgroup>
+<col width="71%" />
+<col width="29%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Feed Class</th>
+<th class="head">Format</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">django.utils.feedgenerator.Rss201rev2Feed</span></tt></td>
+<td>RSS 2.01 (default)</td>
+</tr>
+<tr class="row-odd"><td><tt class="docutils literal"><span class="pre">django.utils.feedgenerator.RssUserland091Feed</span></tt></td>
+<td>RSS 0.91</td>
+</tr>
+<tr class="row-even"><td><tt class="docutils literal"><span class="pre">django.utils.feedgenerator.Atom1Feed</span></tt></td>
+<td>Atom 1.0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="enclosures">
+<h3>Enclosures</h3>
+<p>To specify enclosures (i.e., media resources associated with a feed item such as
+MP3 podcast feeds), use the <tt class="docutils literal"><span class="pre">item_enclosure_url</span></tt>, <tt class="docutils literal"><span class="pre">item_enclosure_length</span></tt>,
+and <tt class="docutils literal"><span class="pre">item_enclosure_mime_type</span></tt> hooks, for example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">myproject.models</span> <span class="kn">import</span> <span class="n">Song</span>
+
+<span class="k">class</span> <span class="nc">MyFeedWithEnclosures</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s">&quot;Example feed with enclosures&quot;</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="s">&quot;/feeds/example-with-enclosures/&quot;</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Song</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()[:</span><span class="mi">30</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">item_enclosure_url</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">song_url</span>
+
+    <span class="k">def</span> <span class="nf">item_enclosure_length</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">item</span><span class="o">.</span><span class="n">song_length</span>
+
+    <span class="n">item_enclosure_mime_type</span> <span class="o">=</span> <span class="s">&quot;audio/mpeg&quot;</span>
+</pre></div>
+</div>
+<p>This assumes, of course, that you&#8217;ve created a <tt class="docutils literal"><span class="pre">Song</span></tt> object with <tt class="docutils literal"><span class="pre">song_url</span></tt>
+and <tt class="docutils literal"><span class="pre">song_length</span></tt> (i.e., the size in bytes) fields.</p>
+</div>
+<div class="section" id="language">
+<h3>Language</h3>
+<p>Feeds created by the syndication framework automatically include the
+appropriate <tt class="docutils literal"><span class="pre">&lt;language&gt;</span></tt> tag (RSS 2.0) or <tt class="docutils literal"><span class="pre">xml:lang</span></tt> attribute (Atom).
+This comes directly from your <tt class="docutils literal"><span class="pre">LANGUAGE_CODE</span></tt> setting.</p>
+</div>
+<div class="section" id="urls">
+<h3>URLs</h3>
+<p>The <tt class="docutils literal"><span class="pre">link</span></tt> method/attribute can return either an absolute URL (e.g.,
+<tt class="docutils literal"><span class="pre">&quot;/blog/&quot;</span></tt>) or a URL with the fully qualified domain and protocol (e.g.,
+<tt class="docutils literal"><span class="pre">&quot;http://www.example.com/blog/&quot;</span></tt>). If <tt class="docutils literal"><span class="pre">link</span></tt> doesn&#8217;t return the domain,
+the syndication framework will insert the domain of the current site,
+according to your <tt class="docutils literal"><span class="pre">SITE_ID</span></tt> setting. (See Chapter 16 for more on <tt class="docutils literal"><span class="pre">SITE_ID</span></tt>
+and the sites framework.)</p>
+<p>Atom feeds require a <tt class="docutils literal"><span class="pre">&lt;link</span> <span class="pre">rel=&quot;self&quot;&gt;</span></tt> that defines the feed&#8217;s current
+location. The syndication framework populates this automatically.</p>
+</div>
+<div class="section" id="publishing-atom-and-rss-feeds-in-tandem">
+<h3>Publishing Atom and RSS Feeds in Tandem</h3>
+<p>Some developers like to make available both Atom <em>and</em> RSS versions of their
+feeds. That&#8217;s easy to do with Django: just create a subclass of your <tt class="docutils literal"><span class="pre">feed</span></tt>
+class and set the <tt class="docutils literal"><span class="pre">feed_type</span></tt> to something different. Then update your
+URLconf to add the extra versions. Here&#8217;s a full example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.syndication.feeds</span> <span class="kn">import</span> <span class="n">Feed</span>
+<span class="kn">from</span> <span class="nn">django.utils.feedgenerator</span> <span class="kn">import</span> <span class="n">Atom1Feed</span>
+<span class="kn">from</span> <span class="nn">mysite.blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="k">class</span> <span class="nc">RssLatestEntries</span><span class="p">(</span><span class="n">Feed</span><span class="p">):</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s">&quot;My Blog&quot;</span>
+    <span class="n">link</span> <span class="o">=</span> <span class="s">&quot;/archive/&quot;</span>
+    <span class="n">description</span> <span class="o">=</span> <span class="s">&quot;The latest news about stuff.&quot;</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s">&#39;-pub_date&#39;</span><span class="p">)[:</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="k">class</span> <span class="nc">AtomLatestEntries</span><span class="p">(</span><span class="n">RssLatestEntries</span><span class="p">):</span>
+    <span class="n">feed_type</span> <span class="o">=</span> <span class="n">Atom1Feed</span>
+</pre></div>
+</div>
+<p>And here&#8217;s the accompanying URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">myproject.feeds</span> <span class="kn">import</span> <span class="n">RssLatestEntries</span><span class="p">,</span> <span class="n">AtomLatestEntries</span>
+
+<span class="n">feeds</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;rss&#39;</span><span class="p">:</span> <span class="n">RssLatestEntries</span><span class="p">,</span>
+    <span class="s">&#39;atom&#39;</span><span class="p">:</span> <span class="n">AtomLatestEntries</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="c"># ...</span>
+    <span class="p">(</span><span class="s">r&#39;^feeds/(?P&lt;url&gt;.*)/$&#39;</span><span class="p">,</span> <span class="s">&#39;django.contrib.syndication.views.feed&#39;</span><span class="p">,</span>
+        <span class="p">{</span><span class="s">&#39;feed_dict&#39;</span><span class="p">:</span> <span class="n">feeds</span><span class="p">}),</span>
+    <span class="c"># ...</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="the-sitemap-framework">
+<h2>The Sitemap Framework</h2>
+<p>A <em>sitemap</em> is an XML file on your Web site that tells search engine indexers
+how frequently your pages change and how &#8220;important&#8221; certain pages are in
+relation to other pages on your site. This information helps search engines
+index your site.</p>
+<p>For example, here&#8217;s a piece of the sitemap for Django&#8217;s Web site
+(<a class="reference external" href="http://www.djangoproject.com/sitemap.xml">http://www.djangoproject.com/sitemap.xml</a>):</p>
+<div class="highlight-python"><pre>&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"&gt;
+  &lt;url&gt;
+    &lt;loc&gt;http://www.djangoproject.com/documentation/&lt;/loc&gt;
+    &lt;changefreq&gt;weekly&lt;/changefreq&gt;
+    &lt;priority&gt;0.5&lt;/priority&gt;
+  &lt;/url&gt;
+  &lt;url&gt;
+    &lt;loc&gt;http://www.djangoproject.com/documentation/0_90/&lt;/loc&gt;
+    &lt;changefreq&gt;never&lt;/changefreq&gt;
+    &lt;priority&gt;0.1&lt;/priority&gt;
+  &lt;/url&gt;
+  ...
+&lt;/urlset&gt;</pre>
+</div>
+<p>For more on sitemaps, see <a class="reference external" href="http://www.sitemaps.org/">http://www.sitemaps.org/</a>.</p>
+<p>The Django sitemap framework automates the creation of this XML file by
+letting you express this information in Python code. To create a sitemap,
+you just need to write a <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class and point to it in your URLconf.</p>
+<div class="section" id="installation">
+<h3>Installation</h3>
+<p>To install the sitemap application, follow these steps:</p>
+<ol class="arabic simple">
+<li>Add <tt class="docutils literal"><span class="pre">'django.contrib.sitemaps'</span></tt> to your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> setting.</li>
+<li>Make sure
+<tt class="docutils literal"><span class="pre">'django.template.loaders.app_directories.load_template_source'</span></tt> is
+in your <tt class="docutils literal"><span class="pre">TEMPLATE_LOADERS</span></tt> setting. It&#8217;s in there by default, so
+you&#8217;ll need to change this only if you&#8217;ve changed that setting.</li>
+<li>Make sure you&#8217;ve installed the sites framework (see Chapter 16).</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The sitemap application doesn&#8217;t install any database tables. The only
+reason it needs to go into <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt> is so the
+<tt class="docutils literal"><span class="pre">load_template_source</span></tt> template loader can find the default templates.</p>
+</div>
+</div>
+<div class="section" id="id1">
+<h3>Initialization</h3>
+<p>To activate sitemap generation on your Django site, add this line to your
+URLconf:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^sitemap\.xml$&#39;</span><span class="p">,</span> <span class="s">&#39;django.contrib.sitemaps.views.sitemap&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s">&#39;sitemaps&#39;</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>This line tells Django to build a sitemap when a client accesses
+<tt class="docutils literal"><span class="pre">/sitemap.xml</span></tt>. Note that the dot character in <tt class="docutils literal"><span class="pre">sitemap.xml</span></tt> is escaped
+with a backslash, because dots have a special meaning in regular expressions.</p>
+<p>The name of the sitemap file is not important, but the location is. Search
+engines will only index links in your sitemap for the current URL level and
+below. For instance, if <tt class="docutils literal"><span class="pre">sitemap.xml</span></tt> lives in your root directory, it may
+reference any URL in your site. However, if your sitemap lives at
+<tt class="docutils literal"><span class="pre">/content/sitemap.xml</span></tt>, it may only reference URLs that begin with
+<tt class="docutils literal"><span class="pre">/content/</span></tt>.</p>
+<p>The sitemap view takes an extra, required argument: <tt class="docutils literal"><span class="pre">{'sitemaps':</span>
+<span class="pre">sitemaps}</span></tt>. <tt class="docutils literal"><span class="pre">sitemaps</span></tt> should be a dictionary that maps a short section
+label (e.g., <tt class="docutils literal"><span class="pre">blog</span></tt> or <tt class="docutils literal"><span class="pre">news</span></tt>) to its <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class (e.g.,
+<tt class="docutils literal"><span class="pre">BlogSitemap</span></tt> or <tt class="docutils literal"><span class="pre">NewsSitemap</span></tt>). It may also map to an <em>instance</em> of a
+<tt class="docutils literal"><span class="pre">Sitemap</span></tt> class (e.g., <tt class="docutils literal"><span class="pre">BlogSitemap(some_var)</span></tt>).</p>
+</div>
+<div class="section" id="sitemap-classes">
+<h3>Sitemap Classes</h3>
+<p>A <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class is a simple Python class that represents a &#8220;section&#8221; of
+entries in your sitemap. For example, one <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class could represent
+all the entries of your weblog, while another could represent all of the
+events in your events calendar.</p>
+<p>In the simplest case, all these sections get lumped together into one
+<tt class="docutils literal"><span class="pre">sitemap.xml</span></tt>, but it&#8217;s also possible to use the framework to generate a
+sitemap index that references individual sitemap files, one per section
+(as described shortly).</p>
+<p><tt class="docutils literal"><span class="pre">Sitemap</span></tt> classes must subclass <tt class="docutils literal"><span class="pre">django.contrib.sitemaps.Sitemap</span></tt>. They
+can live anywhere in your code tree.</p>
+<p>For example, let&#8217;s assume you have a blog system, with an <tt class="docutils literal"><span class="pre">Entry</span></tt> model, and
+you want your sitemap to include all the links to your individual blog
+entries. Here&#8217;s how your <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class might look:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.sitemaps</span> <span class="kn">import</span> <span class="n">Sitemap</span>
+<span class="kn">from</span> <span class="nn">mysite.blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="k">class</span> <span class="nc">BlogSitemap</span><span class="p">(</span><span class="n">Sitemap</span><span class="p">):</span>
+    <span class="n">changefreq</span> <span class="o">=</span> <span class="s">&quot;never&quot;</span>
+    <span class="n">priority</span> <span class="o">=</span> <span class="mf">0.5</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">is_draft</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">lastmod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">obj</span><span class="o">.</span><span class="n">pub_date</span>
+</pre></div>
+</div>
+<p>Declaring a <tt class="docutils literal"><span class="pre">Sitemap</span></tt> should look very similar to declaring a <tt class="docutils literal"><span class="pre">Feed</span></tt>.
+That&#8217;s by design.</p>
+<p>Like <tt class="docutils literal"><span class="pre">Feed</span></tt> classes, <tt class="docutils literal"><span class="pre">Sitemap</span></tt> members can be either methods or
+attributes. See the steps in the earlier &#8220;A Complex Example&#8221; section for more
+about how this works.</p>
+<p>A <tt class="docutils literal"><span class="pre">Sitemap</span></tt> class can define the following methods/attributes:</p>
+<ul>
+<li><p class="first"><tt class="docutils literal"><span class="pre">items</span></tt> (<strong>required</strong>): Provides list of objects. The framework
+doesn&#8217;t care what <em>type</em> of objects they are; all that matters is that
+these objects get passed to the <tt class="docutils literal"><span class="pre">location()</span></tt>, <tt class="docutils literal"><span class="pre">lastmod()</span></tt>,
+<tt class="docutils literal"><span class="pre">changefreq()</span></tt>, and <tt class="docutils literal"><span class="pre">priority()</span></tt> methods.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">location</span></tt> (optional): Gives the absolute URL for a given object.
+Here, &#8220;absolute URL&#8221; means a URL that doesn&#8217;t include the protocol or
+domain. Here are some examples:</p>
+<ul class="simple">
+<li>Good: <tt class="docutils literal"><span class="pre">'/foo/bar/'</span></tt></li>
+<li>Bad: <tt class="docutils literal"><span class="pre">'example.com/foo/bar/'</span></tt></li>
+<li>Bad: <tt class="docutils literal"><span class="pre">'http://example.com/foo/bar/'</span></tt></li>
+</ul>
+<p>If <tt class="docutils literal"><span class="pre">location</span></tt> isn&#8217;t provided, the framework will call the
+<tt class="docutils literal"><span class="pre">get_absolute_url()</span></tt> method on each object as returned by
+<tt class="docutils literal"><span class="pre">items()</span></tt>.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">lastmod</span></tt> (optional): The object&#8217;s &#8220;last modification&#8221; date, as a
+Python <tt class="docutils literal"><span class="pre">datetime</span></tt> object.</p>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">changefreq</span></tt> (optional): How often the object changes. Possible values
+(as given by the Sitemaps specification) are as follows:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">'always'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'hourly'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'daily'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'weekly'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'monthly'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'yearly'</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">'never'</span></tt></li>
+</ul>
+</li>
+<li><p class="first"><tt class="docutils literal"><span class="pre">priority</span></tt> (optional): A suggested indexing priority between <tt class="docutils literal"><span class="pre">0.0</span></tt>
+and <tt class="docutils literal"><span class="pre">1.0</span></tt>. The default priority of a page is <tt class="docutils literal"><span class="pre">0.5</span></tt>; see the
+<a class="reference external" href="http://sitemaps.org/">http://sitemaps.org/</a> documentation for more about how <tt class="docutils literal"><span class="pre">priority</span></tt> works.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="shortcuts">
+<h3>Shortcuts</h3>
+<p>The sitemap framework provides a couple convenience classes for common cases. These
+are described in the sections that follow.</p>
+<div class="section" id="flatpagesitemap">
+<h4>FlatPageSitemap</h4>
+<p>The <tt class="docutils literal"><span class="pre">django.contrib.sitemaps.FlatPageSitemap</span></tt> class looks at all flat pages
+defined for the current site and creates an entry in the sitemap. These
+entries include only the <tt class="docutils literal"><span class="pre">location</span></tt> attribute &#8211; not <tt class="docutils literal"><span class="pre">lastmod</span></tt>,
+<tt class="docutils literal"><span class="pre">changefreq</span></tt>, or <tt class="docutils literal"><span class="pre">priority</span></tt>.</p>
+<p>See Chapter 16 for more about flat pages.</p>
+</div>
+<div class="section" id="genericsitemap">
+<h4>GenericSitemap</h4>
+<p>The <tt class="docutils literal"><span class="pre">GenericSitemap</span></tt> class works with any generic views (see Chapter 11) you
+already have.</p>
+<p>To use it, create an instance, passing in the same <tt class="docutils literal"><span class="pre">info_dict</span></tt> you pass to
+the generic views. The only requirement is that the dictionary have a
+<tt class="docutils literal"><span class="pre">queryset</span></tt> entry. It may also have a <tt class="docutils literal"><span class="pre">date_field</span></tt> entry that specifies a
+date field for objects retrieved from the <tt class="docutils literal"><span class="pre">queryset</span></tt>. This will be used for
+the <tt class="docutils literal"><span class="pre">lastmod</span></tt> attribute in the generated sitemap. You may also pass
+<tt class="docutils literal"><span class="pre">priority</span></tt> and <tt class="docutils literal"><span class="pre">changefreq</span></tt> keyword arguments to the <tt class="docutils literal"><span class="pre">GenericSitemap</span></tt>
+constructor to specify these attributes for all URLs.</p>
+<p>Here&#8217;s an example of a URLconf using both <tt class="docutils literal"><span class="pre">FlatPageSitemap</span></tt> and
+<tt class="docutils literal"><span class="pre">GenericSiteMap</span></tt> (with the hypothetical <tt class="docutils literal"><span class="pre">Entry</span></tt> object from earlier):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.conf.urls.defaults</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">django.contrib.sitemaps</span> <span class="kn">import</span> <span class="n">FlatPageSitemap</span><span class="p">,</span> <span class="n">GenericSitemap</span>
+<span class="kn">from</span> <span class="nn">mysite.blog.models</span> <span class="kn">import</span> <span class="n">Entry</span>
+
+<span class="n">info_dict</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;queryset&#39;</span><span class="p">:</span> <span class="n">Entry</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">(),</span>
+    <span class="s">&#39;date_field&#39;</span><span class="p">:</span> <span class="s">&#39;pub_date&#39;</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">sitemaps</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s">&#39;flatpages&#39;</span><span class="p">:</span> <span class="n">FlatPageSitemap</span><span class="p">,</span>
+    <span class="s">&#39;blog&#39;</span><span class="p">:</span> <span class="n">GenericSitemap</span><span class="p">(</span><span class="n">info_dict</span><span class="p">,</span> <span class="n">priority</span><span class="o">=</span><span class="mf">0.6</span><span class="p">),</span>
+<span class="p">}</span>
+
+<span class="n">urlpatterns</span> <span class="o">=</span> <span class="n">patterns</span><span class="p">(</span><span class="s">&#39;&#39;</span><span class="p">,</span>
+    <span class="c"># some generic view using info_dict</span>
+    <span class="c"># ...</span>
+
+    <span class="c"># the sitemap</span>
+    <span class="p">(</span><span class="s">r&#39;^sitemap\.xml$&#39;</span><span class="p">,</span>
+     <span class="s">&#39;django.contrib.sitemaps.views.sitemap&#39;</span><span class="p">,</span>
+     <span class="p">{</span><span class="s">&#39;sitemaps&#39;</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">})</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="creating-a-sitemap-index">
+<h3>Creating a Sitemap Index</h3>
+<p>The sitemap framework also has the ability to create a sitemap index that
+references individual sitemap files, one per each section defined in your
+<tt class="docutils literal"><span class="pre">sitemaps</span></tt> dictionary. The only differences in usage are as follows:</p>
+<ul class="simple">
+<li>You use two views in your URLconf:
+<tt class="docutils literal"><span class="pre">django.contrib.sitemaps.views.index</span></tt> and
+<tt class="docutils literal"><span class="pre">django.contrib.sitemaps.views.sitemap</span></tt>.</li>
+<li>The <tt class="docutils literal"><span class="pre">django.contrib.sitemaps.views.sitemap</span></tt> view should take a
+<tt class="docutils literal"><span class="pre">section</span></tt> keyword argument.</li>
+</ul>
+<p>Here is what the relevant URLconf lines would look like for the previous example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="s">r&#39;^sitemap.xml$&#39;</span><span class="p">,</span>
+ <span class="s">&#39;django.contrib.sitemaps.views.index&#39;</span><span class="p">,</span>
+ <span class="p">{</span><span class="s">&#39;sitemaps&#39;</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">}),</span>
+
+<span class="p">(</span><span class="s">r&#39;^sitemap-(?P&lt;section&gt;.+).xml$&#39;</span><span class="p">,</span>
+ <span class="s">&#39;django.contrib.sitemaps.views.sitemap&#39;</span><span class="p">,</span>
+ <span class="p">{</span><span class="s">&#39;sitemaps&#39;</span><span class="p">:</span> <span class="n">sitemaps</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>This will automatically generate a <tt class="docutils literal"><span class="pre">sitemap.xml</span></tt> file that references both
+<tt class="docutils literal"><span class="pre">sitemap-flatpages.xml</span></tt> and <tt class="docutils literal"><span class="pre">sitemap-blog.xml</span></tt>. The <tt class="docutils literal"><span class="pre">Sitemap</span></tt> classes
+and the <tt class="docutils literal"><span class="pre">sitemaps</span></tt> dictionary don&#8217;t change at all.</p>
+</div>
+<div class="section" id="pinging-google">
+<h3>Pinging Google</h3>
+<p>You may want to &#8220;ping&#8221; Google when your sitemap changes, to let it know to
+reindex your site. The framework provides a function to do just that:
+<tt class="docutils literal"><span class="pre">django.contrib.sitemaps.ping_google()</span></tt>.</p>
+<p><tt class="docutils literal"><span class="pre">ping_google()</span></tt> takes an optional argument, <tt class="docutils literal"><span class="pre">sitemap_url</span></tt>, which should be
+the absolute URL of your site&#8217;s sitemap (e.g., <tt class="docutils literal"><span class="pre">'/sitemap.xml'</span></tt>). If this
+argument isn&#8217;t provided, <tt class="docutils literal"><span class="pre">ping_google()</span></tt> will attempt to figure out your
+sitemap by performing a reverse lookup on your URLconf.</p>
+<p><tt class="docutils literal"><span class="pre">ping_google()</span></tt> raises the exception
+<tt class="docutils literal"><span class="pre">django.contrib.sitemaps.SitemapNotFound</span></tt> if it cannot determine your
+sitemap URL.</p>
+<p>One useful way to call <tt class="docutils literal"><span class="pre">ping_google()</span></tt> is from a model&#8217;s <tt class="docutils literal"><span class="pre">save()</span></tt> method:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">django.contrib.sitemaps</span> <span class="kn">import</span> <span class="n">ping_google</span>
+
+<span class="k">class</span> <span class="nc">Entry</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="c"># ...</span>
+    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Entry</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ping_google</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="c"># Bare &#39;except&#39; because we could get a variety</span>
+            <span class="c"># of HTTP-related exceptions.</span>
+            <span class="k">pass</span>
+</pre></div>
+</div>
+<p>A more efficient solution, however, would be to call <tt class="docutils literal"><span class="pre">ping_google()</span></tt> from a
+<tt class="docutils literal"><span class="pre">cron</span></tt> script or some other scheduled task. The function makes an HTTP
+request to Google&#8217;s servers, so you may not want to introduce that network
+overhead each time you call <tt class="docutils literal"><span class="pre">save()</span></tt>.</p>
+<p>Finally, if <tt class="docutils literal"><span class="pre">'django.contrib.sitemaps'</span></tt> is in your <tt class="docutils literal"><span class="pre">INSTALLED_APPS</span></tt>, then
+your <tt class="docutils literal"><span class="pre">manage.py</span></tt> will include a new command, <tt class="docutils literal"><span class="pre">ping_google</span></tt>. This is useful
+for command-line access to pinging. For example:</p>
+<div class="highlight-python"><pre>python manage.py ping_google /sitemap.xml</pre>
+</div>
+</div>
+</div>
+<div class="section" id="what-s-next">
+<h2>What&#8217;s Next?</h2>
+<p>Next, we&#8217;ll continue to dig deeper into the built-in tools Django gives you.
+<a class="reference external" href="chapter14.html">Chapter 14</a> looks at all the tools you need to provide user-customized
+sites: sessions, users, and authentication.</p>
+</div>
+</div>
+</div>
+
+          </div>
+        </div>
+      </div>
+      <div id="ft">
+        
+<div class="nav">
+    
+        <a href='chapter12.html'>&laquo; previous</a> &loz;
+    
+    <a href="index.html">table of contents</a>
+    
+        &loz; <a href='chapter14.html'>next &raquo;</a>
+    
+</div>
+
+        Copyright Adrian Holovaty, Jacob Kaplan-Moss, et al.<br>This
+        work is licensed under the <a href="license.html">GNU Free Document
+        License</a>.
+      </div>
+    </div>
+  
+  </body>
+</html>
