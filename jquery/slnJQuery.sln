@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "objJQuery", "objJQuery", "{A1484E9C-512C-4109-8CB6-8EB13F7F3660}"
+EndProject
+Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "slnJQuery", ".", "{E39EE0CB-F7F8-4525-B2CA-8799B27F56A9}"
+	ProjectSection(WebsiteProperties) = preProject
+		TargetFramework = "3.5"
+		Debug.AspNetCompiler.VirtualPath = "/slnJQuery"
+		Debug.AspNetCompiler.PhysicalPath = "..\slnJQuery\"
+		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\slnJQuery\"
+		Debug.AspNetCompiler.Updateable = "true"
+		Debug.AspNetCompiler.ForceOverwrite = "true"
+		Debug.AspNetCompiler.FixedNames = "false"
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.VirtualPath = "/slnJQuery"
+		Release.AspNetCompiler.PhysicalPath = "..\slnJQuery\"
+		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\slnJQuery\"
+		Release.AspNetCompiler.Updateable = "true"
+		Release.AspNetCompiler.ForceOverwrite = "true"
+		Release.AspNetCompiler.FixedNames = "false"
+		Release.AspNetCompiler.Debug = "False"
+		VWDPort = "13706"
+		DefaultWebSiteLanguage = "Visual C#"
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|.NET = Debug|.NET
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E39EE0CB-F7F8-4525-B2CA-8799B27F56A9}.Debug|.NET.ActiveCfg = Debug|.NET
+		{E39EE0CB-F7F8-4525-B2CA-8799B27F56A9}.Debug|.NET.Build.0 = Debug|.NET
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E39EE0CB-F7F8-4525-B2CA-8799B27F56A9} = {A1484E9C-512C-4109-8CB6-8EB13F7F3660}
+	EndGlobalSection
+EndGlobal

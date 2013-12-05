@@ -1,0 +1,22 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>jQuery控制CSS样式</title>
+    <script language="javascript" type="text/javascript" 
+            src="Jscript/jquery-1.4.2.min.js"></script>
+    <style type="text/css">
+           .divDefalut{width:260px;font-size:10pt;padding:5px}
+           .divClick{width:260px;border:solid 1px #666;font-size:10pt;background-color:#eee;padding:5px}
+    </style>
+    <script type="text/javascript">
+         $(function(){
+          $(".divDefalut").click(function(){
+            $(this).toggleClass("divClick").html("点击后的样式");
+          });
+         });
+    </script>
+</head>
+<body>
+    <div class="divDefalut">点击前的样式</div>
+</body>
+</html>

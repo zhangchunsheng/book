@@ -1,0 +1,234 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html>   
+<head>   
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">  
+<title>jQuery权威指南-code</title>   
+<meta name="keywords" content="jQuery权威指南">   
+<meta name="description" content="jQuery权威指南">
+<script language="javascript" type="text/javascript" 
+		src="Ch1/Jscript/jquery-1.4.2.min.js"></script>
+<script language="javascript">
+/*
+* jQuery权威指南
+* 源代码来自网上
+* 导航整理: 罩雳菌 email:imp_rove@163.com QQ:124343372 欢迎交流
+*/
+$(function(){
+	$(".indexChapter").each(function(index) { 
+		$(this).click(function(){
+			//$(".chapter ul .show").removeClass("show");
+			$(this).next("ul").toggle();
+		})
+	})
+})
+</script>
+<style type="text/css">
+body{pading:0px;}
+#con{
+float:left;
+width:260px;
+min-height:510px;
+height:510px;
+border:solid 1px #006600;
+font-size:12px;
+overflow-y:auto;
+scrollbar-face-color:#ffffff; 
+scrollbar-highlight-color:#cccccc;
+scrollbar-shadow-color:#cccccc;
+scrollbar-3dlight-color:#ffffff;
+scrollbar-arrow-color:#919192;
+scrollbar-track-color:#ffffff;
+scrollbar-darkshadow-color:#ffffff;  
+}
+#view{margin-left:20px;width:700px;min-height:510px;height:510px;border:solid 1px #006600;font-size:12px;float:left;}
+ul{margin:0px;padding-top:0px;padding-left:10px; display:none;}
+ul li{float:left; text-align:left;padding-top:2px;padding-bottom:5px; width:250px;list-style:disc inside; list-style-type:decimal;}
+a{text-decoration:none; color:#555;}
+a:hover{text-decoration:none; color:#7f0019}
+.chapter{width:260px;}
+.indexChapter{margin:0px;padding:5px;font-weight:bold;width:250px;}
+</style>
+</head>   
+<body>
+<div id="con">
+	<div id="chapter_1" class="chapter">
+		<div class="indexChapter">第1章</div>
+		<ul>
+			<li><a href="Ch1/1-1.html" target="viewframe">第一个简单的jQuery程序</a></li>
+			<li><a href="Ch1/1-2.html" target="viewframe">jQuery事件的链式写法</a></li>
+			<li><a href="Ch1/1-3.html" target="viewframe">控制jQuery对象</a></li>
+			<li><a href="Ch1/1-4.html" target="viewframe">jQuery控制CSS样式</a></li>
+		</ul>
+	</div>
+	<div id="chapter_2" class="chapter">
+		<div class="indexChapter">第2章</div>
+		<ul>
+			<li><a href="Ch2/2-1.html" target="viewframe">使用JavaScript实现隔行变色</a></li>
+			<li><a href="Ch2/2-2.html" target="viewframe">使用jQuery选择器实现隔行变色</a></li>
+			<li><a href="Ch2/2-3.html" target="viewframe">JavaScript代码检测页面元素</a></li>
+			<li><a href="Ch2/2-4.html" target="viewframe">jQuery代码检测页面元素</a></li>
+			<li><a href="Ch2/2-5.html" target="viewframe">使用jQuery基本选择器</a></li>
+			<li><a href="Ch2/2-6.html" target="viewframe">使用jQuery层次选择器</a></li>
+			<li><a href="Ch2/2-7.html" target="viewframe">使用jQuery基本过滤选择器</a></li>
+			<li><a href="Ch2/2-8.html" target="viewframe">使用jQuery内容过滤选择器</a></li>
+			<li><a href="Ch2/2-9.html" target="viewframe">使用jQuery可见性过滤选择器</a></li>
+			<li><a href="Ch2/2-10.html" target="viewframe">使用jQuery属性过滤选择器</a></li>
+			<li><a href="Ch2/2-11.html" target="viewframe">使用jQuery子元素过滤选择器</a></li>
+			<li><a href="Ch2/2-12.html" target="viewframe">使用jQuery表单对象属性过滤选择器</a></li>
+			<li><a href="Ch2/2-13.html" target="viewframe">使用jQuery表单过滤选择器</a></li>
+		</ul>
+	</div>
+	<div id="chapter_3" class="chapter">
+		<div class="indexChapter">第3章</div>
+		<ul>
+			<li><a href="Ch3/3-1.html" target="viewframe">DOM树状文档</a></li>
+			<li><a href="Ch3/3-2.html" target="viewframe">获取元素的属性</a></li>
+			<li><a href="Ch3/3-3.html" target="viewframe">设置元素的属性</a></li>
+			<li><a href="Ch3/3-4.html" target="viewframe">设置元素的属性(二)</a></li>
+			<li><a href="Ch3/3-5.html" target="viewframe">获取或设置元素的内容</a></li>
+			<li><a href="Ch3/3-6.html" target="viewframe">获取或设置元素的值</a></li>
+			<li><a href="Ch3/3-7.html" target="viewframe">直接设置元素样式值</a></li>
+			<li><a href="Ch3/3-8.html" target="viewframe">增加CSS类别</a></li>
+			<li><a href="Ch3/3-9.html" target="viewframe">类别切换</a></li>
+			<li><a href="Ch3/3-10.html" target="viewframe">动态创建节点元素</a></li>
+			<li><a href="Ch3/3-11.html" target="viewframe">动态插入节点方法</a></li>
+			<li><a href="Ch3/3-12.html" target="viewframe">动态插入节点方法</a></li>
+			<li><a href="Ch3/3-13.html" target="viewframe">动态插入节点方法</a></li>
+			<li><a href="Ch3/3-14.html" target="viewframe">复制元素节点</a></li>
+			<li><a href="Ch3/3-15.html" target="viewframe">替换元素节点</a></li>
+			<li><a href="Ch3/3-16.html" target="viewframe">包裹元素节点</a></li>
+			<li><a href="Ch3/3-17.html" target="viewframe">遍历元素</a></li>
+			<li><a href="Ch3/3-18.html" target="viewframe">删除元素</a></li>
+			<li><a href="Ch3/ListManager.html" target="viewframe">数据管理</a></li>
+		</ul>
+	</div>
+	<div id="chapter_4" class="chapter">
+		<div class="indexChapter">第4章</div>
+		<ul>
+			<li><a href="Ch4/4-1.html" target="viewframe">事件中的冒泡现象</a></li>
+			<li><a href="Ch4/4-2.html" target="viewframe">bind方法绑定事件</a></li>
+			<li><a href="Ch4/4-3.html" target="viewframe">映射方式绑定不同的事件</a></li>
+			<li><a href="Ch4/4-4.html" target="viewframe">切换事件hover</a></li>
+			<li><a href="Ch4/4-5.html" target="viewframe">切换事件toggle</a></li>
+			<li><a href="Ch4/4-6.html" target="viewframe">移除事件unbind</a></li>
+			<li><a href="Ch4/4-7.html" target="viewframe">其他事件one</a></li>
+			<li><a href="Ch4/4-8.html" target="viewframe">其他事件trigger</a></li>
+			<li><a href="Ch4/4-9.html" target="viewframe">文本框中的事件应用</a></li>
+			<li><a href="Ch4/4-10.html" target="viewframe">列表框中事件应用</a></li>
+			<li><a href="Ch4/4-11.html" target="viewframe">列表中的导航菜单应用</a></li>
+			<li><a href="Ch4/4-12.html" target="viewframe">网页选项卡应用</a></li>
+			<li><a href="Ch4/delete.html" target="viewframe">删除记录时的提示效果</a></li>
+		</ul>
+	</div>	
+	<div id="chapter_5" class="chapter">
+		<div class="indexChapter">第5章</div>
+		<ul>
+			<li><a href="Ch5/5-1.html" target="viewframe">show()与hide()方法</a></li>
+			<li><a href="Ch5/5-2.html" target="viewframe">动画效果的show()与hide()方法</a></li>
+			<li><a href="Ch5/5-3.html" target="viewframe">toggle()方法</a></li>
+			<li><a href="Ch5/5-4.html" target="viewframe">slideDown()与slideUp()方法</a></li>
+			<li><a href="Ch5/5-5.html" target="viewframe">slideToggle()方法</a></li>
+			<li><a href="Ch5/5-6.html" target="viewframe">fadeIn()和fadeOut()方法</a></li>
+			<li><a href="Ch5/5-7.html" target="viewframe">fadeTo()方法</a></li>
+			<li><a href="Ch5/5-8.html" target="viewframe">简单的动画</a></li>
+			<li><a href="Ch5/5-9.html" target="viewframe">移动位置的动画</a></li>
+			<li><a href="Ch5/5-10.html" target="viewframe">队列中的动画</a></li>
+			<li><a href="Ch5/5-11.html" target="viewframe">动画停止和延时</a></li>
+			<li><a href="Ch5/listImg.html" target="viewframe">动画方式浏览图片</a></li>
+		</ul>
+	</div>
+	<div id="chapter_6" class="chapter">
+		<div class="indexChapter">第6章</div>
+		<ul>
+			<li><a href="Ch6/6-1.html" target="viewframe">传统的JavaScript方法实现Ajax功能</a></li>
+			<li><a href="Ch6/6-2.html" target="viewframe">load()方法实现Ajax功能</a></li>
+			<li><a href="Ch6/6-3.html" target="viewframe">getJSON函数获取数据</a></li>
+			<li><a href="Ch6/6-4.html" target="viewframe">getScript函数获取数据</a></li>
+			<li><a href="Ch6/6-5.html" target="viewframe">get实现异步获取xml文档数据</a></li>
+			<li><a href="Ch6/6-6.html" target="viewframe">$.get发送请求</a></li>
+			<li><a href="Ch6/6-7.html" target="viewframe">$.post发送请求</a></li>
+			<li><a href="Ch6/6-8.html" target="viewframe">serialize()序列化表单</a></li>
+			<li><a href="Ch6/6-9.html" target="viewframe">$.ajax()方法发送请求</a></li>
+		</ul>
+	</div>
+	<div id="chapter_7" class="chapter">
+		<div class="indexChapter">第7章</div>
+		<ul>
+			<li><a href="Ch7/7-1.html" target="viewframe">validate验证插件</a></li>
+			<li><a href="Ch7/7-2.html" target="viewframe">form表单插件</a></li>
+			<li><a href="Ch7/7-3.html" target="viewframe">cookie插件</a></li>
+			<li><a href="Ch7/7-4.html" target="viewframe">autocomplete插件</a></li>
+			<li><a href="Ch7/7-5.html" target="viewframe">notesforlightbox插件</a></li>
+			<li><a href="Ch7/7-6.html" target="viewframe">ContextMenu插件</a></li>
+			<li><a href="Ch7/7-7.html" target="viewframe">JQZoom放大镜插件</a></li>
+			<li><a href="Ch7/7-8.html" target="viewframe">编写一个对象级别的插件</a></li>
+			<li><a href="Ch7/7-9.html" target="viewframe">编写一个类级别的插件</a></li>
+			<li><a href="Ch7/UploadPic.html" target="viewframe">uploadify文件上传插件</a></li>	
+		</ul>
+	</div>
+	<div id="chapter_8" class="chapter">
+		<div class="indexChapter">第8章</div>
+		<ul>
+			<li><a href="Ch8/8-1.html" target="viewframe">使用draggable插件实现对象的拖曳操作</a></li>
+			<li><a href="Ch8/8-2.html" target="viewframe">使用droppable插件实现对象的置放操作</a></li>
+			<li><a href="Ch8/8-3.html" target="viewframe">使用sortable插件实现列表中表项的拖曳排序操作</a></li>
+			<li><a href="Ch8/8-4.html" target="viewframe">使用accordion插件实现区域块的折叠操作</a></li>
+			<li><a href="Ch8/8-5.html" target="viewframe">使用datepicker插件实现选择日期的操作一</a></li>
+			<li><a href="Ch8/8-6.html" target="viewframe">使用datepicker插件实现选择日期的操作二</a></li>
+			<li><a href="Ch8/8-7.html" target="viewframe">使用tabs插件展示选项卡的基本功能</a></li>
+			<li><a href="Ch8/8-8.html" target="viewframe">使用dialog插件弹出提示和确定信息对话框</a></li>
+			<li><a href="Ch8/PhotoManage.html" target="viewframe">使用jQuery UI插件以拖动方式管理相册</a></li>
+		</ul>
+	</div>
+	<div id="chapter_9" class="chapter">
+		<div class="indexChapter">第9章</div>
+		<ul>
+			<li><a href="Ch9/9-1.html" target="viewframe">使用browser对象获取浏览器信息</a></li>
+			<li><a href="Ch9/9-2.html" target="viewframe">使用boxModel对象检测是否是W3C盒子模型</a></li>
+			<li><a href="Ch9/9-3.html" target="viewframe">使用$.each()工具函数遍历数组</a></li>
+			<li><a href="Ch9/9-4.html" target="viewframe">使用$.each()工具函数遍历ajaxSettings对象</a></li>
+			<li><a href="Ch9/9-5.html" target="viewframe">使用$.grep()工具函数筛选数组中的元素</a></li>
+			<li><a href="Ch9/9-6.html" target="viewframe">使用$.map()工具函数变更数组中的元素</a></li>
+			<li><a href="Ch9/9-7.html" target="viewframe">使用$.inArray()工具函数搜索数组中指定元素的位置</a></li>
+			<li><a href="Ch9/9-8.html" target="viewframe">使用$.trim()工具函数除掉字符串的空格符</a></li>
+			<li><a href="Ch9/9-9.html" target="viewframe">使用$.isEmptyObject()函数检测对象是否为空</a></li>
+			<li><a href="Ch9/9-10.html" target="viewframe">使用$.isPlainObject()函数检测对象是否为原始对象</a></li>
+			<li><a href="Ch9/9-11.html" target="viewframe">使用$.contains()函数检测两个节点是否包含</a></li>
+			<li><a href="Ch9/9-12.html" target="viewframe">使用$.param()进行数组元素序列化</a></li>
+			<li><a href="Ch9/9-13.html" target="viewframe">使用函数$.extend()扩展工具函数</a></li>
+			<li><a href="Ch9/9-14.html" target="viewframe">使用函数$.proxy()改变事件函数的作用域</a></li>
+			<li><a href="Ch9/chkStr.html" target="viewframe">使用jQuery扩展工具函数实现对字符串指定类型的检测<</a></li>
+		</ul>
+	</div>
+	<div id="chapter_10" class="chapter">
+		<div class="indexChapter">第10章</div>
+		<ul>
+			<li><a href="Ch10/10-1.html" target="viewframe">在指定的查找范围内获取DOM元素</a></li>
+			<li><a href="Ch10/10-2.html" target="viewframe">选择器中含有空格符与不含空格符的区别</a></li>
+			<li><a href="Ch10/10-3.html" target="viewframe">事件中的target方法优化冒泡现象</a></li>
+			<li><a href="Ch10/10-4.html" target="viewframe">使用data()方法在元素上存取移数据</a></li>
+			<li><a href="Ch10/10-5.html" target="viewframe">使用data()方法在元素上存取移JSON格式的数据</a></li>
+			<li><a href="Ch10/10-6.html" target="viewframe">解决jQuery库先于其他库导入时变量“$”的使用权</a></li>
+			<li><a href="Ch10/10-7.html" target="viewframe">解决jQuery库后于其他库导入时变量“$”的使用权</a></li>
+			<li><a href="Ch10/10-8.html" target="viewframe">使用子查询优化选择器性能</a></li>
+			<li><a href="Ch10/10-9.html" target="viewframe">减少对DOM元素直接操作</a></li>
+			<li><a href="Ch10/10-10.html" target="viewframe">DOM对象与jQuery对象的类型转换</a></li>
+		</ul>
+	</div>
+	<div id="chapter_11" class="chapter">
+		<div class="indexChapter">第11章</div>
+		<ul>
+			<li><a href="Ch11/Chats/login.html" target="viewframe">应用案例-聊天室系统</a></li>
+			<li><a href="Ch11/Cropper/ImgCropper.html" target="viewframe">应用案例_图片切割</a></li>
+		</ul>
+	</div>
+
+</div>
+<div id="view">	
+<iframe id="viewframe" name="viewframe" scrolling="no" width="700" height="500" 
+            ALLOWTRANSPARENCY="true" frameborder="0" 
+            src="">
+</iframe>
+</div>
+</body>   
+</html>
