@@ -1,39 +1,37 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<meta charset="utf-8">
 <style type="text/css">
 <!--
 @import url(stylesheet/text.css);
 @import url(stylesheet/box.css);
 -->
 </style>
-<title>���� Python �̳� / �쳣 / �����쳣 </title>
+<title>简明 Python 教程 / 异常 / 引发异常 </title>
 </head>
 
 <body>
 <table width="100%">
 <tr>
-<th colspan="3" align="center"><span class="header">���� Python �̳�</span></th>
+<th colspan="3" align="center"><span class="header">简明 Python 教程</span></th>
 </tr>
-<th colspan="3" align="center">��13�� �쳣</th>
+<th colspan="3" align="center">第13章 异常</th>
 <tr>
-<th width="20%" align="left"><a href="ch13s02.html">��һҳ</a></th>
-<th width="60%" align="center"><span class="header2">�����쳣</span></th>
-<th align="right"><a href="ch13s04.html">��һҳ</a></th>
+<th width="20%" align="left"><a href="ch13s02.html">上一页</a></th>
+<th width="60%" align="center"><span class="header2">引发异常</span></th>
+<th align="right"><a href="ch13s04.html">下一页</a></th>
 </tr>
 </table>
 
 <hr noshade>
 
-<h1>�����쳣</h1>
+<h1>引发异常</h1>
 
-<p>�����ʹ��<code>raise</code>��� <dfn>����</dfn> �쳣���㻹��ָ������/�쳣�����ƺͰ����쳣 <dfn>������</dfn> �쳣��������������Ĵ�����쳣Ӧ�÷ֱ���һ��<code>Error</code>��<code>Exception</code>���ֱ�ӻ��ӵ����ࡣ</p>
+<p>你可以使用<code>raise</code>语句 <dfn>引发</dfn> 异常。你还得指明错误/异常的名称和伴随异常 <dfn>触发的</dfn> 异常对象。你可以引发的错误或异常应该分别是一个<code>Error</code>或<code>Exception</code>类的直接或间接导出类。</p>
 
-<h2><a name="how">��������쳣</a></h2>
+<h2><a name="how">如何引发异常</a></h2>
 
-<p class="exampletitle"><a name="e132">��13.2 ��������쳣</a></p>
+<p class="exampletitle"><a name="e132">例13.2 如何引发异常</a></p>
 <p class="filebox">
 <code class="comment">#!/usr/bin/python<br>
 # Filename: raising.py</code><br>
@@ -59,9 +57,9 @@
 <code class="key">&nbsp;&nbsp;&nbsp;&nbsp;print </code><code class="cite">'No exception was raised.'
 </code>
 </p>
-<p>Դ�ļ���<a href="code/raising.py">code/raising.py</a>��</p>
+<p>源文件（<a href="code/raising.py">code/raising.py</a>）</p>
 
-<h2>���</h2>
+<h2>输出</h2>
 <p class="codebox"><code>
 $ python raising.py<br>
 Enter something --&gt;<br>
@@ -76,21 +74,21 @@ Enter something --&gt; abc<br>
 No exception was raised.
 </code></p>
 
-<h2>����ι���</h2>
-<p>������Ǵ����������Լ����쳣���ͣ���ʵ���ǿ���ʹ���κ�Ԥ������쳣/��������µ��쳣������<code>ShortInputException</code>�ࡣ���������򡪡�<code>length</code>�Ǹ�������ĳ��ȣ�<code>atleast</code>���ǳ�����������С���ȡ�</p>
-<p>��<code>except</code>�Ӿ��У������ṩ�˴������������ʾ����/�쳣����ı��������뺯�������е��βκ�ʵ�θ������ơ�������ر��<code>except</code>�Ӿ��У�����ʹ���쳣�����<code>length</code>��<code>atleast</code>����Ϊ�û���ӡһ��ǡ������Ϣ��</p>
+<h2>它如何工作</h2>
+<p>这里，我们创建了我们自己的异常类型，其实我们可以使用任何预定义的异常/错误。这个新的异常类型是<code>ShortInputException</code>类。它有两个域——<code>length</code>是给定输入的长度，<code>atleast</code>则是程序期望的最小长度。</p>
+<p>在<code>except</code>从句中，我们提供了错误类和用来表示错误/异常对象的变量。这与函数调用中的形参和实参概念类似。在这个特别的<code>except</code>从句中，我们使用异常对象的<code>length</code>和<code>atleast</code>域来为用户打印一个恰当的消息。</p>
 
 <hr noshade>
 
 <table width="100%">
 <tr>
-<th width="20%" align="left"><a href="ch13s02.html">��һҳ</a></th>
-<th width="60%" align="center"><a href="ch13.html">��һ��</a></th>
-<th width="20%" align="right"><a href="ch13s04.html">��һҳ</a></th>
+<th width="20%" align="left"><a href="ch13s02.html">上一页</a></th>
+<th width="60%" align="center"><a href="ch13.html">上一级</a></th>
+<th width="20%" align="right"><a href="ch13s04.html">下一页</a></th>
 </tr>
 <tr>
 <th width="20%" align="left">try..except</th>
-<th width="60%" align="center"><a href="index.html">��ҳ</a></th>
+<th width="60%" align="center"><a href="index.html">首页</a></th>
 <th align="right">try..finally</th>
 </tr>
 </table>
