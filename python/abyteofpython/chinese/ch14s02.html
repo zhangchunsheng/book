@@ -1,37 +1,35 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<meta charset="utf-8">
 <style type="text/css">
 <!--
 @import url(stylesheet/text.css);
 @import url(stylesheet/box.css);
 -->
 </style>
-<title>���� Python �̳� / Python��׼�� / sysģ�� </title>
+<title>简明 Python 教程 / Python标准库 / sys模块 </title>
 </head>
 
 <body>
 <table width="100%">
 <tr>
-<th colspan="3" align="center"><span class="header">���� Python �̳�</span></th>
+<th colspan="3" align="center"><span class="header">简明 Python 教程</span></th>
 </tr>
-<th colspan="3" align="center">��14�� Python��׼��</th>
+<th colspan="3" align="center">第14章 Python标准库</th>
 <tr>
-<th width="20%" align="left"><a href="ch14.html#s01">��һҳ</a></th>
-<th width="60%" align="center"><span class="header2">sysģ��</span></th>
-<th align="right"><a href="ch14s03.html">��һҳ</a></th>
+<th width="20%" align="left"><a href="ch14.html#s01">上一页</a></th>
+<th width="60%" align="center"><span class="header2">sys模块</span></th>
+<th align="right"><a href="ch14s03.html">下一页</a></th>
 </tr>
 </table>
 
 <hr noshade>
 
-<h1>sysģ��</h1>
-<p><code>sys</code>ģ�����ϵͳ��Ӧ�Ĺ��ܡ������Ѿ�ѧϰ��<code>sys.argv</code>�б��������������в�����</p>
+<h1>sys模块</h1>
+<p><code>sys</code>模块包含系统对应的功能。我们已经学习了<code>sys.argv</code>列表，它包含命令行参数。</p>
 
-<h2><a name="command">�����в���</a></h2>
-<p class="exampletitle"><a name="e141">��14.1 ʹ��sys.argv</a></p>
+<h2><a name="command">命令行参数</a></h2>
+<p class="exampletitle"><a name="e141">例14.1 使用sys.argv</a></p>
 <p class="filebox">
 <code class="comment">#!/usr/bin/python<br>
 # Filename: cat.py</code><br>
@@ -72,9 +70,9 @@ Options include:<br>
 <code class="key">&nbsp;&nbsp;&nbsp;&nbsp;for </code><code>filename </code><code class="key">in </code><code class="func">sys</code><code>.argv[</code><code class="cite">1</code><code>:]:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;readfile(filename)</code>
 </p>
-<p>��Դ�ļ���<a href="code/cat.py">code/cat.py</a>��</p>
+<p>（源文件：<a href="code/cat.py">code/cat.py</a>）</p>
 
-<h2>���</h2>
+<h2>输出</h2>
 <p class="codebox"><code>
 $ python cat.py<br>
 No action specified.<br>
@@ -99,15 +97,15 @@ if you wanna make your work also fun:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use Python!<br>
 </code></p>
 
-<h2>����ι���</h2>
-<p>�����������ģ��Linux/Unix�û���Ϥ��<strong>cat</strong>�����ֻ��Ҫָ��ĳЩ�ı��ļ������֣�������������Ǵ�ӡ�����</p>
-<p>��Python�������е�ʱ�򣬼������ڽ���ģʽ�£���<code>sys.argv</code>�б�������������һ����Ŀ�������ǵ�ǰ���еĳ������ƣ���Ϊ<code>sys.argv[0]</code>������Python��<code>0</code>��ʼ�������������������в����������Ŀ֮��</p>
-<p>Ϊ��ʹ���������û������Ѻã������ṩ��һЩ�û�����ָ����ѡ�����˽�����������ݡ�����ʹ�õ�һ���������������ǵĳ����Ƿ�ָ����ѡ����ʹ����<code>--version</code>ѡ�����İ汾�Ž�����ӡ���������Ƶأ����ָ����<code>--help</code>ѡ������ṩһЩ���ڳ���Ľ��͡�����ʹ��<code>sys.exit</code>�����˳��������еĳ��򡣺�����һ��������Կ�һ��<code>help(sys.exit)</code>���˽�������顣</p>
-<p>���û��ָ���κ�ѡ�����Ϊ�����ṩ�ļ����Ļ������ͼ򵥵ش�ӡ��ÿ���ļ���ÿһ�У������������е�˳��һ���ļ�����һ���ļ��ش�ӡ��</p>
-<p>˳��˵һ�£�����<strong>cat</strong>�� <dfn>concatenate</dfn> ����д���������ϱ����˳���Ĺ��ܡ����������������ӡһ���ļ����߰����������������ļ�����/������һ���ӡ��</p>
+<h2>它如何工作</h2>
+<p>这个程序用来模范Linux/Unix用户熟悉的<strong>cat</strong>命令。你只需要指明某些文本文件的名字，这个程序会把它们打印输出。</p>
+<p>在Python程序运行的时候，即不是在交互模式下，在<code>sys.argv</code>列表中总是至少有一个项目。它就是当前运行的程序名称，作为<code>sys.argv[0]</code>（由于Python从<code>0</code>开始计数）。其他的命令行参数在这个项目之后。</p>
+<p>为了使这个程序对用户更加友好，我们提供了一些用户可以指定的选项来了解更多程序的内容。我们使用第一个参数来检验我们的程序是否被指定了选项。如果使用了<code>--version</code>选项，程序的版本号将被打印出来。类似地，如果指定了<code>--help</code>选项，我们提供一些关于程序的解释。我们使用<code>sys.exit</code>函数退出正在运行的程序。和以往一样，你可以看一下<code>help(sys.exit)</code>来了解更多详情。</p>
+<p>如果没有指定任何选项，而是为程序提供文件名的话，它就简单地打印出每个文件地每一行，按照命令行中的顺序一个文件接着一个文件地打印。</p>
+<p>顺便说一下，名称<strong>cat</strong>是 <dfn>concatenate</dfn> 的缩写，它基本上表明了程序的功能——它可以在输出打印一个文件或者把两个或两个以上文件连接/级连在一起打印。</p>
 
-<h2><a name="more">����sys������</a></h2>
-<p><code>sys.version</code>�ַ��������ṩ��װ��Python�İ汾��Ϣ��<code>sys.version_info</code>Ԫ�����ṩһ�����򵥵ķ�����ʹ��ĳ���߱�Python�汾Ҫ���ܡ�</p>
+<h2><a name="more">更多sys的内容</a></h2>
+<p><code>sys.version</code>字符串给你提供安装的Python的版本信息。<code>sys.version_info</code>元组则提供一个更简单的方法来使你的程序具备Python版本要求功能。</p>
 
 <p class="codebox"><code>
 [swaroop@localhost code]$ python<br>
@@ -117,20 +115,20 @@ if you wanna make your work also fun:<br>
 &gt;&gt;&gt; sys.version_info<br>
 (2, 3, 4, 'final', 0)</code></p>
 
-<p>�����о���ĳ���Ա��<code>sys</code>ģ�����������˸���Ȥ����Ŀ��<code>sys.stdin</code>��<code>sys.stdout</code>��<code>sys.stderr</code>���Ƿֱ��Ӧ��ĳ���ı�׼���롢��׼����ͱ�׼��������</p>
+<p>对于有经验的程序员，<code>sys</code>模块中其他令人感兴趣的项目有<code>sys.stdin</code>、<code>sys.stdout</code>和<code>sys.stderr</code>它们分别对应你的程序的标准输入、标准输出和标准错误流。</p>
 
 <hr noshade>
 
 <table width="100%">
 <tr>
-<th width="20%" align="left"><a href="ch14.html#s01">��һҳ</a></th>
-<th width="60%" align="center"><a href="ch14.html">��һ��</a></th>
-<th width="20%" align="right"><a href="ch14s03.html">��һҳ</a></th>
+<th width="20%" align="left"><a href="ch14.html#s01">上一页</a></th>
+<th width="60%" align="center"><a href="ch14.html">上一级</a></th>
+<th width="20%" align="right"><a href="ch14s03.html">下一页</a></th>
 </tr>
 <tr>
-<th width="20%" align="left">���</th>
-<th width="60%" align="center"><a href="index.html">��ҳ</a></th>
-<th align="right">osģ��</th>
+<th width="20%" align="left">简介</th>
+<th width="60%" align="center"><a href="index.html">首页</a></th>
+<th align="right">os模块</th>
 </tr>
 </table>
 

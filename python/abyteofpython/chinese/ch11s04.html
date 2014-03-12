@@ -1,37 +1,35 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-"http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=gb2312">
+<meta charset="utf-8">
 <style type="text/css">
 <!--
 @import url(stylesheet/text.css);
 @import url(stylesheet/box.css);
 -->
 </style>
-<title>¼òÃ÷ Python ½Ì³Ì / ÃæÏò¶ÔÏóµÄ±à³Ì / ¶ÔÏóµÄ·½·¨ </title>
+<title>ç®€æ˜Ž Python æ•™ç¨‹ / é¢å‘å¯¹è±¡çš„ç¼–ç¨‹ / å¯¹è±¡çš„æ–¹æ³• </title>
 </head>
 
 <body>
 <table width="100%">
 <tr>
-<th colspan="3" align="center"><span class="header">¼òÃ÷ Python ½Ì³Ì</span></th>
+<th colspan="3" align="center"><span class="header">ç®€æ˜Ž Python æ•™ç¨‹</span></th>
 </tr>
-<th colspan="3" align="center">µÚ11ÕÂ ÃæÏò¶ÔÏóµÄ±à³Ì</th>
+<th colspan="3" align="center">ç¬¬11ç«  é¢å‘å¯¹è±¡çš„ç¼–ç¨‹</th>
 <tr>
-<th width="20%" align="left"><a href="ch11s03.html">ÉÏÒ»Ò³</a></th>
-<th width="60%" align="center"><span class="header2">¶ÔÏóµÄ·½·¨</span></th>
-<th align="right"><a href="ch11s05.html">ÏÂÒ»Ò³</a></th>
+<th width="20%" align="left"><a href="ch11s03.html">ä¸Šä¸€é¡µ</a></th>
+<th width="60%" align="center"><span class="header2">å¯¹è±¡çš„æ–¹æ³•</span></th>
+<th align="right"><a href="ch11s05.html">ä¸‹ä¸€é¡µ</a></th>
 </tr>
 </table>
 
 <hr noshade>
 
-<h1>¶ÔÏóµÄ·½·¨</h1>
-<p>ÎÒÃÇÒÑ¾­ÌÖÂÛÁËÀà/¶ÔÏó¿ÉÒÔÓµÓÐÏñº¯ÊýÒ»ÑùµÄ·½·¨£¬ÕâÐ©·½·¨Óëº¯ÊýµÄÇø±ðÖ»ÊÇÒ»¸ö¶îÍâµÄ<code>self</code>±äÁ¿¡£ÏÖÔÚÎÒÃÇÀ´Ñ§Ï°Ò»¸öÀý×Ó¡£</p>
+<h1>å¯¹è±¡çš„æ–¹æ³•</h1>
+<p>æˆ‘ä»¬å·²ç»è®¨è®ºäº†ç±»/å¯¹è±¡å¯ä»¥æ‹¥æœ‰åƒå‡½æ•°ä¸€æ ·çš„æ–¹æ³•ï¼Œè¿™äº›æ–¹æ³•ä¸Žå‡½æ•°çš„åŒºåˆ«åªæ˜¯ä¸€ä¸ªé¢å¤–çš„<code>self</code>å˜é‡ã€‚çŽ°åœ¨æˆ‘ä»¬æ¥å­¦ä¹ ä¸€ä¸ªä¾‹å­ã€‚</p>
 
-<h2><a name="using">Ê¹ÓÃ¶ÔÏóµÄ·½·¨</a></h2>
-<p class="exampletitle"><a name="e112">Àý11.2 Ê¹ÓÃ¶ÔÏóµÄ·½·¨</a></p>
+<h2><a name="using">ä½¿ç”¨å¯¹è±¡çš„æ–¹æ³•</a></h2>
+<p class="exampletitle"><a name="e112">ä¾‹11.2 ä½¿ç”¨å¯¹è±¡çš„æ–¹æ³•</a></p>
 <p class="filebox">
 <code class="comment">#!/usr/bin/python<br>
 # Filename: method.py</code><br>
@@ -45,28 +43,28 @@ p.sayHi()</code><br>
 <br>
 <code class="comment"># This short example can also be written as Person().sayHi()</code>
 </p>
-<p>£¨Ô´ÎÄ¼þ£º<a href="code/method.py">code/method.py</a>£©</p>
+<p>ï¼ˆæºæ–‡ä»¶ï¼š<a href="code/method.py">code/method.py</a>ï¼‰</p>
 
-<h2>Êä³ö</h2>
+<h2>è¾“å‡º</h2>
 <p class="codebox"><code>
 $ python method.py<br>
 Hello, how are you?</code></p>
 
-<h2>ËüÈçºÎ¹¤×÷</h2>
-<p>ÕâÀïÎÒÃÇ¿´µ½ÁË<code>self</code>µÄÓÃ·¨¡£×¢Òâ<code>sayHi</code>·½·¨Ã»ÓÐÈÎºÎ²ÎÊý£¬µ«ÈÔÈ»ÔÚº¯Êý¶¨ÒåÊ±ÓÐ<code>self</code>¡£</p>
+<h2>å®ƒå¦‚ä½•å·¥ä½œ</h2>
+<p>è¿™é‡Œæˆ‘ä»¬çœ‹åˆ°äº†<code>self</code>çš„ç”¨æ³•ã€‚æ³¨æ„<code>sayHi</code>æ–¹æ³•æ²¡æœ‰ä»»ä½•å‚æ•°ï¼Œä½†ä»ç„¶åœ¨å‡½æ•°å®šä¹‰æ—¶æœ‰<code>self</code>ã€‚</p>
 
 <hr noshade>
 
 <table width="100%">
 <tr>
-<th width="20%" align="left"><a href="ch11s03.html">ÉÏÒ»Ò³</a></th>
-<th width="60%" align="center"><a href="ch11.html">ÉÏÒ»¼¶</a></th>
-<th width="20%" align="right"><a href="ch11s05.html">ÏÂÒ»Ò³</a></th>
+<th width="20%" align="left"><a href="ch11s03.html">ä¸Šä¸€é¡µ</a></th>
+<th width="60%" align="center"><a href="ch11.html">ä¸Šä¸€çº§</a></th>
+<th width="20%" align="right"><a href="ch11s05.html">ä¸‹ä¸€é¡µ</a></th>
 </tr>
 <tr>
-<th width="20%" align="left">Àà</th>
-<th width="60%" align="center"><a href="index.html">Ê×Ò³</a></th>
-<th align="right">__init__·½·¨</th>
+<th width="20%" align="left">ç±»</th>
+<th width="60%" align="center"><a href="index.html">é¦–é¡µ</a></th>
+<th align="right">__init__æ–¹æ³•</th>
 </tr>
 </table>
 
